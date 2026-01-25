@@ -2,19 +2,55 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# AI Film Making Hackathon v2 - Landing Page
 
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/drive/1HwFFd7FgK-KogDBOoBCZ6vuAn66CPvR9
+This landing page for the AI Film Making Hackathon features an immersive 3D photo tunnel and waitlist capture.
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
+**Prerequisites:** Node.js (v18+)
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+   ```bash
+   npm install
+   ```
+
+2. Set up environment variables for EmailOctopus (optional, for waitlist functionality):
+   - Copy `.env.example` to `.env.local`
+   - Add your `EMAIL_OCTOPUS_API_KEY` and `EMAIL_OCTOPUS_LIST_ID`
+   - See [.env.example](.env.example) for detailed setup instructions
+
+3. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+4. Open [http://localhost:5173](http://localhost:5173) in your browser
+
+## Features
+
+- **3D Photo Tunnel**: Immersive Three.js-powered photo gallery tunnel
+- **Morphing Waitlist Form**: Animated button that transforms into an email capture form
+- **Dark Mode**: Toggle between light and dark themes
+- **EmailOctopus Integration**: Serverless API endpoint for waitlist management
+
+## Deployment
+
+Deploy to Vercel:
+
+1. Push your code to GitHub
+2. Import the project in Vercel
+3. Add environment variables in Vercel project settings:
+   - `EMAIL_OCTOPUS_API_KEY`
+   - `EMAIL_OCTOPUS_LIST_ID`
+4. Deploy!
+
+## Image Optimization
+
+To optimize images for the photo tunnel:
+
+```bash
+npm run optimize-images
+```
+
+This will process images in `public/images/` and output optimized WebP versions to `public/images-optimized/`.
