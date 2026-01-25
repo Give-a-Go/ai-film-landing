@@ -9,9 +9,12 @@ const Navigation: React.FC<NavigationProps> = ({ isDarkMode, toggleTheme }) => {
   return (
     <nav className="fixed top-0 left-0 w-full z-50 px-6 py-6 md:px-12 flex justify-between items-center bg-transparent pointer-events-none">
       {/* Logo */}
-      <div className={`text-2xl font-serif font-medium tracking-tight pointer-events-auto cursor-pointer transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+      <a 
+        href="https://giveago.co"
+        className={`text-2xl font-serif font-medium tracking-tight pointer-events-auto cursor-pointer transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-black'}`}
+      >
         Give(a)Go
-      </div>
+      </a>
 
       {/* Center Links & Toggle */}
       <div className="hidden md:flex items-center gap-4 bg-white/0 backdrop-blur-[2px] px-6 py-2 rounded-full pointer-events-auto">
