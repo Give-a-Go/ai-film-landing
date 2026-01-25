@@ -24,8 +24,8 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
 
   // --- CONFIGURATION ---
   // Tuned to match the reference design's density and scale
-  const TUNNEL_WIDTH = 24;
-  const TUNNEL_HEIGHT = 16;
+  const TUNNEL_WIDTH = 37.5;
+  const TUNNEL_HEIGHT = 25.0;
   const SEGMENT_DEPTH = 6; // Short depth for "square-ish" floor tiles
   const NUM_SEGMENTS = 8; // Reduced from 14 for faster initial load
   const FOG_DENSITY = 0.02;
@@ -470,27 +470,32 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
           ref={contentRef}
           className="text-center flex flex-col items-center max-w-3xl px-6 pointer-events-auto mix-blend-multiply-normal"
         >
-          <h1 className={`text-[4rem] md:text-[5rem] lg:text-[7rem] leading-[0.9] font-serif font-bold tracking-tight mb-4 transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-dark'}`}>
-            AI Film Making Hackathon <span className="text-[2rem] md:text-[2.5rem] lg:text-[3.5rem] font-light align-baseline ml-1">v2</span>
+          <h1
+            className={`text-[2.5rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] leading-[0.95] font-serif tracking-tight mb-4 transition-colors duration-500 ${isDarkMode ? "text-white" : "text-dark"}`}
+          >
+            <span className="block font-bold">AI Film Making</span>
+            <span className="block italic font-light">
+              Hackathon{" "}
+              <span className="text-[1.25rem] sm:text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] font-light align-baseline ml-1">
+                v2
+              </span>
+            </span>
           </h1>
 
           <p
-            className={`text-lg md:text-xl font-normal mb-2 transition-colors duration-500 ${isDarkMode ? "text-gray-400" : "text-muted"}`}
+            className={`text-lg md:text-xl font-normal mb-8 transition-colors duration-500 ${isDarkMode ? "text-gray-400" : "text-muted"}`}
           >
-            Dublin
+            Dublin &nbsp;•&nbsp; Late March
           </p>
 
-          <p
-            className={`text-lg md:text-xl font-normal mb-10 transition-colors duration-500 ${isDarkMode ? "text-gray-400" : "text-muted"}`}
-          >
-            Late March
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
             <button className={`w-full sm:w-auto rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap ${isDarkMode ? 'bg-white text-black hover:bg-gray-200' : 'bg-dark text-white'}`}>
-              Join waitlist for the event
+              Join waitlist
             </button>
-            <a href="https://giveago.co/sponsor" className={`w-full sm:w-auto text-sm font-medium hover:opacity-70 transition-opacity flex items-center justify-center gap-1 ${isDarkMode ? 'text-white' : 'text-dark'}`}>
+            <a 
+              href="https://giveago.co/sponsor" 
+              className={`w-full sm:w-auto rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-1 ${isDarkMode ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-purple-600 text-white hover:bg-purple-700'}`}
+            >
               Sponsor <span>→</span>
             </a>
           </div>
