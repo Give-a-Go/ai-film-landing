@@ -9,22 +9,31 @@ const Navigation: React.FC<NavigationProps> = ({ isDarkMode, toggleTheme }) => {
   return (
     <nav className="fixed top-0 left-0 w-full z-50 px-6 py-6 md:px-12 flex justify-between items-center bg-transparent pointer-events-none">
       {/* Logo */}
-      <div className={`text-lg font-medium tracking-tight pointer-events-auto cursor-pointer flex items-center gap-1 transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-black'}`}>
-        <span className="font-serif italic text-xl mr-1">⌘</span> Delphi
+      <div className={`text-2xl font-serif font-medium tracking-tight pointer-events-auto cursor-pointer transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+        Give(a)Go
       </div>
 
       {/* Center Links & Toggle */}
       <div className="hidden md:flex items-center gap-4 bg-white/0 backdrop-blur-[2px] px-6 py-2 rounded-full pointer-events-auto">
         <div className="flex items-center gap-8 mr-4">
-          {['Use Cases', 'Discover', 'About'].map((item) => (
-            <a 
-              key={item} 
-              href="#" 
-              className={`text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'}`}
-            >
-              {item}
-            </a>
-          ))}
+          <a 
+            href="https://giveago.co"
+            className={`text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'}`}
+          >
+            About us
+          </a>
+          <a 
+            href="https://luma.com/giveago?period=past"
+            className={`text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'}`}
+          >
+            Previous events
+          </a>
+          <a 
+            href="https://giveago.co/after-movie/ai-film"
+            className={`text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'}`}
+          >
+            See outputs from AI Film Making Hackathon v1
+          </a>
         </div>
         
         {/* Theme Toggle */}
@@ -41,11 +50,14 @@ const Navigation: React.FC<NavigationProps> = ({ isDarkMode, toggleTheme }) => {
         </button>
       </div>
 
-      {/* CTA */}
-      <div className="pointer-events-auto">
-        <button className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-1 group ${isDarkMode ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-900'}`}>
-          Get started now <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+      {/* CTAs */}
+      <div className="pointer-events-auto flex items-center gap-3">
+        <button className={`px-4 py-2 md:px-5 md:py-2.5 rounded-full text-xs md:text-sm font-medium transition-all duration-300 flex items-center gap-1 group ${isDarkMode ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-900'}`}>
+          Join waitlist <span className="group-hover:translate-x-0.5 transition-transform">→</span>
         </button>
+        <a href="https://giveago.co/sponsor" className={`px-4 py-2 md:px-5 md:py-2.5 rounded-full text-xs md:text-sm font-medium transition-all duration-300 ${isDarkMode ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-black/10 text-black hover:bg-black/20'}`}>
+          Sponsor
+        </a>
       </div>
     </nav>
   );
