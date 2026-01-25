@@ -493,22 +493,15 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
           ref={contentRef}
           className="text-center flex flex-col items-center max-w-3xl px-6 pointer-events-auto mix-blend-multiply-normal"
         >
-          <h1 className={`text-[4rem] md:text-[5rem] lg:text-[7rem] leading-[0.9] font-serif font-bold tracking-tight mb-4 transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-dark'}`}>
+          <h1 className={`text-[3rem] md:text-[4rem] lg:text-[5rem] leading-[0.9] font-serif font-bold tracking-tight mb-6 transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-dark'}`}>
             <span className="block">AI Film Making</span>
-            <span className="block">Hackathon</span>
-            <span className="block text-[2rem] md:text-[2.5rem] lg:text-[3.5rem] font-light">v2</span>
+            <span className="block">Hackathon <span className="text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] font-sans font-normal italic ml-2">v2</span></span>
           </h1>
 
           <p
-            className={`text-lg md:text-xl font-normal mb-2 transition-colors duration-500 ${isDarkMode ? "text-gray-400" : "text-muted"}`}
+            className={`text-base md:text-lg font-normal mb-8 transition-colors duration-500 ${isDarkMode ? "text-gray-400" : "text-muted"}`}
           >
-            Dublin
-          </p>
-
-          <p
-            className={`text-lg md:text-xl font-normal mb-10 transition-colors duration-500 ${isDarkMode ? "text-gray-400" : "text-muted"}`}
-          >
-            Late March
+            Dublin • Late March
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto">
