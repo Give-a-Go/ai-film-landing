@@ -35,7 +35,7 @@ const Navigation: React.FC<NavigationProps> = ({ isDarkMode, toggleTheme }) => {
             href="https://giveago.co/after-movie/ai-film"
             className={`text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'}`}
           >
-            See outputs from AI Film Making Hackathon v1
+            View v1 Gallery
           </a>
         </div>
         

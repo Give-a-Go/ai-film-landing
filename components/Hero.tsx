@@ -163,12 +163,49 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
       ht: number,
     ) => {
       const url = imageUrls[Math.floor(Math.random() * imageUrls.length)];
-      const geom = new THREE.PlaneGeometry(wd - cellMargin, ht - cellMargin);
       const mat = new THREE.MeshBasicMaterial({
         transparent: true,
         opacity: 0,
         side: THREE.DoubleSide,
       });
+      
+      // Helper function to create mesh with proper aspect ratio
+      const createMeshWithTexture = (tex: THREE.Texture) => {
+        // Ensure image is loaded and has dimensions
+        if (!tex.image || !tex.image.width || !tex.image.height) {
+          // Fallback to cell dimensions if image not ready
+          const geom = new THREE.PlaneGeometry(wd - cellMargin, ht - cellMargin);
+          const m = new THREE.Mesh(geom, mat);
+          m.position.copy(pos);
+          m.rotation.copy(rot);
+          m.name = "slab_image";
+          group.add(m);
+          return;
+        }
+        
+        // Get texture aspect ratio
+        const texAspect = tex.image.width / tex.image.height;
+        const cellAspect = wd / ht;
+        
+        // Calculate dimensions that maintain image aspect ratio while fitting in cell
+        let finalWidth = wd - cellMargin;
+        let finalHeight = ht - cellMargin;
+        
+        if (texAspect > cellAspect) {
+          // Image is wider than cell - fit to width
+          finalHeight = finalWidth / texAspect;
+        } else {
+          // Image is taller than cell - fit to height
+          finalWidth = finalHeight * texAspect;
+        }
+        
+        const geom = new THREE.PlaneGeometry(finalWidth, finalHeight);
+        const m = new THREE.Mesh(geom, mat);
+        m.position.copy(pos);
+        m.rotation.copy(rot);
+        m.name = "slab_image";
+        group.add(m);
+      };
       
       // Check cache first, then load if not cached
       const cachedTexture = textureCacheRef.current.get(url);
@@ -176,6 +213,7 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
         // Use cached texture immediately
         mat.map = cachedTexture;
         mat.needsUpdate = true;
+        createMeshWithTexture(cachedTexture);
         gsap.to(mat, { opacity: 0.85, duration: 0.5 });
       } else {
         // Load texture and cache it
@@ -191,15 +229,10 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
           
           mat.map = tex;
           mat.needsUpdate = true;
+          createMeshWithTexture(tex);
           gsap.to(mat, { opacity: 0.85, duration: 1 });
         });
       }
-      
-      const m = new THREE.Mesh(geom, mat);
-      m.position.copy(pos);
-      m.rotation.copy(rot);
-      m.name = "slab_image";
-      group.add(m);
     };
 
     // Logic: Iterate slots, but skip if the previous slot was filled.
@@ -491,7 +524,7 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
       <div className="fixed inset-0 z-10 flex items-center justify-center pointer-events-none">
         <div
           ref={contentRef}
-          className="text-center flex flex-col items-center max-w-3xl px-6 pointer-events-auto mix-blend-multiply-normal"
+          className="text-center flex flex-col items-center max-w-4xl px-6 pointer-events-auto mix-blend-multiply-normal"
         >
           <h1 className={`text-[3rem] md:text-[4rem] lg:text-[5rem] leading-[0.9] font-serif font-bold tracking-tight mb-6 transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-dark'}`}>
             <span className="block">AI Film Making</span>
