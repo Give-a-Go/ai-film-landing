@@ -17,6 +17,9 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const segmentsRef = useRef<THREE.Group[]>([]);
   const scrollPosRef = useRef(0);
+  const autoScrollSpeedRef = useRef(0.1); // Slow auto-scroll speed
+  const isUserScrollingRef = useRef(false);
+  const lastUserScrollTimeRef = useRef(0);
   
   // Texture cache for performance - load each texture only once
   const textureLoaderRef = useRef<THREE.TextureLoader>(new THREE.TextureLoader());
@@ -160,12 +163,49 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
       ht: number,
     ) => {
       const url = imageUrls[Math.floor(Math.random() * imageUrls.length)];
-      const geom = new THREE.PlaneGeometry(wd - cellMargin, ht - cellMargin);
       const mat = new THREE.MeshBasicMaterial({
         transparent: true,
         opacity: 0,
         side: THREE.DoubleSide,
       });
+      
+      // Helper function to create mesh with proper aspect ratio
+      const createMeshWithTexture = (tex: THREE.Texture) => {
+        // Ensure image is loaded and has dimensions
+        if (!tex.image || !tex.image.width || !tex.image.height) {
+          // Fallback to cell dimensions if image not ready
+          const geom = new THREE.PlaneGeometry(wd - cellMargin, ht - cellMargin);
+          const m = new THREE.Mesh(geom, mat);
+          m.position.copy(pos);
+          m.rotation.copy(rot);
+          m.name = "slab_image";
+          group.add(m);
+          return;
+        }
+        
+        // Get texture aspect ratio
+        const texAspect = tex.image.width / tex.image.height;
+        const cellAspect = wd / ht;
+        
+        // Calculate dimensions that maintain image aspect ratio while fitting in cell
+        let finalWidth = wd - cellMargin;
+        let finalHeight = ht - cellMargin;
+        
+        if (texAspect > cellAspect) {
+          // Image is wider than cell - fit to width
+          finalHeight = finalWidth / texAspect;
+        } else {
+          // Image is taller than cell - fit to height
+          finalWidth = finalHeight * texAspect;
+        }
+        
+        const geom = new THREE.PlaneGeometry(finalWidth, finalHeight);
+        const m = new THREE.Mesh(geom, mat);
+        m.position.copy(pos);
+        m.rotation.copy(rot);
+        m.name = "slab_image";
+        group.add(m);
+      };
       
       // Check cache first, then load if not cached
       const cachedTexture = textureCacheRef.current.get(url);
@@ -173,6 +213,7 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
         // Use cached texture immediately
         mat.map = cachedTexture;
         mat.needsUpdate = true;
+        createMeshWithTexture(cachedTexture);
         gsap.to(mat, { opacity: 0.85, duration: 0.5 });
       } else {
         // Load texture and cache it
@@ -188,15 +229,10 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
           
           mat.map = tex;
           mat.needsUpdate = true;
+          createMeshWithTexture(tex);
           gsap.to(mat, { opacity: 0.85, duration: 1 });
         });
       }
-      
-      const m = new THREE.Mesh(geom, mat);
-      m.position.copy(pos);
-      m.rotation.copy(rot);
-      m.name = "slab_image";
-      group.add(m);
     };
 
     // Logic: Iterate slots, but skip if the previous slot was filled.
@@ -310,6 +346,15 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
       if (!cameraRef.current || !sceneRef.current || !rendererRef.current)
         return;
 
+      // Auto-scroll: slowly increment scroll position when user is not actively scrolling
+      const now = Date.now();
+      const timeSinceLastScroll = now - lastUserScrollTimeRef.current;
+      
+      // If user hasn't scrolled in the last 100ms, enable auto-scroll
+      if (timeSinceLastScroll > 100 && !isUserScrollingRef.current) {
+        scrollPosRef.current += autoScrollSpeedRef.current;
+      }
+
       const targetZ = -scrollPosRef.current * 0.05;
       const currentZ = cameraRef.current.position.z;
       cameraRef.current.position.z += (targetZ - currentZ) * 0.1;
@@ -380,7 +425,15 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
     animate();
 
     const onScroll = () => {
+      isUserScrollingRef.current = true;
+      lastUserScrollTimeRef.current = Date.now();
       scrollPosRef.current = window.scrollY;
+      
+      // Reset user scrolling flag after scroll ends
+      clearTimeout((window as any).scrollTimeout);
+      (window as any).scrollTimeout = setTimeout(() => {
+        isUserScrollingRef.current = false;
+      }, 150);
     };
     window.addEventListener("scroll", onScroll);
     const handleResize = () => {
@@ -396,6 +449,9 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", handleResize);
       cancelAnimationFrame(frameId);
+      if ((window as any).scrollTimeout) {
+        clearTimeout((window as any).scrollTimeout);
+      }
       renderer.dispose();
       
       // Clean up texture cache
@@ -468,7 +524,7 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
       <div className="fixed inset-0 z-10 flex items-center justify-center pointer-events-none">
         <div
           ref={contentRef}
-          className="text-center flex flex-col items-center max-w-3xl px-6 pointer-events-auto mix-blend-multiply-normal"
+          className="text-center flex flex-col items-center max-w-4xl px-6 pointer-events-auto mix-blend-multiply-normal"
         >
           <h1
             className={`text-[2.5rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] leading-[0.95] font-serif tracking-tight mb-4 transition-colors duration-500 ${isDarkMode ? "text-white" : "text-dark"}`}
