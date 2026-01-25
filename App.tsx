@@ -20,7 +20,7 @@ const App: React.FC = () => {
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-700 ${isDarkMode ? "bg-[#050505] text-white selection:bg-orange-900 selection:text-orange-100" : "bg-white text-slate-900 selection:bg-orange-100 selection:text-orange-900"} overflow-hidden`}
+      className={`min-h-screen transition-colors duration-700 ${isDarkMode ? "bg-[#050505] text-white selection:bg-purple-800 selection:text-purple-100" : "bg-white text-slate-900 selection:bg-purple-200 selection:text-purple-900"} overflow-hidden`}
     >
       <Navigation isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
       <main>
