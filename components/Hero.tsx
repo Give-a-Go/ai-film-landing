@@ -17,6 +17,9 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const segmentsRef = useRef<THREE.Group[]>([]);
   const scrollPosRef = useRef(0);
+  const autoScrollSpeedRef = useRef(0.1); // Slow auto-scroll speed
+  const isUserScrollingRef = useRef(false);
+  const lastUserScrollTimeRef = useRef(0);
   
   // Texture cache for performance - load each texture only once
   const textureLoaderRef = useRef<THREE.TextureLoader>(new THREE.TextureLoader());
@@ -310,6 +313,15 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
       if (!cameraRef.current || !sceneRef.current || !rendererRef.current)
         return;
 
+      // Auto-scroll: slowly increment scroll position when user is not actively scrolling
+      const now = Date.now();
+      const timeSinceLastScroll = now - lastUserScrollTimeRef.current;
+      
+      // If user hasn't scrolled in the last 100ms, enable auto-scroll
+      if (timeSinceLastScroll > 100 && !isUserScrollingRef.current) {
+        scrollPosRef.current += autoScrollSpeedRef.current;
+      }
+
       const targetZ = -scrollPosRef.current * 0.05;
       const currentZ = cameraRef.current.position.z;
       cameraRef.current.position.z += (targetZ - currentZ) * 0.1;
@@ -380,7 +392,15 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
     animate();
 
     const onScroll = () => {
+      isUserScrollingRef.current = true;
+      lastUserScrollTimeRef.current = Date.now();
       scrollPosRef.current = window.scrollY;
+      
+      // Reset user scrolling flag after scroll ends
+      clearTimeout((window as any).scrollTimeout);
+      (window as any).scrollTimeout = setTimeout(() => {
+        isUserScrollingRef.current = false;
+      }, 150);
     };
     window.addEventListener("scroll", onScroll);
     const handleResize = () => {
@@ -396,6 +416,9 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", handleResize);
       cancelAnimationFrame(frameId);
+      if ((window as any).scrollTimeout) {
+        clearTimeout((window as any).scrollTimeout);
+      }
       renderer.dispose();
       
       // Clean up texture cache
@@ -471,7 +494,9 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
           className="text-center flex flex-col items-center max-w-3xl px-6 pointer-events-auto mix-blend-multiply-normal"
         >
           <h1 className={`text-[4rem] md:text-[5rem] lg:text-[7rem] leading-[0.9] font-serif font-bold tracking-tight mb-4 transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-dark'}`}>
-            AI Film Making Hackathon <span className="text-[2rem] md:text-[2.5rem] lg:text-[3.5rem] font-light align-baseline ml-1">v2</span>
+            <span className="block">AI Film Making</span>
+            <span className="block">Hackathon</span>
+            <span className="block text-[2rem] md:text-[2.5rem] lg:text-[3.5rem] font-light">v2</span>
           </h1>
 
           <p
