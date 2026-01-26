@@ -1,5 +1,95 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
+// Helper function to find a contact by email
+async function findContactByEmail(
+  email: string,
+  listId: string,
+  apiKey: string
+): Promise<any> {
+  const response = await fetch(
+    `https://emailoctopus.com/api/1.6/lists/${listId}/contacts?email_address=${encodeURIComponent(
+      email
+    )}&api_key=${apiKey}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to find contact: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.data && data.data.length > 0 ? data.data[0] : null;
+}
+
+// Helper function to update contact tags
+async function updateContactTags(
+  contactId: string,
+  tags: string[],
+  listId: string,
+  apiKey: string
+): Promise<void> {
+  const response = await fetch(
+    `https://emailoctopus.com/api/1.6/lists/${listId}/contacts/${contactId}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        api_key: apiKey,
+        tags: tags,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const data = await response.json();
+    throw new Error(
+      `Failed to update contact: ${data.error?.message || response.statusText}`
+    );
+  }
+}
+
+// Helper function to append tag to existing contact
+async function appendTagToExistingContact(
+  email: string,
+  newTag: string,
+  listId: string,
+  apiKey: string
+): Promise<void> {
+  try {
+    // Find the contact by email
+    const contact = await findContactByEmail(email, listId, apiKey);
+
+    if (!contact) {
+      console.error("Contact not found despite MEMBER_EXISTS error");
+      return;
+    }
+
+    // Get existing tags
+    const existingTags = contact.tags || [];
+
+    // Add new tag if not already present
+    if (!existingTags.includes(newTag)) {
+      existingTags.push(newTag);
+
+      // Update contact with merged tags
+      await updateContactTags(contact.id, existingTags, listId, apiKey);
+      console.log(`Successfully appended tag "${newTag}" to ${email}`);
+    } else {
+      console.log(`Tag "${newTag}" already exists for ${email}`);
+    }
+  } catch (error) {
+    console.error("Error appending tag to existing contact:", error);
+    // Don't throw - we want to return success to the user even if tag update fails
+  }
+}
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
@@ -53,9 +143,17 @@ export default async function handler(
     if (!response.ok) {
       // Handle specific EmailOctopus errors
       if (data.error && data.error.code === "MEMBER_EXISTS_WITH_EMAIL_ADDRESS") {
-        return res.status(200).json({ 
-          success: true, 
-          message: "You're already on the waitlist!" 
+        // Append tag to existing contact
+        await appendTagToExistingContact(
+          email,
+          "ai-film-making-hackathon-v2",
+          listId,
+          apiKey
+        );
+
+        return res.status(200).json({
+          success: true,
+          message: "You're already on the waitlist!",
         });
       }
 
