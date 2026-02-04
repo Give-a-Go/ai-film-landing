@@ -1,13 +1,16 @@
-import React, { useRef, useLayoutEffect, useEffect } from "react";
+import React, { useRef, useLayoutEffect, useEffect, useState } from "react";
 import gsap from "gsap";
 import * as THREE from "three";
 import WaitlistMorph from "./WaitlistMorph";
+import TeleprompterModal from "./TeleprompterModal";
 
 interface HeroProps {
   isDarkMode: boolean;
 }
 
 const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
+  const [isTeleprompterOpen, setIsTeleprompterOpen] = useState(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -518,7 +521,11 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
       ref={containerRef}
       className={`relative w-full h-[10000vh] transition-colors duration-700 ${isDarkMode ? "bg-[#050505]" : "bg-white"}`}
     >
-      <div className="fixed inset-0 w-full h-full overflow-hidden z-0">
+      <div
+        className={`fixed inset-0 w-full h-full overflow-hidden z-0 transition-[filter,transform] duration-300 ease-out ${
+          isTeleprompterOpen ? "blur-sm scale-[1.01]" : "blur-0 scale-100"
+        }`}
+      >
         <canvas ref={canvasRef} className="w-full h-full block" />
       </div>
 
@@ -547,13 +554,28 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
 
           <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
             <WaitlistMorph isDarkMode={isDarkMode} />
-            <a 
-              href="https://giveago.co/sponsor" 
+            <a
+              href="https://giveago.co/sponsor"
               className={`w-full sm:w-auto rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-1 ${isDarkMode ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-purple-600 text-white hover:bg-purple-700'}`}
             >
               Sponsor <span>→</span>
             </a>
           </div>
+
+          <button
+            onClick={() => setIsTeleprompterOpen(true)}
+            className={`mt-4 text-sm font-medium underline underline-offset-4 hover:opacity-70 transition-opacity duration-300 ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}
+          >
+            More about the event
+          </button>
+
+          <TeleprompterModal
+            isOpen={isTeleprompterOpen}
+            onClose={() => setIsTeleprompterOpen(false)}
+            isDarkMode={isDarkMode}
+          />
         </div>
       </div>
     </div>
