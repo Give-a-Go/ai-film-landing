@@ -255,7 +255,7 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className={`fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 md:p-8 backdrop-blur-sm md:backdrop-blur-md transition-colors duration-200 ${
+          className={`fixed inset-0 z-[100] flex items-center justify-center p-3 pt-24 pb-6 sm:p-5 sm:pt-28 sm:pb-8 md:p-8 md:pt-32 md:pb-10 backdrop-blur-sm md:backdrop-blur-md transition-colors duration-200 ${
             isDarkMode ? "bg-black/60" : "bg-white/60"
           }`}
           role="dialog"
@@ -268,7 +268,7 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
             exit={{ opacity: 0, y: 12, scale: 0.98 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             onClick={(e) => e.stopPropagation()}
-            className={`relative w-full max-w-6xl xl:max-w-7xl max-h-[82vh] sm:max-h-[84vh] md:max-h-[86vh] rounded-3xl border overflow-hidden backdrop-blur-xl flex flex-col transition-colors duration-200 ${
+            className={`relative w-full max-w-6xl xl:max-w-7xl max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-9rem)] md:max-h-[calc(100vh-10rem)] rounded-3xl border overflow-hidden backdrop-blur-xl flex flex-col transition-colors duration-200 ${
               isDarkMode
                 ? "bg-gray-950/90 border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.65)]"
                 : "bg-white/90 border-black/10 shadow-[0_30px_80px_rgba(0,0,0,0.25)]"
