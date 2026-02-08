@@ -323,6 +323,15 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
     camera.position.set(0, 0, 0);
     cameraRef.current = camera;
 
+    // On portrait screens the horizontal FOV gets very narrow, which can push the
+    // side walls outside the camera frustum. We compensate by scaling the scene
+    // narrower on the X axis based on aspect ratio (desktop remains unchanged).
+    const updateResponsiveSceneScale = (aspect: number) => {
+      const scaleX = THREE.MathUtils.clamp(aspect * 1.2, 0.55, 1);
+      scene.scale.set(scaleX, 1, 1);
+    };
+    updateResponsiveSceneScale(width / height);
+
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
       antialias: true,
@@ -446,6 +455,7 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
+      updateResponsiveSceneScale(w / h);
     };
     window.addEventListener("resize", handleResize);
 
