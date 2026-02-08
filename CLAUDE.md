@@ -59,7 +59,8 @@ Key configuration constants:
 
 **POST `/api/subscribe.ts`** (Vercel serverless function)
 - Adds email to EmailOctopus waitlist with tag `"ai-film-making-hackathon-v2"`
-- If email already exists, appends tag to existing contact
+- Uses EmailOctopus API v2 upsert endpoint to automatically handle both new and existing contacts
+- If email already exists, appends tag (preserving other tags) and sets status to `subscribed`
 - Requires environment variables: `EMAIL_OCTOPUS_API_KEY`, `EMAIL_OCTOPUS_LIST_ID`
 
 ### Environment Variables

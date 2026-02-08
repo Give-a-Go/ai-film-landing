@@ -1,95 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-// Helper function to find a contact by email
-async function findContactByEmail(
-  email: string,
-  listId: string,
-  apiKey: string
-): Promise<any> {
-  const response = await fetch(
-    `https://emailoctopus.com/api/1.6/lists/${listId}/contacts?email_address=${encodeURIComponent(
-      email
-    )}&api_key=${apiKey}`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(`Failed to find contact: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  return data.data && data.data.length > 0 ? data.data[0] : null;
-}
-
-// Helper function to update contact tags
-async function updateContactTags(
-  contactId: string,
-  tags: string[],
-  listId: string,
-  apiKey: string
-): Promise<void> {
-  const response = await fetch(
-    `https://emailoctopus.com/api/1.6/lists/${listId}/contacts/${contactId}`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        api_key: apiKey,
-        tags: tags,
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const data = await response.json();
-    throw new Error(
-      `Failed to update contact: ${data.error?.message || response.statusText}`
-    );
-  }
-}
-
-// Helper function to append tag to existing contact
-async function appendTagToExistingContact(
-  email: string,
-  newTag: string,
-  listId: string,
-  apiKey: string
-): Promise<void> {
-  try {
-    // Find the contact by email
-    const contact = await findContactByEmail(email, listId, apiKey);
-
-    if (!contact) {
-      console.error("Contact not found despite MEMBER_EXISTS error");
-      return;
-    }
-
-    // Get existing tags
-    const existingTags = contact.tags || [];
-
-    // Add new tag if not already present
-    if (!existingTags.includes(newTag)) {
-      existingTags.push(newTag);
-
-      // Update contact with merged tags
-      await updateContactTags(contact.id, existingTags, listId, apiKey);
-      console.log(`Successfully appended tag "${newTag}" to ${email}`);
-    } else {
-      console.log(`Tag "${newTag}" already exists for ${email}`);
-    }
-  } catch (error) {
-    console.error("Error appending tag to existing contact:", error);
-    // Don't throw - we want to return success to the user even if tag update fails
-  }
-}
-
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
@@ -121,51 +31,48 @@ export default async function handler(
   }
 
   try {
-    // Call EmailOctopus API
+    // Call EmailOctopus API v2 upsert endpoint (create or update contact)
+    // This endpoint automatically handles both new and existing contacts
     const response = await fetch(
-      `https://emailoctopus.com/api/1.6/lists/${listId}/contacts`,
+      `https://api.emailoctopus.com/lists/${listId}/contacts`,
       {
-        method: "POST",
+        method: "PUT",
         headers: {
+          "Authorization": `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          api_key: apiKey,
           email_address: email,
-          status: "SUBSCRIBED",
-          tags: ["ai-film-making-hackathon-v2"],
+          status: "subscribed",
+          tags: {
+            "ai-film-making-hackathon-v2": true
+          },
         }),
       }
     );
 
+    // Parse response
     const data = await response.json();
 
     if (!response.ok) {
-      // Handle specific EmailOctopus errors
-      if (data.error && data.error.code === "MEMBER_EXISTS_WITH_EMAIL_ADDRESS") {
-        // Append tag to existing contact
-        await appendTagToExistingContact(
-          email,
-          "ai-film-making-hackathon-v2",
-          listId,
-          apiKey
-        );
-
-        return res.status(200).json({
-          success: true,
-          message: "You're already on the waitlist!",
-        });
-      }
-
-      console.error("EmailOctopus API error:", data);
+      // Handle EmailOctopus API v2 errors (RFC 7807 format)
+      const errorDetail = data.detail || data.title || "Failed to subscribe to waitlist";
+      console.error("EmailOctopus API v2 error:", data);
+      
       return res.status(response.status).json({
-        error: data.error?.message || "Failed to subscribe to waitlist",
+        error: errorDetail,
       });
     }
 
+    // Success - check if contact was created or updated
+    const isExisting = response.status === 200;
+    const message = isExisting 
+      ? "You're already on the waitlist! Your interest has been noted."
+      : "Successfully added to waitlist!";
+
     return res.status(200).json({
       success: true,
-      message: "Successfully added to waitlist!",
+      message: message,
     });
   } catch (error) {
     console.error("Error subscribing to EmailOctopus:", error);
