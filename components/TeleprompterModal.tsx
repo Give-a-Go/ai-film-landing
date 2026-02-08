@@ -324,7 +324,7 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
                   isDarkMode ? "text-gray-200" : "text-gray-700 light-mode"
                 }`}
                 style={{
-                  scrollBehavior: "smooth",
+                  WebkitOverflowScrolling: "touch",
                 }}
                 id="teleprompter-content"
               >
