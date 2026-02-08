@@ -1,7 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import React, { useState, useEffect, useRef } from "react";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useTransform,
+} from "framer-motion";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface TeleprompterModalProps {
   isOpen: boolean;
@@ -14,12 +19,13 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
   onClose,
   isDarkMode,
 }) => {
-  const [markdown, setMarkdown] = useState('');
+  const [markdown, setMarkdown] = useState("");
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true); // Auto-scroll playing by default
   const contentRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const lastUserScrollTimeRef = useRef<number>(Date.now());
+  const programmaticScrollGuardUntilRef = useRef<number>(0);
   const autoScrollIntervalRef = useRef<number | null>(null);
 
   // Constants
@@ -31,12 +37,14 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
   useEffect(() => {
     const loadContent = async () => {
       try {
-        const response = await fetch('/content/event-info.md');
+        const response = await fetch("/content/event-info.md");
         const text = await response.text();
         setMarkdown(text);
       } catch (error) {
-        console.error('Failed to load content:', error);
-        setMarkdown('# Content Coming Soon\n\nWe\'re preparing exciting details about the event. Check back soon!');
+        console.error("Failed to load content:", error);
+        setMarkdown(
+          "# Content Coming Soon\n\nWe're preparing exciting details about the event. Check back soon!",
+        );
       }
     };
 
@@ -62,8 +70,6 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
     if (!isOpen || !contentRef.current) return;
 
     const startAutoScroll = () => {
-      setIsAutoScrolling(true);
-
       const scroll = () => {
         if (!contentRef.current) return;
 
@@ -73,12 +79,10 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
         // Check if manually paused
         if (!isPlaying) {
           setIsAutoScrolling(false);
-          return;
-        }
-
-        // Check if user has scrolled recently
-        if (timeSinceLastScroll < USER_SCROLL_TIMEOUT) {
-          setIsAutoScrolling(false);
+          if (autoScrollIntervalRef.current) {
+            cancelAnimationFrame(autoScrollIntervalRef.current);
+            autoScrollIntervalRef.current = null;
+          }
           return;
         }
 
@@ -93,8 +97,18 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
           return;
         }
 
-        // Perform auto-scroll
-        contentRef.current.scrollTop += AUTO_SCROLL_SPEED;
+        // Only auto-scroll after user inactivity
+        const shouldAutoScroll = timeSinceLastScroll >= USER_SCROLL_TIMEOUT;
+        setIsAutoScrolling(shouldAutoScroll);
+
+        if (shouldAutoScroll) {
+          // Guard against our own programmatic scroll triggering `onScroll`
+          // and being interpreted as user interaction.
+          programmaticScrollGuardUntilRef.current = Date.now() + 80;
+          contentRef.current.scrollTop += AUTO_SCROLL_SPEED;
+        }
+
+        // Keep the loop alive so auto-scroll can resume
         autoScrollIntervalRef.current = requestAnimationFrame(scroll);
       };
 
@@ -112,34 +126,26 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
     };
   }, [isOpen, markdown, isPlaying]);
 
-  // Handle user scroll
-  const handleScroll = () => {
+  const markUserInteraction = () => {
     lastUserScrollTimeRef.current = Date.now();
     setIsAutoScrolling(false);
+  };
 
-    // Try to resume auto-scroll after timeout
-    setTimeout(() => {
-      const now = Date.now();
-      if (now - lastUserScrollTimeRef.current >= USER_SCROLL_TIMEOUT) {
-        if (contentRef.current) {
-          const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
-          if (scrollTop + clientHeight < scrollHeight - 10) {
-            setIsAutoScrolling(true);
-          }
-        }
-      }
-    }, USER_SCROLL_TIMEOUT);
+  // Handle scroll (includes programmatic scroll events)
+  const handleScroll = () => {
+    if (Date.now() < programmaticScrollGuardUntilRef.current) return;
+    markUserInteraction();
   };
 
   // Scroll progress tracking for progress bar
   // Use useMotionValue and manually update it to avoid the container ref hydration issue
   const scrollProgress = useMotionValue(0);
-  
+
   useEffect(() => {
     if (!isOpen || !contentRef.current) return;
-    
+
     const element = contentRef.current;
-    
+
     const updateScrollProgress = () => {
       if (!element) return;
       const { scrollTop, scrollHeight, clientHeight } = element;
@@ -147,19 +153,19 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
       const progress = maxScroll > 0 ? scrollTop / maxScroll : 0;
       scrollProgress.set(progress);
     };
-    
+
     // Initial calculation
     updateScrollProgress();
-    
+
     // Update on scroll
-    element.addEventListener('scroll', updateScrollProgress);
-    
+    element.addEventListener("scroll", updateScrollProgress);
+
     return () => {
-      element.removeEventListener('scroll', updateScrollProgress);
+      element.removeEventListener("scroll", updateScrollProgress);
     };
   }, [isOpen, scrollProgress]);
 
-  const progressWidth = useTransform(scrollProgress, [0, 1], ['0%', '100%']);
+  const progressWidth = useTransform(scrollProgress, [0, 1], ["0%", "100%"]);
 
   // Play/Pause handler
   const handlePlayPause = () => {
@@ -199,22 +205,22 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
       if (!isOpen) return;
 
       switch (e.key) {
-        case 'Escape':
+        case "Escape":
           onClose();
           break;
-        case ' ':
-        case 'k':
+        case " ":
+        case "k":
           e.preventDefault();
           handlePlayPause();
           break;
-        case 'ArrowUp':
+        case "ArrowUp":
           e.preventDefault();
           if (contentRef.current) {
             contentRef.current.scrollTop -= 100;
             lastUserScrollTimeRef.current = Date.now();
           }
           break;
-        case 'ArrowDown':
+        case "ArrowDown":
           e.preventDefault();
           if (contentRef.current) {
             contentRef.current.scrollTop += 100;
@@ -224,20 +230,20 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose, isPlaying]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
@@ -250,7 +256,7 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           className={`fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 md:p-8 backdrop-blur-sm md:backdrop-blur-md transition-colors duration-200 ${
-            isDarkMode ? 'bg-black/60' : 'bg-white/60'
+            isDarkMode ? "bg-black/60" : "bg-white/60"
           }`}
           role="dialog"
           aria-modal="true"
@@ -260,22 +266,22 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
             initial={{ opacity: 0, y: 20, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.98 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
             onClick={(e) => e.stopPropagation()}
             className={`relative w-full max-w-6xl xl:max-w-7xl max-h-[82vh] sm:max-h-[84vh] md:max-h-[86vh] rounded-3xl border overflow-hidden backdrop-blur-xl flex flex-col transition-colors duration-200 ${
               isDarkMode
-                ? 'bg-gray-950/90 border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.65)]'
-                : 'bg-white/90 border-black/10 shadow-[0_30px_80px_rgba(0,0,0,0.25)]'
+                ? "bg-gray-950/90 border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.65)]"
+                : "bg-white/90 border-black/10 shadow-[0_30px_80px_rgba(0,0,0,0.25)]"
             }`}
           >
             <div
               className={`flex items-center justify-between px-4 sm:px-6 md:px-8 py-4 sm:py-5 border-b ${
-                isDarkMode ? 'border-white/10' : 'border-black/10'
+                isDarkMode ? "border-white/10" : "border-black/10"
               }`}
             >
               <div
                 className={`text-xs sm:text-sm uppercase tracking-[0.28em] font-serif ${
-                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                  isDarkMode ? "text-gray-400" : "text-gray-500"
                 }`}
               >
                 Event info
@@ -285,13 +291,23 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
                 onClick={onClose}
                 className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 ${
                   isDarkMode
-                    ? 'bg-white/5 hover:bg-white/10 text-gray-200'
-                    : 'bg-black/5 hover:bg-black/10 text-gray-700'
+                    ? "bg-white/5 hover:bg-white/10 text-gray-200"
+                    : "bg-black/5 hover:bg-black/10 text-gray-700"
                 }`}
                 aria-label="Close event information (ESC)"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -300,11 +316,15 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
               <div
                 ref={contentRef}
                 onScroll={handleScroll}
+                onWheel={markUserInteraction}
+                onTouchStart={markUserInteraction}
+                onTouchMove={markUserInteraction}
+                onPointerDown={markUserInteraction}
                 className={`flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 md:px-8 lg:px-10 py-5 sm:py-7 md:py-8 ${
-                  isDarkMode ? 'text-gray-200' : 'text-gray-700 light-mode'
+                  isDarkMode ? "text-gray-200" : "text-gray-700 light-mode"
                 }`}
                 style={{
-                  scrollBehavior: 'smooth',
+                  scrollBehavior: "smooth",
                 }}
                 id="teleprompter-content"
               >
@@ -316,7 +336,7 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
                         <h1
                           id="teleprompter-title"
                           className={`text-2xl sm:text-3xl md:text-4xl font-serif font-semibold mb-5 sm:mb-7 text-center leading-tight ${
-                            isDarkMode ? 'text-white' : 'text-gray-900'
+                            isDarkMode ? "text-white" : "text-gray-900"
                           }`}
                         >
                           {children}
@@ -325,7 +345,7 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
                       h2: ({ children }) => (
                         <h2
                           className={`text-xl sm:text-2xl md:text-3xl font-serif font-semibold mb-3 sm:mb-5 mt-8 sm:mt-10 leading-snug ${
-                            isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                            isDarkMode ? "text-gray-100" : "text-gray-800"
                           }`}
                         >
                           {children}
@@ -334,7 +354,7 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
                       h3: ({ children }) => (
                         <h3
                           className={`text-lg sm:text-xl md:text-2xl font-serif font-medium mb-2 sm:mb-3 mt-6 sm:mt-8 leading-snug ${
-                            isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                            isDarkMode ? "text-gray-200" : "text-gray-700"
                           }`}
                         >
                           {children}
@@ -342,8 +362,8 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
                       ),
                       p: ({ children }) => (
                         <p
-                          className={`text-sm sm:text-base md:text-lg mb-3 sm:mb-4 leading-relaxed ${
-                            isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                          className={`text-xs sm:text-sm md:text-base mb-3 sm:mb-4 leading-relaxed ${
+                            isDarkMode ? "text-gray-200" : "text-gray-700"
                           }`}
                         >
                           {children}
@@ -351,8 +371,8 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
                       ),
                       ul: ({ children }) => (
                         <ul
-                          className={`list-disc pl-6 mb-3 space-y-2 text-sm sm:text-base md:text-lg leading-relaxed ${
-                            isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                          className={`list-disc pl-6 mb-3 space-y-2 text-xs sm:text-sm md:text-base leading-relaxed ${
+                            isDarkMode ? "text-gray-200" : "text-gray-700"
                           }`}
                         >
                           {children}
@@ -360,8 +380,8 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
                       ),
                       ol: ({ children }) => (
                         <ol
-                          className={`list-decimal pl-6 mb-3 space-y-2 text-sm sm:text-base md:text-lg leading-relaxed ${
-                            isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                          className={`list-decimal pl-6 mb-3 space-y-2 text-xs sm:text-sm md:text-base leading-relaxed ${
+                            isDarkMode ? "text-gray-200" : "text-gray-700"
                           }`}
                         >
                           {children}
@@ -380,8 +400,8 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
                           rel="noopener noreferrer"
                           className={`underline underline-offset-2 ${
                             isDarkMode
-                              ? 'text-purple-300 hover:text-purple-200'
-                              : 'text-purple-700 hover:text-purple-600'
+                              ? "text-purple-300 hover:text-purple-200"
+                              : "text-purple-700 hover:text-purple-600"
                           }`}
                         >
                           {children}
@@ -390,7 +410,7 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
                       hr: () => (
                         <hr
                           className={`my-8 border-t ${
-                            isDarkMode ? 'border-white/10' : 'border-black/10'
+                            isDarkMode ? "border-white/10" : "border-black/10"
                           }`}
                         />
                       ),
@@ -404,20 +424,20 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
               <div
                 className={`border-t px-4 sm:px-6 md:px-8 py-3 sm:py-4 ${
                   isDarkMode
-                    ? 'border-white/10 bg-white/5'
-                    : 'border-black/10 bg-black/5'
+                    ? "border-white/10 bg-white/5"
+                    : "border-black/10 bg-black/5"
                 }`}
               >
                 <div
                   className={`w-full h-1 rounded-full cursor-pointer ${
-                    isDarkMode ? 'bg-white/10' : 'bg-black/10'
+                    isDarkMode ? "bg-white/10" : "bg-black/10"
                   }`}
                   onClick={handleProgressBarClick}
                 >
                   <motion.div
                     style={{ width: progressWidth }}
                     className={`h-full rounded-full ${
-                      isDarkMode ? 'bg-purple-400' : 'bg-purple-600'
+                      isDarkMode ? "bg-purple-400" : "bg-purple-600"
                     }`}
                   />
                 </div>
@@ -427,18 +447,30 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
                     onClick={handlePlayPause}
                     className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 ${
                       isDarkMode
-                        ? 'bg-white/10 hover:bg-white/20 text-white'
-                        : 'bg-black/5 hover:bg-black/10 text-gray-700'
+                        ? "bg-white/10 hover:bg-white/20 text-white"
+                        : "bg-black/5 hover:bg-black/10 text-gray-700"
                     }`}
-                    aria-label={isPlaying ? "Pause auto-scroll (Space)" : "Play auto-scroll (Space)"}
+                    aria-label={
+                      isPlaying
+                        ? "Pause auto-scroll (Space)"
+                        : "Play auto-scroll (Space)"
+                    }
                     aria-pressed={isPlaying}
                   >
                     {isPlaying ? (
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className="w-4 h-4 sm:w-5 sm:h-5"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
                       </svg>
                     ) : (
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className="w-4 h-4 sm:w-5 sm:h-5 ml-0.5"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path d="M8 5v14l11-7z" />
                       </svg>
                     )}
@@ -446,10 +478,10 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
 
                   <div
                     className={`text-xs sm:text-sm ${
-                      isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                      isDarkMode ? "text-gray-400" : "text-gray-500"
                     }`}
                   >
-                    {isPlaying ? 'Auto-scroll on' : 'Auto-scroll paused'}
+                    {isPlaying ? "Auto-scroll on" : "Auto-scroll paused"}
                     <span className="hidden sm:inline"> · Space</span>
                   </div>
                 </div>
