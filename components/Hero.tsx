@@ -6,9 +6,15 @@ import TeleprompterModal from "./TeleprompterModal";
 
 interface HeroProps {
   isDarkMode: boolean;
+  waitlistOpen?: boolean;
+  onWaitlistOpenChange?: (open: boolean) => void;
 }
 
-const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
+const Hero: React.FC<HeroProps> = ({
+  isDarkMode,
+  waitlistOpen,
+  onWaitlistOpenChange,
+}) => {
   const [isTeleprompterOpen, setIsTeleprompterOpen] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -563,7 +569,11 @@ const Hero: React.FC<HeroProps> = ({ isDarkMode }) => {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
-            <WaitlistMorph isDarkMode={isDarkMode} />
+            <WaitlistMorph
+              isDarkMode={isDarkMode}
+              open={waitlistOpen}
+              onOpenChange={onWaitlistOpenChange}
+            />
             <a
               href="https://giveago.co/sponsor"
               className={`w-full sm:w-auto rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-1 ${isDarkMode ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-purple-600 text-white hover:bg-purple-700'}`}

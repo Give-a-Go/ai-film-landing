@@ -320,7 +320,7 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
                 onTouchStart={markUserInteraction}
                 onTouchMove={markUserInteraction}
                 onPointerDown={markUserInteraction}
-                className={`flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 md:px-8 lg:px-10 py-5 sm:py-7 md:py-8 ${
+                className={`flex-1 min-h-0 overflow-y-auto px-5 sm:px-6 md:px-8 lg:px-10 py-6 sm:py-7 md:py-8 ${
                   isDarkMode ? "text-gray-200" : "text-gray-700 light-mode"
                 }`}
                 style={{
@@ -335,7 +335,7 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
                       h1: ({ children }) => (
                         <h1
                           id="teleprompter-title"
-                          className={`text-2xl sm:text-3xl md:text-4xl font-serif font-semibold mb-5 sm:mb-7 text-center leading-tight ${
+                          className={`text-3xl sm:text-3xl md:text-4xl font-serif font-semibold mb-5 sm:mb-7 text-center leading-tight ${
                             isDarkMode ? "text-white" : "text-gray-900"
                           }`}
                         >
@@ -344,7 +344,7 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
                       ),
                       h2: ({ children }) => (
                         <h2
-                          className={`text-xl sm:text-2xl md:text-3xl font-serif font-semibold mb-3 sm:mb-5 mt-8 sm:mt-10 leading-snug ${
+                          className={`text-2xl sm:text-2xl md:text-3xl font-serif font-semibold mb-3 sm:mb-5 mt-8 sm:mt-10 leading-snug ${
                             isDarkMode ? "text-gray-100" : "text-gray-800"
                           }`}
                         >
@@ -353,7 +353,7 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
                       ),
                       h3: ({ children }) => (
                         <h3
-                          className={`text-lg sm:text-xl md:text-2xl font-serif font-medium mb-2 sm:mb-3 mt-6 sm:mt-8 leading-snug ${
+                          className={`text-xl sm:text-xl md:text-2xl font-serif font-medium mb-2 sm:mb-3 mt-6 sm:mt-8 leading-snug ${
                             isDarkMode ? "text-gray-200" : "text-gray-700"
                           }`}
                         >
@@ -362,7 +362,7 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
                       ),
                       p: ({ children }) => (
                         <p
-                          className={`text-xs sm:text-sm md:text-base mb-3 sm:mb-4 leading-relaxed ${
+                          className={`text-sm sm:text-sm md:text-base mb-3 sm:mb-4 leading-relaxed ${
                             isDarkMode ? "text-gray-200" : "text-gray-700"
                           }`}
                         >
@@ -371,7 +371,7 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
                       ),
                       ul: ({ children }) => (
                         <ul
-                          className={`list-disc pl-6 mb-3 space-y-2 text-xs sm:text-sm md:text-base leading-relaxed ${
+                          className={`list-disc pl-6 mb-3 space-y-2 text-sm sm:text-sm md:text-base leading-relaxed ${
                             isDarkMode ? "text-gray-200" : "text-gray-700"
                           }`}
                         >
@@ -380,7 +380,7 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
                       ),
                       ol: ({ children }) => (
                         <ol
-                          className={`list-decimal pl-6 mb-3 space-y-2 text-xs sm:text-sm md:text-base leading-relaxed ${
+                          className={`list-decimal pl-6 mb-3 space-y-2 text-sm sm:text-sm md:text-base leading-relaxed ${
                             isDarkMode ? "text-gray-200" : "text-gray-700"
                           }`}
                         >

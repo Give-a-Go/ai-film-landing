@@ -3,12 +3,29 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface WaitlistMorphProps {
   isDarkMode: boolean;
+  /** When provided, form open state is controlled from parent (e.g. nav "I'm interested") */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 type FormState = "idle" | "loading" | "success" | "error";
 
-const WaitlistMorph: React.FC<WaitlistMorphProps> = ({ isDarkMode }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const WaitlistMorph: React.FC<WaitlistMorphProps> = ({
+  isDarkMode,
+  open: controlledOpen,
+  onOpenChange,
+}) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const isOpen = isControlled ? controlledOpen : internalOpen;
+
+  const setIsOpen = (value: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(value);
+    } else {
+      setInternalOpen(value);
+    }
+  };
   const [email, setEmail] = useState("");
   const [formState, setFormState] = useState<FormState>("idle");
   const [errorMessage, setErrorMessage] = useState("");

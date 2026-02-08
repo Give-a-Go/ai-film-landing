@@ -5,6 +5,7 @@ import gsap from "gsap";
 
 const App: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [waitlistOpen, setWaitlistOpen] = useState(false);
 
   const toggleTheme = () => {
     setIsDarkMode((prev) => !prev);
@@ -22,20 +23,18 @@ const App: React.FC = () => {
     <div
       className={`min-h-screen transition-colors duration-700 ${isDarkMode ? "bg-[#050505] text-white selection:bg-purple-800 selection:text-purple-100" : "bg-white text-slate-900 selection:bg-purple-200 selection:text-purple-900"} overflow-hidden`}
     >
-      <Navigation isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+      <Navigation
+        isDarkMode={isDarkMode}
+        toggleTheme={toggleTheme}
+        onOpenWaitlist={() => setWaitlistOpen(true)}
+      />
       <main>
-        <Hero isDarkMode={isDarkMode} />
+        <Hero
+          isDarkMode={isDarkMode}
+          waitlistOpen={waitlistOpen}
+          onWaitlistOpenChange={setWaitlistOpen}
+        />
       </main>
-
-      {/* Footer fixed at bottom right or hidden for infinite feel */}
-      <footer
-        className={`fixed bottom-4 right-6 text-[10px] pointer-events-none z-50 transition-colors duration-500 ${isDarkMode ? "text-white/30" : "text-black/30"}`}
-      >
-        <p>
-          &copy; {new Date().getFullYear()} Give(a)Go. AI Film Making Hackathon
-          v2.
-        </p>
-      </footer>
     </div>
   );
 };
