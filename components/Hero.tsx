@@ -30,9 +30,11 @@ const Hero: React.FC<HeroProps> = ({
   const autoScrollSpeedRef = useRef(0.1); // Slow auto-scroll speed
   const isUserScrollingRef = useRef(false);
   const lastUserScrollTimeRef = useRef(0);
-  
+
   // Texture cache for performance - load each texture only once
-  const textureLoaderRef = useRef<THREE.TextureLoader>(new THREE.TextureLoader());
+  const textureLoaderRef = useRef<THREE.TextureLoader>(
+    new THREE.TextureLoader(),
+  );
   const textureCacheRef = useRef<Map<string, THREE.Texture>>(new Map());
 
   // --- CONFIGURATION ---
@@ -178,13 +180,16 @@ const Hero: React.FC<HeroProps> = ({
         opacity: 0,
         side: THREE.DoubleSide,
       });
-      
+
       // Helper function to create mesh with proper aspect ratio
       const createMeshWithTexture = (tex: THREE.Texture) => {
         // Ensure image is loaded and has dimensions
         if (!tex.image || !tex.image.width || !tex.image.height) {
           // Fallback to cell dimensions if image not ready
-          const geom = new THREE.PlaneGeometry(wd - cellMargin, ht - cellMargin);
+          const geom = new THREE.PlaneGeometry(
+            wd - cellMargin,
+            ht - cellMargin,
+          );
           const m = new THREE.Mesh(geom, mat);
           m.position.copy(pos);
           m.rotation.copy(rot);
@@ -192,15 +197,15 @@ const Hero: React.FC<HeroProps> = ({
           group.add(m);
           return;
         }
-        
+
         // Get texture aspect ratio
         const texAspect = tex.image.width / tex.image.height;
         const cellAspect = wd / ht;
-        
+
         // Calculate dimensions that maintain image aspect ratio while fitting in cell
         let finalWidth = wd - cellMargin;
         let finalHeight = ht - cellMargin;
-        
+
         if (texAspect > cellAspect) {
           // Image is wider than cell - fit to width
           finalHeight = finalWidth / texAspect;
@@ -208,7 +213,7 @@ const Hero: React.FC<HeroProps> = ({
           // Image is taller than cell - fit to height
           finalWidth = finalHeight * texAspect;
         }
-        
+
         const geom = new THREE.PlaneGeometry(finalWidth, finalHeight);
         const m = new THREE.Mesh(geom, mat);
         m.position.copy(pos);
@@ -216,7 +221,7 @@ const Hero: React.FC<HeroProps> = ({
         m.name = "slab_image";
         group.add(m);
       };
-      
+
       // Check cache first, then load if not cached
       const cachedTexture = textureCacheRef.current.get(url);
       if (cachedTexture) {
@@ -233,10 +238,10 @@ const Hero: React.FC<HeroProps> = ({
           tex.magFilter = THREE.LinearFilter;
           tex.generateMipmaps = false; // Skip mipmaps for better performance
           tex.encoding = THREE.sRGBEncoding;
-          
+
           // Cache the texture for reuse
           textureCacheRef.current.set(url, tex);
-          
+
           mat.map = tex;
           mat.needsUpdate = true;
           createMeshWithTexture(tex);
@@ -368,7 +373,7 @@ const Hero: React.FC<HeroProps> = ({
       // Auto-scroll: slowly increment scroll position when user is not actively scrolling
       const now = Date.now();
       const timeSinceLastScroll = now - lastUserScrollTimeRef.current;
-      
+
       // If user hasn't scrolled in the last 100ms, enable auto-scroll
       if (timeSinceLastScroll > 100 && !isUserScrollingRef.current) {
         scrollPosRef.current += autoScrollSpeedRef.current;
@@ -447,7 +452,7 @@ const Hero: React.FC<HeroProps> = ({
       isUserScrollingRef.current = true;
       lastUserScrollTimeRef.current = Date.now();
       scrollPosRef.current = window.scrollY;
-      
+
       // Reset user scrolling flag after scroll ends
       clearTimeout((window as any).scrollTimeout);
       (window as any).scrollTimeout = setTimeout(() => {
@@ -473,7 +478,7 @@ const Hero: React.FC<HeroProps> = ({
         clearTimeout((window as any).scrollTimeout);
       }
       renderer.dispose();
-      
+
       // Clean up texture cache
       textureCacheRef.current.forEach((texture) => {
         texture.dispose();
@@ -562,12 +567,6 @@ const Hero: React.FC<HeroProps> = ({
             </span>
           </h1>
 
-          <p
-            className={`text-lg md:text-xl font-normal mb-8 transition-colors duration-500 ${isDarkMode ? "text-gray-400" : "text-muted"}`}
-          >
-            Dublin &nbsp;•&nbsp; Late March
-          </p>
-
           <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
             <WaitlistMorph
               isDarkMode={isDarkMode}
@@ -576,7 +575,7 @@ const Hero: React.FC<HeroProps> = ({
             />
             <a
               href="https://giveago.co/sponsor"
-              className={`w-full sm:w-auto rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-1 ${isDarkMode ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-purple-600 text-white hover:bg-purple-700'}`}
+              className={`w-full sm:w-auto rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-1 ${isDarkMode ? "bg-purple-600 text-white hover:bg-purple-700" : "bg-purple-600 text-white hover:bg-purple-700"}`}
             >
               Sponsor <span>→</span>
             </a>
@@ -585,7 +584,7 @@ const Hero: React.FC<HeroProps> = ({
           <button
             onClick={() => setIsTeleprompterOpen(true)}
             className={`mt-4 text-sm font-medium underline underline-offset-4 hover:opacity-70 transition-opacity duration-300 ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              isDarkMode ? "text-gray-400" : "text-gray-600"
             }`}
           >
             More about the event

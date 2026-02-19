@@ -1,6 +1,5 @@
 # AI Filmmaking Hackathon
 
-*Dublin · Late March / Early April*
 
 A two-day cinematic experiment at the intersection of film, AI, and creative technology.
 
