@@ -29,7 +29,7 @@ const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
   const autoScrollIntervalRef = useRef<number | null>(null);
 
   // Constants
-  const AUTO_SCROLL_SPEED = 0.5; // pixels per frame
+  const AUTO_SCROLL_SPEED = 0.25; // pixels per frame (half of previous 0.5)
   const AUTO_SCROLL_DELAY = 2000; // 2 seconds before starting
   const USER_SCROLL_TIMEOUT = 2000; // Resume after 2 seconds of no interaction
 
