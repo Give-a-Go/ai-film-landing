@@ -27,7 +27,7 @@ const Hero: React.FC<HeroProps> = ({
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const segmentsRef = useRef<THREE.Group[]>([]);
   const scrollPosRef = useRef(0);
-  const autoScrollSpeedRef = useRef(0.1); // Slow auto-scroll speed
+  const autoScrollSpeedRef = useRef(0.5); // Auto-scroll speed
   const isUserScrollingRef = useRef(false);
   const lastUserScrollTimeRef = useRef(0);
 
@@ -36,6 +36,12 @@ const Hero: React.FC<HeroProps> = ({
     new THREE.TextureLoader(),
   );
   const textureCacheRef = useRef<Map<string, THREE.Texture>>(new Map());
+
+  // Video elements cache for reuse
+  const videoElementsRef = useRef<Map<string, HTMLVideoElement>>(new Map());
+
+  // Track recently used video URLs across segments to avoid close repetition
+  const recentVideoUrlsRef = useRef<string[]>([]);
 
   // --- CONFIGURATION ---
   // Tuned to match the reference design's density and scale
@@ -52,6 +58,17 @@ const Hero: React.FC<HeroProps> = ({
   // Derived dimensions
   const COL_WIDTH = TUNNEL_WIDTH / FLOOR_COLS;
   const ROW_HEIGHT = TUNNEL_HEIGHT / WALL_ROWS;
+
+  // Cloudinary videos from collection be38947943f4608449e53793e421b109
+  const videoUrls = [
+    "https://res.cloudinary.com/dwgjwc96q/video/upload/v1769368553/PXL_20250329_140459146_kqw0rn.mp4",
+    "https://res.cloudinary.com/dwgjwc96q/video/upload/v1769368527/PXL_20250816_110111789_1_jcfgsa.mp4",
+    "https://res.cloudinary.com/dwgjwc96q/video/upload/v1769368537/PXL_20250816_111902752_1_wsjey1.mp4",
+    "https://res.cloudinary.com/dwgjwc96q/video/upload/v1769368545/PXL_20250816_114424016_vuzphm.mp4",
+    "https://res.cloudinary.com/dwgjwc96q/video/upload/v1769368536/PXL_20250816_120022662_bijv8t.mp4",
+    "https://res.cloudinary.com/dwgjwc96q/video/upload/v1769368532/PXL_20250816_162740267_1_fa3uxb.mp4",
+    "https://res.cloudinary.com/dwgjwc96q/video/upload/v1769368550/PXL_20251025_115448039_jgyjr1.mp4",
+  ];
 
   // Optimized local images from public/images-optimized folder
   const imageUrls = [
@@ -100,7 +117,7 @@ const Hero: React.FC<HeroProps> = ({
   ];
 
   // Helper: Create a segment with grid lines and filled cells
-  const createSegment = (zPos: number) => {
+  const createSegment = (zPos: number, fadeDelay = 0) => {
     const group = new THREE.Group();
     group.position.z = zPos;
 
@@ -154,19 +171,169 @@ const Hero: React.FC<HeroProps> = ({
     group.add(lines);
 
     // Initial population of images
-    populateImages(group, w, h, d);
+    populateImages(group, w, h, d, fadeDelay);
 
     return group;
   };
 
-  // Helper: Populate images in a segment with texture caching and optimization
+  // Pick `count` evenly-spaced random slot indices from `total` slots
+  const pickSlots = (count: number, total: number): Set<number> => {
+    const result = new Set<number>();
+    if (count <= 0 || total <= 0) return result;
+    const clamped = Math.min(count, total);
+    // Divide slots into equal buckets and pick one random index per bucket
+    const bucketSize = total / clamped;
+    for (let b = 0; b < clamped; b++) {
+      const start = Math.floor(b * bucketSize);
+      const end = Math.floor((b + 1) * bucketSize);
+      result.add(start + Math.floor(Math.random() * (end - start)));
+    }
+    return result;
+  };
+
+  // Helper: Populate images and videos in a segment with caching and optimization
   const populateImages = (
     group: THREE.Group,
     w: number,
     h: number,
     d: number,
+    fadeDelay = 0,
   ) => {
     const cellMargin = 0.4;
+
+    // Track used URLs in this segment to prevent duplicates
+    const usedUrls = new Set<string>();
+
+    // Create shuffled arrays for variety
+    const shuffledVideos = [...videoUrls].sort(() => Math.random() - 0.5);
+    const shuffledImages = [...imageUrls].sort(() => Math.random() - 0.5);
+    let videoIndex = 0;
+    let imageIndex = 0;
+
+    // Helper to add a video element
+    const addVideo = (
+      pos: THREE.Vector3,
+      rot: THREE.Euler,
+      wd: number,
+      ht: number,
+    ) => {
+      // Pick a video URL that hasn't been used in this segment AND isn't in the
+      // global recent list (to avoid the same video appearing in nearby tiles).
+      const recentGlobal = recentVideoUrlsRef.current;
+      let url = '';
+
+      // First pass: avoid both segment-level and global-recent duplicates
+      for (let i = 0; i < shuffledVideos.length; i++) {
+        const candidate = shuffledVideos[(videoIndex + i) % shuffledVideos.length];
+        if (!usedUrls.has(candidate) && !recentGlobal.includes(candidate)) {
+          url = candidate;
+          videoIndex += i + 1;
+          break;
+        }
+      }
+
+      // Second pass: relax global constraint if no fresh URL found
+      if (!url) {
+        for (let i = 0; i < shuffledVideos.length; i++) {
+          const candidate = shuffledVideos[(videoIndex + i) % shuffledVideos.length];
+          if (!usedUrls.has(candidate)) {
+            url = candidate;
+            videoIndex += i + 1;
+            break;
+          }
+        }
+      }
+
+      // Fallback
+      if (!url) {
+        url = shuffledVideos[videoIndex % shuffledVideos.length];
+        videoIndex++;
+      }
+
+      usedUrls.add(url);
+
+      // Update global recent list (keep last N = total unique videos to ensure full rotation)
+      recentVideoUrlsRef.current = [...recentGlobal, url].slice(-videoUrls.length);
+
+      // Create or reuse video element
+      let video = videoElementsRef.current.get(url);
+
+      if (!video) {
+        video = document.createElement('video');
+        video.src = url;
+        video.crossOrigin = 'anonymous';
+        video.loop = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.autoplay = false;
+
+        videoElementsRef.current.set(url, video);
+      }
+
+      const playVideo = () => {
+        if (video.readyState >= 2) {
+          // Video is already loaded — ensure it's playing (may have been paused)
+          if (video.paused) {
+            video.play().catch(() => {});
+          }
+        } else {
+          video.addEventListener('loadedmetadata', () => {
+            const randomStart = Math.random() * (video.duration || 0);
+            video.currentTime = randomStart;
+            video.play().catch(() => {});
+          }, { once: true });
+          video.load();
+        }
+      };
+
+      // Small staggered delay so not all videos start simultaneously
+      const playDelay = Math.random() * 1000;
+      setTimeout(playVideo, playDelay);
+
+      // Create video texture
+      const videoTexture = new THREE.VideoTexture(video);
+      videoTexture.minFilter = THREE.LinearFilter;
+      videoTexture.magFilter = THREE.LinearFilter;
+      videoTexture.encoding = THREE.sRGBEncoding;
+
+      // Calculate "cover" UV mapping - fill entire cell and crop overflow
+      // Portrait videos (9:16) need to fill landscape/square cells
+      const videoAspect = video.videoWidth && video.videoHeight
+        ? video.videoWidth / video.videoHeight
+        : 9 / 16;
+      const cellAspect = (wd - cellMargin) / (ht - cellMargin);
+
+      if (videoAspect < cellAspect) {
+        // Video is narrower than cell - scale to fill width, crop top/bottom
+        const scale = cellAspect / videoAspect;
+        videoTexture.repeat.set(1, 1 / scale);
+        videoTexture.offset.set(0, (1 - 1 / scale) / 2);
+      } else {
+        // Video is wider than cell - scale to fill height, crop sides
+        const scale = videoAspect / cellAspect;
+        videoTexture.repeat.set(1 / scale, 1);
+        videoTexture.offset.set((1 - 1 / scale) / 2, 0);
+      }
+
+      const mat = new THREE.MeshBasicMaterial({
+        map: videoTexture,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+      });
+
+      // Use full cell dimensions for cover effect
+      const geom = new THREE.PlaneGeometry(wd - cellMargin, ht - cellMargin);
+      const mesh = new THREE.Mesh(geom, mat);
+      mesh.position.copy(pos);
+      mesh.rotation.copy(rot);
+      mesh.name = "slab_video";
+      mesh.userData.video = video; // Store reference for cleanup
+      group.add(mesh);
+
+      // Fade in animation
+      gsap.to(mat, { opacity: 0.85, duration: 1, delay: fadeDelay });
+    };
 
     const addImg = (
       pos: THREE.Vector3,
@@ -174,7 +341,38 @@ const Hero: React.FC<HeroProps> = ({
       wd: number,
       ht: number,
     ) => {
-      const url = imageUrls[Math.floor(Math.random() * imageUrls.length)];
+      // Randomly choose between video and image if videos are available
+      const hasVideos = videoUrls.length > 0;
+      const useVideo = hasVideos && Math.random() > 0.5; // 50% chance for video
+
+      if (useVideo) {
+        addVideo(pos, rot, wd, ht);
+        return;
+      }
+
+      // Find next unique image URL that hasn't been used in this segment
+      let url = '';
+      let attempts = 0;
+      const maxAttempts = shuffledImages.length;
+
+      while (attempts < maxAttempts) {
+        const candidateUrl = shuffledImages[imageIndex % shuffledImages.length];
+        imageIndex++;
+
+        if (!usedUrls.has(candidateUrl)) {
+          url = candidateUrl;
+          break;
+        }
+        attempts++;
+      }
+
+      // If all images are used, just pick the next one (segment has more tiles than unique images)
+      if (!url) {
+        url = shuffledImages[imageIndex % shuffledImages.length];
+        imageIndex++;
+      }
+
+      usedUrls.add(url);
       const mat = new THREE.MeshBasicMaterial({
         transparent: true,
         opacity: 0,
@@ -229,93 +427,81 @@ const Hero: React.FC<HeroProps> = ({
         mat.map = cachedTexture;
         mat.needsUpdate = true;
         createMeshWithTexture(cachedTexture);
-        gsap.to(mat, { opacity: 0.85, duration: 0.5 });
+        gsap.to(mat, { opacity: 0.85, duration: 0.5, delay: fadeDelay });
       } else {
         // Load texture and cache it
         textureLoaderRef.current.load(url, (tex) => {
-          // Optimize texture settings for performance
           tex.minFilter = THREE.LinearFilter;
           tex.magFilter = THREE.LinearFilter;
-          tex.generateMipmaps = false; // Skip mipmaps for better performance
+          tex.generateMipmaps = false;
           tex.encoding = THREE.sRGBEncoding;
 
-          // Cache the texture for reuse
           textureCacheRef.current.set(url, tex);
 
           mat.map = tex;
           mat.needsUpdate = true;
           createMeshWithTexture(tex);
-          gsap.to(mat, { opacity: 0.85, duration: 1 });
+          gsap.to(mat, { opacity: 0.85, duration: 1, delay: fadeDelay });
         });
       }
     };
 
-    // Logic: Iterate slots, but skip if the previous slot was filled.
-    // Threshold adjusted to 0.80 (20%) to compensate for skipped slots and maintain density.
+    // Pick exactly N evenly-spaced slots per surface for consistent, non-clumpy density
+    const isMobile = window.innerWidth < 768;
+    const floorCount   = isMobile ? 2 : 2; // out of FLOOR_COLS (6)
+    const ceilingCount = isMobile ? 1 : 1; // out of FLOOR_COLS (6)
+    const wallCount    = isMobile ? 1 : 1; // out of WALL_ROWS (4) per wall
+
+    const floorSlots      = pickSlots(floorCount, FLOOR_COLS);
+    const ceilingSlots    = pickSlots(ceilingCount, FLOOR_COLS);
+    const leftWallSlots   = pickSlots(wallCount, WALL_ROWS);
+    const rightWallSlots  = pickSlots(wallCount, WALL_ROWS);
 
     // Floor
-    let lastFloorIdx = -999;
     for (let i = 0; i < FLOOR_COLS; i++) {
-      // Must be at least 2 slots away from last image to avoid adjacency (i > last + 1)
-      if (i > lastFloorIdx + 1) {
-        if (Math.random() > 0.8) {
-          addImg(
-            new THREE.Vector3(-w + i * COL_WIDTH + COL_WIDTH / 2, -h, -d / 2),
-            new THREE.Euler(-Math.PI / 2, 0, 0),
-            COL_WIDTH,
-            d,
-          );
-          lastFloorIdx = i;
-        }
+      if (floorSlots.has(i)) {
+        addImg(
+          new THREE.Vector3(-w + i * COL_WIDTH + COL_WIDTH / 2, -h, -d / 2),
+          new THREE.Euler(-Math.PI / 2, 0, 0),
+          COL_WIDTH,
+          d,
+        );
       }
     }
 
     // Ceiling
-    let lastCeilIdx = -999;
     for (let i = 0; i < FLOOR_COLS; i++) {
-      if (i > lastCeilIdx + 1) {
-        if (Math.random() > 0.88) {
-          // Keep ceiling sparser
-          addImg(
-            new THREE.Vector3(-w + i * COL_WIDTH + COL_WIDTH / 2, h, -d / 2),
-            new THREE.Euler(Math.PI / 2, 0, 0),
-            COL_WIDTH,
-            d,
-          );
-          lastCeilIdx = i;
-        }
+      if (ceilingSlots.has(i)) {
+        addImg(
+          new THREE.Vector3(-w + i * COL_WIDTH + COL_WIDTH / 2, h, -d / 2),
+          new THREE.Euler(Math.PI / 2, 0, 0),
+          COL_WIDTH,
+          d,
+        );
       }
     }
 
     // Left Wall
-    let lastLeftIdx = -999;
     for (let i = 0; i < WALL_ROWS; i++) {
-      if (i > lastLeftIdx + 1) {
-        if (Math.random() > 0.8) {
-          addImg(
-            new THREE.Vector3(-w, -h + i * ROW_HEIGHT + ROW_HEIGHT / 2, -d / 2),
-            new THREE.Euler(0, Math.PI / 2, 0),
-            d,
-            ROW_HEIGHT,
-          );
-          lastLeftIdx = i;
-        }
+      if (leftWallSlots.has(i)) {
+        addImg(
+          new THREE.Vector3(-w, -h + i * ROW_HEIGHT + ROW_HEIGHT / 2, -d / 2),
+          new THREE.Euler(0, Math.PI / 2, 0),
+          d,
+          ROW_HEIGHT,
+        );
       }
     }
 
     // Right Wall
-    let lastRightIdx = -999;
     for (let i = 0; i < WALL_ROWS; i++) {
-      if (i > lastRightIdx + 1) {
-        if (Math.random() > 0.8) {
-          addImg(
-            new THREE.Vector3(w, -h + i * ROW_HEIGHT + ROW_HEIGHT / 2, -d / 2),
-            new THREE.Euler(0, -Math.PI / 2, 0),
-            d,
-            ROW_HEIGHT,
-          );
-          lastRightIdx = i;
-        }
+      if (rightWallSlots.has(i)) {
+        addImg(
+          new THREE.Vector3(w, -h + i * ROW_HEIGHT + ROW_HEIGHT / 2, -d / 2),
+          new THREE.Euler(0, -Math.PI / 2, 0),
+          d,
+          ROW_HEIGHT,
+        );
       }
     }
   };
@@ -353,11 +539,12 @@ const Hero: React.FC<HeroProps> = ({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     rendererRef.current = renderer;
 
-    // Generate segments
+    // Generate segments — stagger fade-in so tiles don't all appear at once
     const segments: THREE.Group[] = [];
     for (let i = 0; i < NUM_SEGMENTS; i++) {
       const z = -i * SEGMENT_DEPTH;
-      const segment = createSegment(z);
+      const fadeDelay = i * 0.35; // Each segment's tiles appear 350ms after the previous
+      const segment = createSegment(z, fadeDelay);
       scene.add(segment);
       segments.push(segment);
     }
@@ -400,11 +587,13 @@ const Hero: React.FC<HeroProps> = ({
           // Re-populate
           const toRemove: THREE.Object3D[] = [];
           segment.traverse((c) => {
-            if (c.name === "slab_image") toRemove.push(c);
+            if (c.name === "slab_image" || c.name === "slab_video") toRemove.push(c);
           });
           toRemove.forEach((c) => {
             segment.remove(c);
             if (c instanceof THREE.Mesh) {
+              // For videos: dispose only the VideoTexture, NOT the underlying video
+              // element (it's cached in videoElementsRef and should keep looping)
               c.geometry.dispose();
               if (c.material.map) c.material.map.dispose();
               c.material.dispose();
@@ -427,11 +616,13 @@ const Hero: React.FC<HeroProps> = ({
           // Re-populate
           const toRemove: THREE.Object3D[] = [];
           segment.traverse((c) => {
-            if (c.name === "slab_image") toRemove.push(c);
+            if (c.name === "slab_image" || c.name === "slab_video") toRemove.push(c);
           });
           toRemove.forEach((c) => {
             segment.remove(c);
             if (c instanceof THREE.Mesh) {
+              // For videos: dispose only the VideoTexture, NOT the underlying video
+              // element (it's cached in videoElementsRef and should keep looping)
               c.geometry.dispose();
               if (c.material.map) c.material.map.dispose();
               c.material.dispose();
@@ -484,6 +675,14 @@ const Hero: React.FC<HeroProps> = ({
         texture.dispose();
       });
       textureCacheRef.current.clear();
+
+      // Clean up video elements
+      videoElementsRef.current.forEach((video) => {
+        video.pause();
+        video.src = '';
+        video.load();
+      });
+      videoElementsRef.current.clear();
     };
   }, []); // Run once on mount
 
