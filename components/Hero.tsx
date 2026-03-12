@@ -5,13 +5,11 @@ import WaitlistMorph from "./WaitlistMorph";
 import TeleprompterModal from "./TeleprompterModal";
 
 interface HeroProps {
-  isDarkMode: boolean;
   waitlistOpen?: boolean;
   onWaitlistOpenChange?: (open: boolean) => void;
 }
 
 const Hero: React.FC<HeroProps> = ({
-  isDarkMode,
   waitlistOpen,
   onWaitlistOpenChange,
 }) => {
@@ -20,6 +18,7 @@ const Hero: React.FC<HeroProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const textOverlayRef = useRef<HTMLDivElement>(null);
 
   // Store refs for cleanup and animation
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -42,6 +41,11 @@ const Hero: React.FC<HeroProps> = ({
 
   // Track recently used video URLs across segments to avoid close repetition
   const recentVideoUrlsRef = useRef<string[]>([]);
+
+  // Grid line materials for fading during fade-to-black transition
+  const lineMaterialsRef = useRef<THREE.LineBasicMaterial[]>([]);
+  // HTML overlay div for uniform cinema-style fade to black over the canvas
+  const fadeOverlayRef = useRef<HTMLDivElement>(null);
 
   // --- CONFIGURATION ---
   // Tuned to match the reference design's density and scale
@@ -510,9 +514,15 @@ const Hero: React.FC<HeroProps> = ({
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current) return;
 
+    // Prevent browser scroll-restoration from triggering blackout on refresh
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
+
     // THREE JS SETUP
     const scene = new THREE.Scene();
     sceneRef.current = scene;
+    scene.background = new THREE.Color(0xffffff);
+    scene.fog = new THREE.FogExp2(0xffffff, FOG_DENSITY);
 
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -550,6 +560,16 @@ const Hero: React.FC<HeroProps> = ({
     }
     segmentsRef.current = segments;
 
+    // Collect grid line materials for animation loop
+    lineMaterialsRef.current = [];
+    segments.forEach(segment => {
+      segment.traverse(child => {
+        if (child instanceof THREE.LineSegments) {
+          lineMaterialsRef.current.push(child.material as THREE.LineBasicMaterial);
+        }
+      });
+    });
+
     // Animation Loop
     let frameId: number;
     const animate = () => {
@@ -557,16 +577,20 @@ const Hero: React.FC<HeroProps> = ({
       if (!cameraRef.current || !sceneRef.current || !rendererRef.current)
         return;
 
-      // Auto-scroll: slowly increment scroll position when user is not actively scrolling
+      const vh = window.innerHeight;
+      const scrollY = window.scrollY;
+
+      // Auto-scroll: keep original infinite fly behaviour
       const now = Date.now();
       const timeSinceLastScroll = now - lastUserScrollTimeRef.current;
 
-      // If user hasn't scrolled in the last 100ms, enable auto-scroll
       if (timeSinceLastScroll > 100 && !isUserScrollingRef.current) {
         scrollPosRef.current += autoScrollSpeedRef.current;
       }
 
-      const targetZ = -scrollPosRef.current * 0.05;
+      // Camera target combines auto-scroll offset + page scroll so user scroll
+      // never causes a backward jump when auto-scroll has been running
+      const targetZ = -(scrollPosRef.current + scrollY) * 0.05;
       const currentZ = cameraRef.current.position.z;
       cameraRef.current.position.z += (targetZ - currentZ) * 0.1;
 
@@ -635,6 +659,39 @@ const Hero: React.FC<HeroProps> = ({
         }
       });
 
+      // Fade starts after 2.5 screen-heights of scroll, completes at 3.5
+      // This gives the tunnel plenty of flight time before darkening begins
+      const FADE_START = 2.5 * vh;
+      const FADE_END   = 3.5 * vh;
+
+      const fp = Math.max(0, Math.min(1, (scrollY - FADE_START) / (FADE_END - FADE_START)));
+      const eased = fp < 0.005 ? 0 : fp * fp * (3 - 2 * fp);
+
+      // Fade grid lines as scene darkens
+      if (lineMaterialsRef.current.length > 0) {
+        lineMaterialsRef.current.forEach(mat => {
+          mat.opacity = 0.5 * (1 - eased);
+          mat.needsUpdate = true;
+        });
+      }
+
+      // Scene background + fog shift toward black (makes distant tunnel naturally dark)
+      if (sceneRef.current) {
+        const bg = 1 - eased;
+        (sceneRef.current.background as THREE.Color).setRGB(bg, bg, bg);
+        (sceneRef.current.fog as THREE.FogExp2).color.setRGB(bg, bg, bg);
+      }
+
+      // HTML overlay fades to black uniformly over the entire canvas — no per-tile slabs
+      if (fadeOverlayRef.current) {
+        fadeOverlayRef.current.style.opacity = String(eased);
+      }
+
+      // Text fades out in the first half of the transition
+      if (textOverlayRef.current) {
+        textOverlayRef.current.style.opacity = String(Math.max(0, 1 - eased * 2));
+      }
+
       rendererRef.current.render(sceneRef.current, cameraRef.current);
     };
     animate();
@@ -642,7 +699,8 @@ const Hero: React.FC<HeroProps> = ({
     const onScroll = () => {
       isUserScrollingRef.current = true;
       lastUserScrollTimeRef.current = Date.now();
-      scrollPosRef.current = window.scrollY;
+      // Don't override scrollPosRef here — auto-scroll accumulates separately,
+      // and window.scrollY is added directly in the camera target above.
 
       // Reset user scrolling flag after scroll ends
       clearTimeout((window as any).scrollTimeout);
@@ -686,37 +744,6 @@ const Hero: React.FC<HeroProps> = ({
     };
   }, []); // Run once on mount
 
-  // --- THEME UPDATE EFFECT ---
-  useEffect(() => {
-    if (!sceneRef.current) return;
-
-    // Define theme colors
-    const bgHex = isDarkMode ? 0x050505 : 0xffffff;
-    const fogHex = isDarkMode ? 0x050505 : 0xffffff;
-
-    // Purple accent for grid lines (matching purple theme)
-    const lineHex = isDarkMode ? 0x9333ea : 0x7c3aed; // Purple-600 and Purple-700
-    const lineOp = isDarkMode ? 0.4 : 0.5;
-
-    // Apply to scene
-    sceneRef.current.background = new THREE.Color(bgHex);
-    if (sceneRef.current.fog) {
-      (sceneRef.current.fog as THREE.FogExp2).color.setHex(fogHex);
-    }
-
-    // Apply to existing grid lines
-    segmentsRef.current.forEach((segment) => {
-      segment.children.forEach((child) => {
-        if (child instanceof THREE.LineSegments) {
-          const mat = child.material as THREE.LineBasicMaterial;
-          mat.color.setHex(lineHex);
-          mat.opacity = lineOp;
-          mat.needsUpdate = true;
-        }
-      });
-    });
-  }, [isDarkMode]);
-
   // Text Entrance Animation
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -737,25 +764,34 @@ const Hero: React.FC<HeroProps> = ({
   }, []);
 
   return (
+    <>
     <div
       ref={containerRef}
-      className={`relative w-full h-[10000vh] transition-colors duration-700 ${isDarkMode ? "bg-[#050505]" : "bg-white"}`}
+      className="relative w-full h-[450vh] bg-black"
     >
-      <div
-        className={`fixed inset-0 w-full h-full overflow-hidden z-0 transition-[filter,transform] duration-300 ease-out ${
-          isTeleprompterOpen ? "blur-sm scale-[1.01]" : "blur-0 scale-100"
-        }`}
-      >
-        <canvas ref={canvasRef} className="w-full h-full block" />
-      </div>
-
-      <div className="fixed inset-0 z-10 flex items-center justify-center pointer-events-none">
+      <div className="sticky top-0 h-screen w-full overflow-hidden">
         <div
-          ref={contentRef}
-          className="text-center flex flex-col items-center max-w-4xl px-6 pointer-events-auto mix-blend-multiply-normal"
+          className={`absolute inset-0 w-full h-full overflow-hidden z-0 transition-[filter,transform] duration-300 ease-out ${
+            isTeleprompterOpen ? "blur-sm scale-[1.01]" : "blur-0 scale-100"
+          }`}
         >
+          <canvas ref={canvasRef} className="w-full h-full block" />
+        </div>
+
+        {/* Cinema-style fade-to-black overlay — covers the entire canvas uniformly */}
+        <div
+          ref={fadeOverlayRef}
+          className="absolute inset-0 bg-black pointer-events-none"
+          style={{ opacity: 0, zIndex: 5 }}
+        />
+
+        <div ref={textOverlayRef} className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+          <div
+            ref={contentRef}
+            className="text-center flex flex-col items-center max-w-4xl px-6 pointer-events-auto mix-blend-multiply-normal"
+          >
           <h1
-            className={`text-[2.5rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] leading-[0.95] font-serif tracking-tight mb-4 transition-colors duration-500 ${isDarkMode ? "text-white" : "text-dark"}`}
+            className="text-[2.5rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] leading-[0.95] font-serif tracking-tight mb-4 text-dark"
           >
             <span className="block font-bold">AI Film Making</span>
             <span className="block italic font-light">
@@ -768,13 +804,12 @@ const Hero: React.FC<HeroProps> = ({
 
           <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
             <WaitlistMorph
-              isDarkMode={isDarkMode}
               open={waitlistOpen}
               onOpenChange={onWaitlistOpenChange}
             />
             <a
               href="https://giveago.co/sponsor"
-              className={`w-full sm:w-auto rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-1 ${isDarkMode ? "bg-purple-600 text-white hover:bg-purple-700" : "bg-purple-600 text-white hover:bg-purple-700"}`}
+              className="w-full sm:w-auto rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-1 bg-purple-600 text-white hover:bg-purple-700"
             >
               Sponsor <span>→</span>
             </a>
@@ -782,9 +817,7 @@ const Hero: React.FC<HeroProps> = ({
 
           <button
             onClick={() => setIsTeleprompterOpen(true)}
-            className={`mt-4 text-sm font-medium underline underline-offset-4 hover:opacity-70 transition-opacity duration-300 ${
-              isDarkMode ? "text-gray-400" : "text-gray-600"
-            }`}
+            className="mt-4 text-sm font-medium underline underline-offset-4 hover:opacity-70 transition-opacity duration-300 text-gray-600"
           >
             More about the event
           </button>
@@ -792,11 +825,14 @@ const Hero: React.FC<HeroProps> = ({
           <TeleprompterModal
             isOpen={isTeleprompterOpen}
             onClose={() => setIsTeleprompterOpen(false)}
-            isDarkMode={isDarkMode}
+            isDarkMode={false}
           />
+          </div>
         </div>
       </div>
     </div>
+    <div className="h-screen bg-black" />
+    </>
   );
 };
 

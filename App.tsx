@@ -4,12 +4,7 @@ import Hero from "./components/Hero";
 import gsap from "gsap";
 
 const App: React.FC = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [waitlistOpen, setWaitlistOpen] = useState(false);
-
-  const toggleTheme = () => {
-    setIsDarkMode((prev) => !prev);
-  };
 
   useEffect(() => {
     // Global GSAP settings
@@ -20,17 +15,10 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div
-      className={`min-h-screen transition-colors duration-700 ${isDarkMode ? "bg-[#050505] text-white selection:bg-purple-800 selection:text-purple-100" : "bg-white text-slate-900 selection:bg-purple-200 selection:text-purple-900"} overflow-hidden`}
-    >
-      <Navigation
-        isDarkMode={isDarkMode}
-        toggleTheme={toggleTheme}
-        onOpenWaitlist={() => setWaitlistOpen(true)}
-      />
+    <div className="min-h-screen bg-white text-slate-900 selection:bg-purple-200 selection:text-purple-900 overflow-hidden">
+      <Navigation onOpenWaitlist={() => setWaitlistOpen(true)} />
       <main>
         <Hero
-          isDarkMode={isDarkMode}
           waitlistOpen={waitlistOpen}
           onWaitlistOpenChange={setWaitlistOpen}
         />

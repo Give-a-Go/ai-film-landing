@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface WaitlistMorphProps {
-  isDarkMode: boolean;
   /** When provided, form open state is controlled from parent (e.g. nav "I'm interested") */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -11,7 +10,6 @@ interface WaitlistMorphProps {
 type FormState = "idle" | "loading" | "success" | "error";
 
 const WaitlistMorph: React.FC<WaitlistMorphProps> = ({
-  isDarkMode,
   open: controlledOpen,
   onOpenChange,
 }) => {
@@ -40,7 +38,7 @@ const WaitlistMorph: React.FC<WaitlistMorphProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setFormState("error");
       setErrorMessage("Please enter a valid email");
@@ -98,11 +96,7 @@ const WaitlistMorph: React.FC<WaitlistMorphProps> = ({
             key="button"
             layout
             onClick={() => setIsOpen(true)}
-            className={`w-full sm:w-auto rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap ${
-              isDarkMode
-                ? "bg-white text-black hover:bg-gray-200"
-                : "bg-dark text-white"
-            }`}
+            className="w-full sm:w-auto rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap bg-dark text-white"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -115,11 +109,7 @@ const WaitlistMorph: React.FC<WaitlistMorphProps> = ({
             key="form"
             layout
             onSubmit={handleSubmit}
-            className={`rounded-full px-4 py-2 flex items-center gap-2 min-w-[280px] sm:min-w-[320px] ${
-              isDarkMode
-                ? "bg-white text-black"
-                : "bg-dark text-white"
-            }`}
+            className="rounded-full px-4 py-2 flex items-center gap-2 min-w-[280px] sm:min-w-[320px] bg-dark text-white"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -142,18 +132,12 @@ const WaitlistMorph: React.FC<WaitlistMorphProps> = ({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your@email.com"
                   disabled={formState === "loading"}
-                  className={`flex-1 bg-transparent outline-none text-sm placeholder:opacity-50 ${
-                    isDarkMode ? "text-black" : "text-white"
-                  }`}
+                  className="flex-1 bg-transparent outline-none text-sm placeholder:opacity-50 text-white"
                 />
                 <button
                   type="submit"
                   disabled={formState === "loading"}
-                  className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
-                    isDarkMode
-                      ? "bg-black text-white hover:bg-gray-800"
-                      : "bg-white text-black hover:bg-gray-100"
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className="px-4 py-1.5 rounded-full text-xs font-medium transition-all bg-white text-black hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {formState === "loading" ? "..." : "Join"}
                 </button>
@@ -171,14 +155,12 @@ const WaitlistMorph: React.FC<WaitlistMorphProps> = ({
           </motion.form>
         )}
       </AnimatePresence>
-      
+
       {formState === "error" && errorMessage && (
         <motion.p
           initial={{ opacity: 0, y: -5 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`absolute top-full mt-2 text-xs ${
-            isDarkMode ? "text-red-400" : "text-red-600"
-          }`}
+          className="absolute top-full mt-2 text-xs text-red-600"
         >
           {errorMessage}
         </motion.p>
