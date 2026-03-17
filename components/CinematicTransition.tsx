@@ -49,15 +49,27 @@ const CinematicTransition: React.FC = () => {
   const clapArmRef = useRef<SVGGElement>(null);
   // Flash
   const flashRef = useRef<HTMLDivElement>(null);
+  const staticNoiseRef = useRef<HTMLDivElement>(null);
+  const staticScanlinesRef = useRef<HTMLDivElement>(null);
   // Camera
   const cameraGroupRef = useRef<HTMLDivElement>(null);
+  const mobileProjectorRef = useRef<HTMLDivElement>(null);
+  const mobileProjectorLensRef = useRef<HTMLDivElement>(null);
   // Beam
   const beamRef = useRef<HTMLDivElement>(null);
+  const desktopBeamRef = useRef<HTMLDivElement>(null);
+  const mobileBeamRef = useRef<HTMLDivElement>(null);
+  const mobileBeamPrimaryRef = useRef<HTMLDivElement>(null);
+  const mobileBeamSecondaryRef = useRef<HTMLDivElement>(null);
+  const mobileBeamConeRef = useRef<HTMLDivElement>(null);
+  const mobileBeamSourceGlowRef = useRef<HTMLDivElement>(null);
   // Screen
   const screenRef = useRef<HTMLDivElement>(null);
   const screenTextRef = useRef<HTMLDivElement>(null);
   const grainRef = useRef<SVGFETurbulenceElement>(null);
   const frameCount = useRef(0);
+  const clapFxTriggeredRef = useRef(false);
+  const clapAudioCtxRef = useRef<AudioContext | null>(null);
 
   // Arc constants (viewBox 0 0 100 100, r=38)
   const ARC_R = 38;
@@ -65,19 +77,124 @@ const CinematicTransition: React.FC = () => {
 
   useEffect(() => {
     let raf: number;
+    const triggerClapFx = () => {
+      if (clapFxTriggeredRef.current) return;
+      clapFxTriggeredRef.current = true;
+
+      // Haptics (supported on many Android browsers).
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate?.([10, 20, 18]);
+      }
+
+      // Short synthetic clap so we don't rely on external assets.
+      try {
+        if (!clapAudioCtxRef.current) {
+          const Ctx = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+          if (Ctx) clapAudioCtxRef.current = new Ctx();
+        }
+        const ctx = clapAudioCtxRef.current;
+        if (!ctx) return;
+        if (ctx.state === "suspended") void ctx.resume();
+
+        const now = ctx.currentTime;
+        const duration = 0.09;
+        const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * duration), ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < data.length; i++) {
+          const t = i / data.length;
+          const envelope = Math.pow(1 - t, 2.2);
+          data[i] = (Math.random() * 2 - 1) * envelope;
+        }
+
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+
+        const band = ctx.createBiquadFilter();
+        band.type = "bandpass";
+        band.frequency.value = 1900;
+        band.Q.value = 0.8;
+
+        const high = ctx.createBiquadFilter();
+        high.type = "highpass";
+        high.frequency.value = 700;
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.35, now + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+        source.connect(band);
+        band.connect(high);
+        high.connect(gain);
+        gain.connect(ctx.destination);
+        source.start(now);
+        source.stop(now + duration);
+      } catch {
+        // Silently ignore if audio is blocked or unavailable.
+      }
+    };
+    const setBeamSegment = (
+      el: HTMLDivElement,
+      fromX: number,
+      fromY: number,
+      toX: number,
+      toY: number,
+      thickness: number,
+      glow: number,
+    ) => {
+      const dx = toX - fromX;
+      const dy = toY - fromY;
+      const dist = Math.hypot(dx, dy);
+      const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+      el.style.left = `${fromX}px`;
+      el.style.top = `${fromY}px`;
+      el.style.width = `${dist}px`;
+      el.style.height = `${thickness}px`;
+      el.style.transform = `translateY(-50%) rotate(${angle}deg)`;
+      el.style.transformOrigin = "0 50%";
+      el.style.borderRadius = "999px";
+      el.style.filter = `blur(${glow}px)`;
+      return { dx, dy, dist };
+    };
 
     const tick = () => {
       raf = requestAnimationFrame(tick);
       const vh = window.innerHeight;
+      const vw = window.innerWidth;
+      const isMobile = vw <= 768;
       const sectionRect = sectionRef.current?.getBoundingClientRect();
+      const PRE_ENTRY_VH = 1.32;
+      const entryStart = vh * PRE_ENTRY_VH;
+      // End timeline when next content is about to enter viewport
+      // (i.e. when this section has only 1 viewport height remaining).
+      const activeScrollRange = sectionRect
+        ? Math.max(1, sectionRect.height - vh)
+        : 1;
+      const totalRange = entryStart + activeScrollRange;
       const p = sectionRect
-        ? clamp((vh - sectionRect.top) / sectionRect.height, 0, 1)
+        ? clamp((entryStart - sectionRect.top) / totalRange, 0, 1)
         : 0;
-      const timelineP = p;
+      // Pre-roll the cinematic timeline so clapboard is already entering
+      // as soon as users scroll into this section (avoids initial dead-black beat).
+      const TIMELINE_DELAY = 0.02;
+      const timelineP = clamp((p - TIMELINE_DELAY) / (1 - TIMELINE_DELAY), 0, 1);
+      const endFade = 1 - phase(p, 0.88, 1.0);
 
       if (!rootRef.current) return;
-      rootRef.current.style.opacity = p > 0 && p < 1 ? "1" : "0";
+      const overlayOpacity =
+        p <= 0 || p >= 1 ? 0 : easeOutCubic(phase(p, 0, 0.16)) * endFade;
+      rootRef.current.style.opacity = String(overlayOpacity);
       if (p <= 0 || p >= 1) return;
+
+      // Keep static only in pre-projector phase; fade to pure black as projector begins.
+      const staticNoiseOpacity = 0.52 * (1 - phase(timelineP, 0.46, 0.58));
+      const staticScanlineOpacity = 0.07 * (1 - phase(timelineP, 0.46, 0.58));
+      if (staticNoiseRef.current) {
+        staticNoiseRef.current.style.opacity = String(staticNoiseOpacity);
+      }
+      if (staticScanlinesRef.current) {
+        staticScanlinesRef.current.style.opacity = String(staticScanlineOpacity);
+      }
 
       // ─────────────────────────────────────────────────────────────────
       // COUNTDOWN  p 0.00 → 0.30
@@ -87,7 +204,9 @@ const CinematicTransition: React.FC = () => {
         const fadeIn = easeOutCubic(phase(p, 0.0, 0.04));
         const fadeOut = easeInCubic(phase(p, 0.26, 0.33));
         const countdownOpacityRaw = fadeIn * (1 - fadeOut);
-        const countdownOpacity = SHOW_LEADER_COUNTDOWN ? countdownOpacityRaw : 0;
+        const countdownOpacity = SHOW_LEADER_COUNTDOWN
+          ? countdownOpacityRaw
+          : 0;
         countdownRef.current.style.opacity = String(countdownOpacity);
       }
 
@@ -109,61 +228,171 @@ const CinematicTransition: React.FC = () => {
       // CLAPBOARD  p 0.30 → 0.52
       // ─────────────────────────────────────────────────────────────────
       if (clapboardRef.current) {
-        const dropIn = easeOutCubic(phase(timelineP, 0.0, 0.14));
-        const exitOut = easeInCubic(phase(timelineP, 0.16, 0.24));
-        const y = -115 + dropIn * 115 + exitOut * 135;
-        clapboardRef.current.style.transform = `translateX(-50%) translateY(${y}%)`;
-        clapboardRef.current.style.opacity = timelineP > 0.24 ? "0" : "1";
+        const dropIn = easeOutCubic(phase(timelineP, 0.0, 0.24));
+        const exitOut = easeInCubic(phase(timelineP, 0.38, 0.62));
+        const dropStart = isMobile ? -150 : -115;
+        const y = dropStart + dropIn * -dropStart + exitOut * 135;
+        clapboardRef.current.style.left = "50%";
+        clapboardRef.current.style.top = isMobile ? "50%" : "24%";
+        clapboardRef.current.style.width = isMobile
+          ? "min(340px, 82vw)"
+          : "min(360px, 56vw)";
+        clapboardRef.current.style.transform = isMobile
+          ? `translate3d(-50%, calc(-50% + ${y}%), 0)`
+          : `translate3d(-50%, ${y}%, 0)`;
+        clapboardRef.current.style.opacity = String((timelineP > 0.62 ? 0 : 1) * endFade);
       }
       if (clapArmRef.current) {
-        const snapT = easeInOutCubic(phase(timelineP, 0.1, 0.14));
+        const snapT = easeInOutCubic(phase(timelineP, 0.2, 0.28));
         clapArmRef.current.style.transform = `rotate(${-28 * (1 - snapT)}deg)`;
+      }
+      if (timelineP >= 0.235 && timelineP <= 0.32) {
+        triggerClapFx();
+      } else if (timelineP < 0.18) {
+        // Allow replay when user scrolls back and re-enters the sequence.
+        clapFxTriggeredRef.current = false;
       }
 
       // ─────────────────────────────────────────────────────────────────
       // FLASH  p 0.43 → 0.50
       // ─────────────────────────────────────────────────────────────────
       if (flashRef.current) {
-        const fp = phase(timelineP, 0.13, 0.2);
+        const fp = phase(timelineP, 0.24, 0.34);
         const spike = fp < 0.4 ? fp / 0.4 : 1 - (fp - 0.4) / 0.6;
-        flashRef.current.style.opacity = String(spike * 0.9);
+        flashRef.current.style.opacity = String(spike * 0.9 * endFade);
       }
 
       // ─────────────────────────────────────────────────────────────────
       // CAMERA  p 0.48 → 0.72
       // ─────────────────────────────────────────────────────────────────
       if (cameraGroupRef.current) {
-        const camIn = easeOutCubic(phase(timelineP, 0.18, 0.42));
-        const tx = (1 - camIn) * -130;
+        const camIn = easeOutCubic(phase(timelineP, 0.34, 0.62));
         cameraGroupRef.current.style.opacity = String(
-          easeOutCubic(phase(timelineP, 0.18, 0.3)),
+          easeOutCubic(phase(timelineP, 0.34, 0.5)) * endFade,
         );
-        cameraGroupRef.current.style.transform = `translateX(${tx}%) translateY(-50%) rotate(-6deg)`;
+        if (isMobile) {
+          cameraGroupRef.current.style.display = "none";
+          cameraGroupRef.current.style.opacity = "0";
+        } else {
+          const tx = (1 - camIn) * -130;
+          cameraGroupRef.current.style.left = "2%";
+          cameraGroupRef.current.style.top = "50%";
+          cameraGroupRef.current.style.width = "min(300px, 34vw)";
+          cameraGroupRef.current.style.display = "block";
+          cameraGroupRef.current.style.transform =
+            `translateX(${tx}%) translateY(-50%) rotate(-6deg)`;
+        }
+      }
+      if (mobileProjectorRef.current) {
+        const projIn = easeOutCubic(phase(timelineP, 0.36, 0.62));
+        const projectorY = vh - 40;
+        mobileProjectorRef.current.style.opacity = isMobile
+          ? String(projIn * endFade)
+          : "0";
+        mobileProjectorRef.current.style.left = `${vw * 0.5}px`;
+        mobileProjectorRef.current.style.top = `${projectorY}px`;
+        mobileProjectorRef.current.style.transform = isMobile
+          ? `translate3d(-50%, ${(1 - projIn) * 10}%, 0) perspective(2000px) rotateX(5deg) scale(${0.95 + projIn * 0.05})`
+          : "translate3d(-50%, 20%, 0)";
       }
 
       // ─────────────────────────────────────────────────────────────────
       // BEAM  p 0.58 → 0.76
       // ─────────────────────────────────────────────────────────────────
       if (beamRef.current) {
-        beamRef.current.style.opacity = String(
-          easeOutCubic(phase(timelineP, 0.28, 0.5)),
-        );
+        const beamOpacity = easeOutCubic(phase(timelineP, 0.5, 0.72)) * endFade;
+        beamRef.current.style.opacity = String(beamOpacity);
+        if (desktopBeamRef.current) {
+          desktopBeamRef.current.style.opacity = isMobile ? "0" : "1";
+        }
+        if (mobileBeamRef.current) {
+          mobileBeamRef.current.style.opacity = isMobile ? "1" : "0";
+        }
+
+        if (
+          isMobile &&
+          mobileBeamPrimaryRef.current &&
+          mobileBeamSecondaryRef.current &&
+          mobileBeamConeRef.current &&
+          mobileBeamSourceGlowRef.current &&
+          mobileProjectorLensRef.current
+        ) {
+          const screenCenterX = vw * 0.5;
+          const screenCenterY = vh * 0.38;
+          const screenWidth = Math.min(430, vw * 0.9);
+          const screenHeight = screenWidth * (9 / 16);
+          const screenLeft = screenCenterX - screenWidth * 0.5;
+          const screenTop = screenCenterY - screenHeight * 0.5;
+          const projectorY = vh - 40;
+          const lensX = vw * 0.5;
+          const lensY = projectorY - 26;
+          // Hide linear helper rays on mobile; keep a single stable volumetric cone.
+          mobileBeamPrimaryRef.current.style.opacity = "0";
+          mobileBeamSecondaryRef.current.style.opacity = "0";
+
+          const distanceToScreen = Math.hypot(screenCenterX - lensX, (screenCenterY + screenHeight * 0.2) - lensY);
+          const coneBaseIntensity = clamp(260 / (distanceToScreen + 260), 0.22, 0.72);
+          const spread = easeOutCubic(phase(timelineP, 0.52, 0.74));
+          const spreadWidth = clamp(0.2 + spread * 1.05, 0.2, 1);
+          const leftEdgeX = screenCenterX - (screenWidth * 0.5 * spreadWidth);
+          const rightEdgeX = screenCenterX + (screenWidth * 0.5 * spreadWidth);
+          const screenTopY = screenTop;
+          const screenBottomY = screenTop + screenHeight;
+          const coneIntensity = clamp(coneBaseIntensity * (0.22 + spread * 0.74), 0.12, 0.62);
+          const sourceHalfWidth = 5 + spread * 3;
+
+          mobileBeamConeRef.current.style.left = "0px";
+          mobileBeamConeRef.current.style.top = "0px";
+          mobileBeamConeRef.current.style.width = `${vw}px`;
+          mobileBeamConeRef.current.style.height = `${vh}px`;
+          mobileBeamConeRef.current.style.clipPath =
+            `polygon(${lensX - sourceHalfWidth}px ${lensY}px, ${lensX + sourceHalfWidth}px ${lensY}px, ${rightEdgeX}px ${screenTopY}px, ${rightEdgeX}px ${screenBottomY}px, ${leftEdgeX}px ${screenBottomY}px, ${leftEdgeX}px ${screenTopY}px)`;
+          mobileBeamConeRef.current.style.background =
+            `radial-gradient(ellipse at ${lensX}px ${lensY}px, rgba(255,248,198,${0.92 * coneIntensity}) 0%, rgba(255,238,152,${0.5 * coneIntensity}) 26%, rgba(255,230,112,${0.24 * coneIntensity}) 52%, rgba(255,224,90,0) 84%)`;
+          mobileBeamConeRef.current.style.boxShadow =
+            `0 0 10px rgba(255,238,148,${0.09 * coneIntensity})`;
+          mobileBeamConeRef.current.style.opacity = String(clamp(0.42 + spread * 0.58, 0.42, 1));
+
+          mobileBeamSourceGlowRef.current.style.left = `${lensX}px`;
+          mobileBeamSourceGlowRef.current.style.top = `${lensY}px`;
+          mobileBeamSourceGlowRef.current.style.opacity = String(
+            clamp(coneBaseIntensity * 0.72, 0.2, 0.62),
+          );
+          mobileProjectorLensRef.current.style.opacity = String(
+            clamp(0.25 + coneBaseIntensity * 0.65, 0.25, 0.85),
+          );
+        }
       }
 
       // ─────────────────────────────────────────────────────────────────
       // SCREEN  p 0.62 → 0.80
       // ─────────────────────────────────────────────────────────────────
       if (screenRef.current) {
-        const sp = easeOutCubic(phase(timelineP, 0.34, 0.56));
-        screenRef.current.style.opacity = String(sp);
-        screenRef.current.style.transform = `translateY(-50%) perspective(1200px) rotateY(-4deg) scale(${0.92 + sp * 0.08})`;
+        const sp = easeOutCubic(phase(timelineP, 0.56, 0.8));
+        const screenScale = 0.92 + sp * 0.08;
+        screenRef.current.style.opacity = String(sp * endFade);
+        if (isMobile) {
+          screenRef.current.style.left = "50%";
+          screenRef.current.style.right = "auto";
+          screenRef.current.style.top = "38%";
+          screenRef.current.style.width = "min(430px, 90vw)";
+          screenRef.current.style.transform =
+            `translate3d(-50%, -50%, 0) perspective(1200px) rotateY(0deg) scale(${screenScale})`;
+        } else {
+          screenRef.current.style.left = "auto";
+          screenRef.current.style.right = "3%";
+          screenRef.current.style.top = "50%";
+          screenRef.current.style.width = "min(620px, 60vw)";
+          screenRef.current.style.transform =
+            `translateY(-50%) perspective(1200px) rotateY(-4deg) scale(${screenScale})`;
+        }
       }
 
       // ─────────────────────────────────────────────────────────────────
       // TEXT WIPE  p 0.76 → 0.96
       // ─────────────────────────────────────────────────────────────────
       if (screenTextRef.current) {
-        const wp = easeOutCubic(phase(timelineP, 0.56, 0.9));
+        const wp = easeOutCubic(phase(timelineP, 0.74, 0.96));
         screenTextRef.current.style.clipPath = `inset(0 ${(1 - wp) * 100}% 0 0)`;
       }
 
@@ -171,18 +400,26 @@ const CinematicTransition: React.FC = () => {
       // FILM GRAIN jitter
       // ─────────────────────────────────────────────────────────────────
       frameCount.current++;
-      if (grainRef.current && frameCount.current % 4 === 0 && timelineP > 0.56) {
+      if (
+        grainRef.current &&
+        frameCount.current % 4 === 0 &&
+        timelineP > 0.74
+      ) {
         const bf = 0.65 + (Math.random() - 0.5) * 0.1;
         grainRef.current.setAttribute("baseFrequency", `${bf} ${bf}`);
       }
     };
 
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      void clapAudioCtxRef.current?.close();
+      clapAudioCtxRef.current = null;
+    };
   }, []);
 
   return (
-    <div ref={sectionRef} className="relative h-[200vh] bg-black">
+    <div ref={sectionRef} className="relative h-[240vh] bg-black">
       <div
         ref={rootRef}
         style={{
@@ -197,405 +434,399 @@ const CinematicTransition: React.FC = () => {
           pointerEvents: "none",
         }}
       >
-      {/* SVG defs — grain filter */}
-      <svg
-        style={{ position: "absolute", width: 0, height: 0 }}
-        aria-hidden="true"
-      >
-        <defs>
-          <filter id="ct-grain" x="0%" y="0%" width="100%" height="100%">
-            <feTurbulence
-              ref={grainRef}
-              type="fractalNoise"
-              baseFrequency="0.65 0.65"
-              numOctaves="3"
-              stitchTiles="stitch"
-              result="noise"
-            />
-            <feColorMatrix type="saturate" values="0" in="noise" result="gn" />
-            <feBlend in="SourceGraphic" in2="gn" mode="overlay" result="b" />
-            <feComposite in="b" in2="SourceGraphic" operator="in" />
-          </filter>
-        </defs>
-      </svg>
+        {/* SVG defs — grain filter */}
+        <svg
+          style={{ position: "absolute", width: 0, height: 0 }}
+          aria-hidden="true"
+        >
+          <defs>
+            <filter id="ct-grain" x="0%" y="0%" width="100%" height="100%">
+              <feTurbulence
+                ref={grainRef}
+                type="fractalNoise"
+                baseFrequency="0.65 0.65"
+                numOctaves="3"
+                stitchTiles="stitch"
+                result="noise"
+              />
+              <feColorMatrix
+                type="saturate"
+                values="0"
+                in="noise"
+                result="gn"
+              />
+              <feBlend in="SourceGraphic" in2="gn" mode="overlay" result="b" />
+              <feComposite in="b" in2="SourceGraphic" operator="in" />
+            </filter>
+          </defs>
+        </svg>
 
-      {/* White flash */}
-      <div
-        ref={flashRef}
-        className="absolute inset-0 bg-white"
-        style={{ opacity: 0, zIndex: 30, pointerEvents: "none" }}
-      />
-
-      {/* ════════════════════════════════════════════════════════════════
-          FILM COUNTDOWN  3 · 2 · 1
-          Classic circular SMPTE-style leader frame
-          ════════════════════════════════════════════════════════════════ */}
-      <div
-        ref={countdownRef}
-        style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          opacity: 0,
-          zIndex: 26,
-        }}
-      >
-        {/* Outer technical frame lines */}
+        {/* White flash */}
         <div
+          ref={flashRef}
+          className="absolute inset-0 bg-white"
+          style={{ opacity: 0, zIndex: 30, pointerEvents: "none" }}
+        />
+
+        {/* Subtle old-school film/TV texture so black moments feel intentional */}
+        <div
+          ref={staticNoiseRef}
           style={{
             position: "absolute",
             inset: 0,
+            zIndex: 4,
+            pointerEvents: "none",
+            opacity: 0.52,
+            mixBlendMode: "normal",
+            filter: "grayscale(1) contrast(2.4) brightness(1.28)",
+            backgroundColor: "#0a0a0a",
+            backgroundImage:
+              'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 160 160\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'s\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'1.35\' numOctaves=\'1\' seed=\'8\'/%3E%3CfeColorMatrix type=\'saturate\' values=\'0\'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type=\'discrete\' tableValues=\'0 0 1 1\'/%3E%3CfeFuncG type=\'discrete\' tableValues=\'0 0 1 1\'/%3E%3CfeFuncB type=\'discrete\' tableValues=\'0 0 1 1\'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23s)\'/%3E%3C/svg%3E")',
+            backgroundSize: "96px 96px",
+            animation: "ctFilmGrainDrift 0.045s steps(2, end) infinite",
+          }}
+        />
+        <div
+          ref={staticScanlinesRef}
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 5,
+            pointerEvents: "none",
+            opacity: 0.07,
             background:
-              "linear-gradient(rgba(248,236,188,0.015) 1px, transparent 1px) 0 0 / 100% 25%," +
-              "linear-gradient(90deg, rgba(248,236,188,0.015) 1px, transparent 1px) 0 0 / 25% 100%",
+              "repeating-linear-gradient(0deg, rgba(210,210,210,0.08) 0px, rgba(210,210,210,0.08) 1px, transparent 1px, transparent 3px)",
           }}
         />
 
-        {/* Corner reference dots */}
-        {(
-          [
-            [8, 8],
-            [92, 8],
-            [8, 92],
-            [92, 92],
-          ] as const
-        ).map(([x, y], i) => (
+        {/* ════════════════════════════════════════════════════════════════
+          FILM COUNTDOWN  3 · 2 · 1
+          Classic circular SMPTE-style leader frame
+          ════════════════════════════════════════════════════════════════ */}
+        <div
+          ref={countdownRef}
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: 0,
+            zIndex: 26,
+          }}
+        >
+          {/* Outer technical frame lines */}
           <div
-            key={i}
             style={{
               position: "absolute",
-              left: `${x}%`,
-              top: `${y}%`,
-              transform: "translate(-50%,-50%)",
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              border: "1px solid rgba(248,236,188,0.15)",
+              inset: 0,
+              background:
+                "linear-gradient(rgba(248,236,188,0.015) 1px, transparent 1px) 0 0 / 100% 25%," +
+                "linear-gradient(90deg, rgba(248,236,188,0.015) 1px, transparent 1px) 0 0 / 25% 100%",
             }}
           />
-        ))}
 
-        {/* Main countdown circle */}
-        <svg
-          viewBox="0 0 100 100"
-          style={{ width: "min(340px,44vw)", height: "min(340px,44vw)" }}
-          aria-hidden="true"
-        >
-          {/* Outer decorative ring */}
-          <circle
-            cx="50"
-            cy="50"
-            r="47"
-            fill="none"
-            stroke="rgba(248,236,188,0.06)"
-            strokeWidth="0.5"
-          />
+          {/* Corner reference dots */}
+          {(
+            [
+              [8, 8],
+              [92, 8],
+              [8, 92],
+              [92, 92],
+            ] as const
+          ).map(([x, y], i) => (
+            <div
+              key={i}
+              style={{
+                position: "absolute",
+                left: `${x}%`,
+                top: `${y}%`,
+                transform: "translate(-50%,-50%)",
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                border: "1px solid rgba(248,236,188,0.15)",
+              }}
+            />
+          ))}
 
-          {/* Main ring */}
-          <circle
-            cx="50"
-            cy="50"
-            r={ARC_R}
-            fill="none"
-            stroke="rgba(248,236,188,0.12)"
-            strokeWidth="0.7"
-          />
-
-          {/* Inner circle */}
-          <circle
-            cx="50"
-            cy="50"
-            r="26"
-            fill="none"
-            stroke="rgba(248,236,188,0.08)"
-            strokeWidth="0.5"
-          />
-
-          {/* Center dot */}
-          <circle cx="50" cy="50" r="2" fill="rgba(248,236,188,0.35)" />
-
-          {/* Tick marks — 12 marks at every 30° */}
-          {Array.from({ length: 12 }, (_, i) => {
-            const a = ((i * 30 - 90) * Math.PI) / 180;
-            const major = i % 3 === 0;
-            const r1 = major ? 40 : 42;
-            return (
-              <line
-                key={i}
-                x1={50 + r1 * Math.cos(a)}
-                y1={50 + r1 * Math.sin(a)}
-                x2={50 + 46 * Math.cos(a)}
-                y2={50 + 46 * Math.sin(a)}
-                stroke="rgba(248,236,188,0.22)"
-                strokeWidth={major ? 0.9 : 0.45}
-              />
-            );
-          })}
-
-          {/* Crosshairs */}
-          <line
-            x1="2"
-            y1="50"
-            x2="98"
-            y2="50"
-            stroke="rgba(248,236,188,0.10)"
-            strokeWidth="0.4"
-          />
-          <line
-            x1="50"
-            y1="2"
-            x2="50"
-            y2="98"
-            stroke="rgba(248,236,188,0.10)"
-            strokeWidth="0.4"
-          />
-
-          {/* Cardinal dots */}
-          {[0, 90, 180, 270].map((a) => {
-            const r = ((a - 90) * Math.PI) / 180;
-            return (
-              <circle
-                key={a}
-                cx={50 + 42 * Math.cos(r)}
-                cy={50 + 42 * Math.sin(r)}
-                r="1.5"
-                fill="rgba(248,236,188,0.2)"
-              />
-            );
-          })}
-
-          {/* Sweeping arc — updated each frame via stroke-dashoffset */}
-          <circle
-            ref={arcRef}
-            cx="50"
-            cy="50"
-            r={ARC_R}
-            fill="none"
-            stroke="rgba(248,236,188,0.80)"
-            strokeWidth="1.5"
-            strokeDasharray={`${ARC_CIRC} ${ARC_CIRC}`}
-            strokeDashoffset={ARC_CIRC}
-            strokeLinecap="butt"
-            transform="rotate(-90 50 50)"
-          />
-
-          {/* The number */}
-          <text
-            ref={countNumRef}
-            x="50"
-            y="50"
-            textAnchor="middle"
-            dominantBaseline="central"
-            fontFamily="monospace"
-            fontSize="34"
-            fontWeight="bold"
-            fill="rgba(248,236,188,0.94)"
-            letterSpacing="-1"
+          {/* Main countdown circle */}
+          <svg
+            viewBox="0 0 100 100"
+            style={{ width: "min(340px,44vw)", height: "min(340px,44vw)" }}
+            aria-hidden="true"
           >
-            3
-          </text>
+            {/* Outer decorative ring */}
+            <circle
+              cx="50"
+              cy="50"
+              r="47"
+              fill="none"
+              stroke="rgba(248,236,188,0.06)"
+              strokeWidth="0.5"
+            />
 
-          {/* Technical corner labels */}
-          <text
-            x="3"
-            y="7"
-            fontFamily="monospace"
-            fontSize="3.8"
-            fill="rgba(248,236,188,0.18)"
-            letterSpacing="0.2"
-          >
-            SYNC
-          </text>
-          <text
-            x="71"
-            y="7"
-            fontFamily="monospace"
-            fontSize="3.8"
-            fill="rgba(248,236,188,0.18)"
-            letterSpacing="0.2"
-          >
-            FRAME
-          </text>
-          <text
-            x="3"
-            y="97"
-            fontFamily="monospace"
-            fontSize="3.8"
-            fill="rgba(248,236,188,0.18)"
-            letterSpacing="0.2"
-          >
-            FOCUS
-          </text>
-          <text
-            x="68"
-            y="97"
-            fontFamily="monospace"
-            fontSize="3.8"
-            fill="rgba(248,236,188,0.18)"
-            letterSpacing="0.2"
-          >
-            24fps
-          </text>
+            {/* Main ring */}
+            <circle
+              cx="50"
+              cy="50"
+              r={ARC_R}
+              fill="none"
+              stroke="rgba(248,236,188,0.12)"
+              strokeWidth="0.7"
+            />
 
-          {/* Frame number (decorative) */}
-          <text
-            x="50"
-            y="76"
-            textAnchor="middle"
-            fontFamily="monospace"
-            fontSize="4"
-            fill="rgba(248,236,188,0.18)"
-            letterSpacing="0.5"
-          >
-            AI FILM HACKATHON v2
-          </text>
-        </svg>
-      </div>
+            {/* Inner circle */}
+            <circle
+              cx="50"
+              cy="50"
+              r="26"
+              fill="none"
+              stroke="rgba(248,236,188,0.08)"
+              strokeWidth="0.5"
+            />
 
-      {/* ════════════════════════════════════════════════════════════════
+            {/* Center dot */}
+            <circle cx="50" cy="50" r="2" fill="rgba(248,236,188,0.35)" />
+
+            {/* Tick marks — 12 marks at every 30° */}
+            {Array.from({ length: 12 }, (_, i) => {
+              const a = ((i * 30 - 90) * Math.PI) / 180;
+              const major = i % 3 === 0;
+              const r1 = major ? 40 : 42;
+              return (
+                <line
+                  key={i}
+                  x1={50 + r1 * Math.cos(a)}
+                  y1={50 + r1 * Math.sin(a)}
+                  x2={50 + 46 * Math.cos(a)}
+                  y2={50 + 46 * Math.sin(a)}
+                  stroke="rgba(248,236,188,0.22)"
+                  strokeWidth={major ? 0.9 : 0.45}
+                />
+              );
+            })}
+
+            {/* Crosshairs */}
+            <line
+              x1="2"
+              y1="50"
+              x2="98"
+              y2="50"
+              stroke="rgba(248,236,188,0.10)"
+              strokeWidth="0.4"
+            />
+            <line
+              x1="50"
+              y1="2"
+              x2="50"
+              y2="98"
+              stroke="rgba(248,236,188,0.10)"
+              strokeWidth="0.4"
+            />
+
+            {/* Cardinal dots */}
+            {[0, 90, 180, 270].map((a) => {
+              const r = ((a - 90) * Math.PI) / 180;
+              return (
+                <circle
+                  key={a}
+                  cx={50 + 42 * Math.cos(r)}
+                  cy={50 + 42 * Math.sin(r)}
+                  r="1.5"
+                  fill="rgba(248,236,188,0.2)"
+                />
+              );
+            })}
+
+            {/* Sweeping arc — updated each frame via stroke-dashoffset */}
+            <circle
+              ref={arcRef}
+              cx="50"
+              cy="50"
+              r={ARC_R}
+              fill="none"
+              stroke="rgba(248,236,188,0.80)"
+              strokeWidth="1.5"
+              strokeDasharray={`${ARC_CIRC} ${ARC_CIRC}`}
+              strokeDashoffset={ARC_CIRC}
+              strokeLinecap="butt"
+              transform="rotate(-90 50 50)"
+            />
+
+            {/* The number */}
+            <text
+              ref={countNumRef}
+              x="50"
+              y="50"
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontFamily="monospace"
+              fontSize="34"
+              fontWeight="bold"
+              fill="rgba(248,236,188,0.94)"
+              letterSpacing="-1"
+            >
+              3
+            </text>
+
+            {/* Technical corner labels */}
+            <text
+              x="3"
+              y="7"
+              fontFamily="monospace"
+              fontSize="3.8"
+              fill="rgba(248,236,188,0.18)"
+              letterSpacing="0.2"
+            >
+              SYNC
+            </text>
+            <text
+              x="71"
+              y="7"
+              fontFamily="monospace"
+              fontSize="3.8"
+              fill="rgba(248,236,188,0.18)"
+              letterSpacing="0.2"
+            >
+              FRAME
+            </text>
+            <text
+              x="3"
+              y="97"
+              fontFamily="monospace"
+              fontSize="3.8"
+              fill="rgba(248,236,188,0.18)"
+              letterSpacing="0.2"
+            >
+              FOCUS
+            </text>
+            <text
+              x="68"
+              y="97"
+              fontFamily="monospace"
+              fontSize="3.8"
+              fill="rgba(248,236,188,0.18)"
+              letterSpacing="0.2"
+            >
+              24fps
+            </text>
+
+            {/* Frame number (decorative) */}
+            <text
+              x="50"
+              y="76"
+              textAnchor="middle"
+              fontFamily="monospace"
+              fontSize="4"
+              fill="rgba(248,236,188,0.18)"
+              letterSpacing="0.5"
+            >
+              AI FILM HACKATHON v2
+            </text>
+          </svg>
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════════
           CLAPBOARD
           ════════════════════════════════════════════════════════════════ */}
-      <svg
-        ref={clapboardRef}
-        viewBox="0 0 220 165"
-        style={{
-          position: "absolute",
-          top: "24%",
-          left: "50%",
-          transform: "translateX(-50%) translateY(-115%)",
-          width: "min(360px, 56vw)",
-          zIndex: 25,
-          filter: "drop-shadow(0 6px 28px rgba(0,0,0,0.95))",
-          transformOrigin: "top center",
-        }}
-        aria-hidden="true"
-      >
-        <rect x="0" y="30" width="220" height="135" rx="4" fill="#2a2a2a" />
-        <rect x="2" y="82" width="216" height="81" rx="3" fill="#e8dfc0" />
-        <rect
-          x="0"
-          y="30"
-          width="220"
-          height="135"
-          rx="4"
-          fill="none"
-          stroke="#555"
-          strokeWidth="1.5"
-        />
-        {Array.from({ length: 10 }, (_, i) => (
+        <svg
+          ref={clapboardRef}
+          viewBox="0 0 220 165"
+          style={{
+            position: "absolute",
+            top: "24%",
+            left: "50%",
+            transform: "translateX(-50%) translateY(-115%)",
+            width: "min(360px, 56vw)",
+            overflow: "visible",
+            zIndex: 25,
+            filter: "drop-shadow(0 6px 28px rgba(0,0,0,0.95))",
+            transformOrigin: "top center",
+          }}
+          aria-hidden="true"
+        >
+          <rect x="0" y="30" width="220" height="135" rx="4" fill="#2a2a2a" />
+          <rect x="2" y="82" width="216" height="81" rx="3" fill="#e8dfc0" />
           <rect
-            key={i}
-            x={i * 22 - 5}
+            x="0"
             y="30"
-            width="12"
-            height="52"
-            fill={i % 2 === 0 ? "#111" : "#eee"}
-            transform="skewX(-15)"
+            width="220"
+            height="135"
+            rx="4"
+            fill="none"
+            stroke="#555"
+            strokeWidth="1.5"
           />
-        ))}
-        {/* Ruled lines */}
-        {[99, 113, 127, 141, 155].map((y) => (
-          <line
-            key={y}
-            x1="8"
-            y1={y}
-            x2="212"
-            y2={y}
-            stroke="rgba(0,0,0,0.1)"
-            strokeWidth="0.8"
-          />
-        ))}
-        <text
-          x="10"
-          y="100"
-          fontFamily="monospace"
-          fontSize="9"
-          fill="#1a1a1a"
-          fontWeight="bold"
-          letterSpacing="0.5"
-        >
-          SCENE 01 / TAKE 01
-        </text>
-        <text
-          x="10"
-          y="114"
-          fontFamily="monospace"
-          fontSize="7.5"
-          fill="#3a3a3a"
-        >
-          DIRECTOR: AI SYSTEMS
-        </text>
-        <text
-          x="10"
-          y="127"
-          fontFamily="monospace"
-          fontSize="7.5"
-          fill="#3a3a3a"
-        >
-          PROD: Give(a)Go
-        </text>
-        <text
-          x="10"
-          y="140"
-          fontFamily="monospace"
-          fontSize="7.5"
-          fill="#3a3a3a"
-        >
-          TITLE: AI FILM HACKATHON v2
-        </text>
-        <text x="10" y="155" fontFamily="monospace" fontSize="7" fill="#888">
-          DATE: 2025 · DUBLIN, IRELAND
-        </text>
-        <circle
-          cx="8"
-          cy="30"
-          r="5.5"
-          fill="#666"
-          stroke="#888"
-          strokeWidth="1"
-        />
-        <circle
-          cx="212"
-          cy="30"
-          r="5.5"
-          fill="#666"
-          stroke="#888"
-          strokeWidth="1"
-        />
-        {/* Arm */}
-        <g
-          ref={clapArmRef}
-          style={{ transformOrigin: "4px 30px", transform: "rotate(-28deg)" }}
-        >
-          <rect x="0" y="4" width="220" height="28" rx="3" fill="#2a2a2a" />
           {Array.from({ length: 10 }, (_, i) => (
             <rect
               key={i}
               x={i * 22 - 5}
-              y="4"
+              y="30"
               width="12"
-              height="28"
-              fill={i % 2 === 0 ? "#eee" : "#111"}
+              height="52"
+              fill={i % 2 === 0 ? "#111" : "#eee"}
               transform="skewX(-15)"
             />
           ))}
-          <rect
-            x="0"
-            y="4"
-            width="220"
-            height="28"
-            rx="3"
-            fill="none"
-            stroke="#666"
-            strokeWidth="1.5"
-          />
+          {/* Ruled lines */}
+          {[99, 113, 127, 141, 155].map((y) => (
+            <line
+              key={y}
+              x1="8"
+              y1={y}
+              x2="212"
+              y2={y}
+              stroke="rgba(0,0,0,0.1)"
+              strokeWidth="0.8"
+            />
+          ))}
+          <text
+            x="10"
+            y="100"
+            fontFamily="monospace"
+            fontSize="9"
+            fill="#1a1a1a"
+            fontWeight="bold"
+            letterSpacing="0.5"
+          >
+            SCENE 01 / TAKE 01
+          </text>
+          <text
+            x="10"
+            y="114"
+            fontFamily="monospace"
+            fontSize="7.5"
+            fill="#3a3a3a"
+          >
+            DIRECTOR: AI SYSTEMS
+          </text>
+          <text
+            x="10"
+            y="127"
+            fontFamily="monospace"
+            fontSize="7.5"
+            fill="#3a3a3a"
+          >
+            PROD: Give(a)Go
+          </text>
+          <text
+            x="10"
+            y="140"
+            fontFamily="monospace"
+            fontSize="7.5"
+            fill="#3a3a3a"
+          >
+            TITLE: AI FILM HACKATHON v2
+          </text>
+          <text x="10" y="155" fontFamily="monospace" fontSize="7" fill="#888">
+            DATE: 2025 · DUBLIN, IRELAND
+          </text>
           <circle
             cx="8"
             cy="30"
             r="5.5"
-            fill="#555"
+            fill="#666"
             stroke="#888"
             strokeWidth="1"
           />
@@ -603,615 +834,822 @@ const CinematicTransition: React.FC = () => {
             cx="212"
             cy="30"
             r="5.5"
-            fill="#555"
+            fill="#666"
             stroke="#888"
             strokeWidth="1"
           />
-        </g>
-      </svg>
+          {/* Arm */}
+          <g
+            ref={clapArmRef}
+            style={{ transformOrigin: "4px 30px", transform: "rotate(-28deg)" }}
+          >
+            <rect x="0" y="4" width="220" height="28" rx="3" fill="#2a2a2a" />
+            {Array.from({ length: 10 }, (_, i) => (
+              <rect
+                key={i}
+                x={i * 22 - 5}
+                y="4"
+                width="12"
+                height="28"
+                fill={i % 2 === 0 ? "#eee" : "#111"}
+                transform="skewX(-15)"
+              />
+            ))}
+            <rect
+              x="0"
+              y="4"
+              width="220"
+              height="28"
+              rx="3"
+              fill="none"
+              stroke="#666"
+              strokeWidth="1.5"
+            />
+            <circle
+              cx="8"
+              cy="30"
+              r="5.5"
+              fill="#555"
+              stroke="#888"
+              strokeWidth="1"
+            />
+            <circle
+              cx="212"
+              cy="30"
+              r="5.5"
+              fill="#555"
+              stroke="#888"
+              strokeWidth="1"
+            />
+          </g>
+        </svg>
 
-      {/* ════════════════════════════════════════════════════════════════
+        {/* ════════════════════════════════════════════════════════════════
           PROJECTOR BEAM
           Multi-layer conic+radial — lens at ~(20%, 44%), beam ≈ 97° from north
           ════════════════════════════════════════════════════════════════ */}
-      <div
-        ref={beamRef}
-        style={{
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
-          opacity: 0,
-          zIndex: 2,
-        }}
-      >
-        {/* Layer 1: Atmospheric outer haze */}
         <div
+          ref={beamRef}
           style={{
             position: "absolute",
             inset: 0,
-            background:
-              "conic-gradient(from 0deg at 20% 44%, transparent 68deg, rgba(255,215,70,0.05) 82deg, rgba(255,210,60,0.10) 97deg, rgba(255,215,70,0.05) 112deg, transparent 126deg)",
-            filter: "blur(34px)",
-            maskImage:
-              "radial-gradient(ellipse 95% 60% at 20% 44%, black 0%, black 25%, transparent 88%)",
-            WebkitMaskImage:
-              "radial-gradient(ellipse 95% 60% at 20% 44%, black 0%, black 25%, transparent 88%)",
+            pointerEvents: "none",
+            opacity: 0,
+            zIndex: 2,
           }}
-        />
-        {/* Layer 2: Main beam body */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "conic-gradient(from 0deg at 20% 44%, transparent 80deg, rgba(255,232,100,0.12) 88deg, rgba(255,228,90,0.28) 97deg, rgba(255,232,100,0.12) 106deg, transparent 114deg)",
-            filter: "blur(15px)",
-            maskImage:
-              "radial-gradient(ellipse 90% 55% at 20% 44%, black 0%, black 18%, transparent 84%)",
-            WebkitMaskImage:
-              "radial-gradient(ellipse 90% 55% at 20% 44%, black 0%, black 18%, transparent 84%)",
-          }}
-        />
-        {/* Layer 3: Inner bright beam */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "conic-gradient(from 0deg at 20% 44%, transparent 86deg, rgba(255,242,128,0.22) 91deg, rgba(255,240,118,0.50) 97deg, rgba(255,242,128,0.22) 103deg, transparent 108deg)",
-            filter: "blur(7px)",
-            maskImage:
-              "radial-gradient(ellipse 80% 48% at 20% 44%, black 0%, black 10%, transparent 80%)",
-            WebkitMaskImage:
-              "radial-gradient(ellipse 80% 48% at 20% 44%, black 0%, black 10%, transparent 80%)",
-          }}
-        />
-        {/* Layer 4: Bright core */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "conic-gradient(from 0deg at 20% 44%, transparent 92deg, rgba(255,252,195,0.28) 95deg, rgba(255,252,195,0.68) 97deg, rgba(255,252,195,0.28) 99deg, transparent 102deg)",
-            filter: "blur(2.5px)",
-            maskImage:
-              "radial-gradient(ellipse 65% 38% at 20% 44%, black 0%, black 8%, transparent 72%)",
-            WebkitMaskImage:
-              "radial-gradient(ellipse 65% 38% at 20% 44%, black 0%, black 8%, transparent 72%)",
-          }}
-        />
-        {/* Lens hot-spot glow */}
-        <div
-          style={{
-            position: "absolute",
-            left: "20%",
-            top: "44%",
-            width: 58,
-            height: 46,
-            transform: "translate(-50%,-50%)",
-            borderRadius: "50%",
-            background:
-              "radial-gradient(ellipse, rgba(255,255,218,0.92) 0%, rgba(255,248,160,0.58) 28%, rgba(255,228,90,0.22) 58%, transparent 82%)",
-            filter: "blur(5px)",
-            zIndex: 1,
-          }}
-        />
-        {/* Dust motes */}
-        {DUST_MOTES.map((m, i) => (
+        >
           <div
-            key={i}
+            ref={mobileBeamRef}
             style={{
               position: "absolute",
-              left: `${m.x}%`,
-              top: `${m.y}%`,
-              width: m.size,
-              height: m.size,
+              inset: 0,
+              opacity: 0,
+            }}
+          >
+            <div
+              ref={mobileBeamPrimaryRef}
+              style={{ position: "absolute", pointerEvents: "none" }}
+            />
+            <div
+              ref={mobileBeamSecondaryRef}
+              style={{ position: "absolute", pointerEvents: "none" }}
+            />
+            <div
+              ref={mobileBeamConeRef}
+              style={{ position: "absolute", pointerEvents: "none", opacity: 0 }}
+            />
+            <div
+              ref={mobileBeamSourceGlowRef}
+              style={{
+                position: "absolute",
+                width: 16,
+                height: 16,
+                transform: "translate(-50%, -50%)",
+                borderRadius: "50%",
+                pointerEvents: "none",
+                background:
+                  "radial-gradient(circle, rgba(255,250,214,0.98) 0%, rgba(255,236,148,0.56) 42%, rgba(255,224,100,0.08) 72%, transparent 100%)",
+                boxShadow: "0 0 10px rgba(255,238,148,0.35)",
+                border: "1px solid rgba(255,246,190,0.28)",
+                opacity: 0,
+              }}
+            />
+          </div>
+          <div
+            ref={desktopBeamRef}
+            style={{ position: "absolute", inset: 0, opacity: 1 }}
+          >
+          {/* Layer 1: Atmospheric outer haze */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "conic-gradient(from 0deg at 20% 44%, transparent 68deg, rgba(255,215,70,0.05) 82deg, rgba(255,210,60,0.10) 97deg, rgba(255,215,70,0.05) 112deg, transparent 126deg)",
+              filter: "blur(34px)",
+              maskImage:
+                "radial-gradient(ellipse 95% 60% at 20% 44%, black 0%, black 25%, transparent 88%)",
+              WebkitMaskImage:
+                "radial-gradient(ellipse 95% 60% at 20% 44%, black 0%, black 25%, transparent 88%)",
+            }}
+          />
+          {/* Layer 2: Main beam body */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "conic-gradient(from 0deg at 20% 44%, transparent 80deg, rgba(255,232,100,0.12) 88deg, rgba(255,228,90,0.28) 97deg, rgba(255,232,100,0.12) 106deg, transparent 114deg)",
+              filter: "blur(15px)",
+              maskImage:
+                "radial-gradient(ellipse 90% 55% at 20% 44%, black 0%, black 18%, transparent 84%)",
+              WebkitMaskImage:
+                "radial-gradient(ellipse 90% 55% at 20% 44%, black 0%, black 18%, transparent 84%)",
+            }}
+          />
+          {/* Layer 3: Inner bright beam */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "conic-gradient(from 0deg at 20% 44%, transparent 86deg, rgba(255,242,128,0.22) 91deg, rgba(255,240,118,0.50) 97deg, rgba(255,242,128,0.22) 103deg, transparent 108deg)",
+              filter: "blur(7px)",
+              maskImage:
+                "radial-gradient(ellipse 80% 48% at 20% 44%, black 0%, black 10%, transparent 80%)",
+              WebkitMaskImage:
+                "radial-gradient(ellipse 80% 48% at 20% 44%, black 0%, black 10%, transparent 80%)",
+            }}
+          />
+          {/* Layer 4: Bright core */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "conic-gradient(from 0deg at 20% 44%, transparent 92deg, rgba(255,252,195,0.28) 95deg, rgba(255,252,195,0.68) 97deg, rgba(255,252,195,0.28) 99deg, transparent 102deg)",
+              filter: "blur(2.5px)",
+              maskImage:
+                "radial-gradient(ellipse 65% 38% at 20% 44%, black 0%, black 8%, transparent 72%)",
+              WebkitMaskImage:
+                "radial-gradient(ellipse 65% 38% at 20% 44%, black 0%, black 8%, transparent 72%)",
+            }}
+          />
+          {/* Lens hot-spot glow */}
+          <div
+            style={{
+              position: "absolute",
+              left: "20%",
+              top: "44%",
+              width: 58,
+              height: 46,
+              transform: "translate(-50%,-50%)",
               borderRadius: "50%",
-              background: "rgba(255,250,180,0.75)",
-              filter: "blur(0.4px)",
-              boxShadow: `0 0 ${m.size * 3}px rgba(255,244,150,0.55)`,
-              animation: `ctDustMote ${m.dur}s ${m.delay}s ease-in-out infinite`,
+              background:
+                "radial-gradient(ellipse, rgba(255,255,218,0.92) 0%, rgba(255,248,160,0.58) 28%, rgba(255,228,90,0.22) 58%, transparent 82%)",
+              filter: "blur(5px)",
+              zIndex: 1,
             }}
           />
-        ))}
-      </div>
-
-      {/* ════════════════════════════════════════════════════════════════
-          CAMERA on tripod — slides in from left, top-center aligned
-          ════════════════════════════════════════════════════════════════ */}
-      <div
-        ref={cameraGroupRef}
-        style={{
-          position: "absolute",
-          left: "2%",
-          top: "50%",
-          transform: "translateX(-130%) translateY(-50%) rotate(-6deg)",
-          width: "min(300px, 34vw)",
-          opacity: 0,
-          zIndex: 22,
-          filter: "drop-shadow(0 4px 22px rgba(200,150,30,0.22))",
-        }}
-      >
-        <svg
-          viewBox="0 0 300 380"
-          style={{ width: "100%", height: "auto", overflow: "visible" }}
-          aria-label="Vintage film camera on tripod"
-        >
-          {/* Body */}
-          <rect
-            x="40"
-            y="55"
-            width="180"
-            height="130"
-            rx="8"
-            fill="#383838"
-            stroke="#666"
-            strokeWidth="2"
-          />
-          <line
-            x1="40"
-            y1="100"
-            x2="220"
-            y2="100"
-            stroke="#4a4a4a"
-            strokeWidth="1.5"
-          />
-          <line
-            x1="40"
-            y1="135"
-            x2="220"
-            y2="135"
-            stroke="#4a4a4a"
-            strokeWidth="1.5"
-          />
-          {/* Nameplate */}
-          <rect
-            x="52"
-            y="106"
-            width="80"
-            height="18"
-            rx="2"
-            fill="#2a2a2a"
-            stroke="#555"
-            strokeWidth="0.8"
-          />
-          <text
-            x="92"
-            y="119"
-            fontFamily="monospace"
-            fontSize="6.5"
-            fill="#777"
-            textAnchor="middle"
-          >
-            CINE-1600
-          </text>
-          {/* Left reel */}
-          <circle
-            cx="72"
-            cy="75"
-            r="22"
-            fill="#3a3a3a"
-            stroke="#777"
-            strokeWidth="2"
-          />
-          <circle
-            cx="72"
-            cy="75"
-            r="15"
-            fill="#2a2a2a"
-            stroke="#666"
-            strokeWidth="1.5"
-          />
-          {[0, 60, 120, 180, 240, 300].map((a) => (
-            <line
-              key={a}
-              x1="72"
-              y1="75"
-              x2={72 + 12 * Math.cos((a * Math.PI) / 180)}
-              y2={75 + 12 * Math.sin((a * Math.PI) / 180)}
-              stroke="#777"
-              strokeWidth="1.5"
+          {/* Dust motes */}
+          {DUST_MOTES.map((m, i) => (
+            <div
+              key={i}
+              style={{
+                position: "absolute",
+                left: `${m.x}%`,
+                top: `${m.y}%`,
+                width: m.size,
+                height: m.size,
+                borderRadius: "50%",
+                background: "rgba(255,250,180,0.75)",
+                filter: "blur(0.4px)",
+                boxShadow: `0 0 ${m.size * 3}px rgba(255,244,150,0.55)`,
+                animation: `ctDustMote ${m.dur}s ${m.delay}s ease-in-out infinite`,
+              }}
             />
           ))}
-          <circle cx="72" cy="75" r="4" fill="#aaa" />
-          {/* Right reel */}
-          <circle
-            cx="188"
-            cy="75"
-            r="22"
-            fill="#3a3a3a"
-            stroke="#777"
-            strokeWidth="2"
-          />
-          <circle
-            cx="188"
-            cy="75"
-            r="15"
-            fill="#2a2a2a"
-            stroke="#666"
-            strokeWidth="1.5"
-          />
-          {[0, 60, 120, 180, 240, 300].map((a) => (
-            <line
-              key={a}
-              x1="188"
-              y1="75"
-              x2={188 + 12 * Math.cos((a * Math.PI) / 180)}
-              y2={75 + 12 * Math.sin((a * Math.PI) / 180)}
-              stroke="#777"
-              strokeWidth="1.5"
-            />
-          ))}
-          <circle cx="188" cy="75" r="4" fill="#aaa" />
-          {/* Viewfinder */}
-          <rect
-            x="100"
-            y="36"
-            width="60"
-            height="25"
-            rx="4"
-            fill="#333"
-            stroke="#666"
-            strokeWidth="1.5"
-          />
-          <rect
-            x="108"
-            y="41"
-            width="44"
-            height="15"
-            rx="2"
-            fill="#222"
-            stroke="#555"
-            strokeWidth="1"
-          />
-          {/* Film perforations */}
-          {[0, 1, 2, 3, 4, 5].map((i) => (
-            <React.Fragment key={i}>
-              <rect
-                x={50 + i * 26}
-                y="55"
-                width="11"
-                height="7"
-                rx="1"
-                fill="#2e2e2e"
-                stroke="#555"
-                strokeWidth="0.5"
-              />
-              <rect
-                x={50 + i * 26}
-                y="178"
-                width="11"
-                height="7"
-                rx="1"
-                fill="#2e2e2e"
-                stroke="#555"
-                strokeWidth="0.5"
-              />
-            </React.Fragment>
-          ))}
-          {/* Lens cone */}
-          <polygon
-            points="220,88 268,74 268,168 220,152"
-            fill="#2e2e2e"
-            stroke="#666"
-            strokeWidth="1.5"
-          />
-          {/* Lens rings */}
-          <circle
-            cx="270"
-            cy="121"
-            r="24"
-            fill="#1a1a1a"
-            stroke="#777"
-            strokeWidth="2.5"
-          />
-          <circle
-            cx="270"
-            cy="121"
-            r="18"
-            fill="#222"
-            stroke="#666"
-            strokeWidth="1.5"
-          />
-          <circle
-            cx="270"
-            cy="121"
-            r="12"
-            fill="#1a1a1a"
-            stroke="#888"
-            strokeWidth="1"
-          />
-          <circle
-            cx="270"
-            cy="121"
-            r="7"
-            fill="#222"
-            stroke="#aaa"
-            strokeWidth="1"
-          />
-          <circle
-            cx="270"
-            cy="121"
-            r="3"
-            fill="#1a1a1a"
-            stroke="#bbb"
-            strokeWidth="0.5"
-          />
-          {/* Lens highlight */}
-          <circle cx="262" cy="112" r="4" fill="rgba(255,255,255,0.18)" />
-          <circle cx="259" cy="109" r="2" fill="rgba(255,255,255,0.24)" />
-          {/* Crank */}
-          <line
-            x1="220"
-            y1="138"
-            x2="246"
-            y2="155"
-            stroke="#666"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <circle
-            cx="250"
-            cy="158"
-            r="7"
-            fill="#404040"
-            stroke="#777"
-            strokeWidth="1.5"
-          />
-          <circle cx="250" cy="158" r="3" fill="#666" />
-          {/* Corner rivets */}
-          <circle
-            cx="48"
-            cy="63"
-            r="3"
-            fill="#555"
-            stroke="#777"
-            strokeWidth="0.5"
-          />
-          <circle
-            cx="212"
-            cy="63"
-            r="3"
-            fill="#555"
-            stroke="#777"
-            strokeWidth="0.5"
-          />
-          <circle
-            cx="48"
-            cy="177"
-            r="3"
-            fill="#555"
-            stroke="#777"
-            strokeWidth="0.5"
-          />
-          <circle
-            cx="212"
-            cy="177"
-            r="3"
-            fill="#555"
-            stroke="#777"
-            strokeWidth="0.5"
-          />
-          {/* Tripod head */}
-          <rect
-            x="112"
-            y="185"
-            width="36"
-            height="14"
-            rx="3"
-            fill="#333"
-            stroke="#555"
-            strokeWidth="1.5"
-          />
-          {/* Legs */}
-          <line
-            x1="120"
-            y1="196"
-            x2="58"
-            y2="370"
-            stroke="#555"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <line
-            x1="130"
-            y1="199"
-            x2="130"
-            y2="370"
-            stroke="#555"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <line
-            x1="140"
-            y1="196"
-            x2="202"
-            y2="370"
-            stroke="#555"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <line
-            x1="76"
-            y1="300"
-            x2="184"
-            y2="300"
-            stroke="#444"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-          <ellipse cx="58" cy="372" rx="9" ry="3.5" fill="#333" />
-          <ellipse cx="130" cy="372" rx="9" ry="3.5" fill="#333" />
-          <ellipse cx="202" cy="372" rx="9" ry="3.5" fill="#333" />
-        </svg>
-      </div>
-
-      {/* ════════════════════════════════════════════════════════════════
-          PROJECTION SCREEN
-          ════════════════════════════════════════════════════════════════ */}
-      <div
-        ref={screenRef}
-        style={{
-          position: "absolute",
-          right: "3%",
-          top: "50%",
-          transform:
-            "translateY(-50%) perspective(1200px) rotateY(-4deg) scale(0.92)",
-          width: "min(480px, 52vw)",
-          aspectRatio: "16 / 9",
-          opacity: 0,
-          zIndex: 21,
-          border: "2px solid rgba(200,180,100,0.22)",
-          boxShadow:
-            "0 0 60px rgba(255,215,60,0.16), " +
-            "0 0 120px rgba(255,200,40,0.07), " +
-            "inset 0 0 60px rgba(0,0,0,0.70)",
-          background:
-            "linear-gradient(135deg, rgba(22,17,6,0.98) 0%, rgba(10,8,2,1) 100%)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {/* Inner bezel */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 7,
-            border: "1px solid rgba(180,155,80,0.12)",
-            pointerEvents: "none",
-          }}
-        />
-        {/* Projected hotspot */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            pointerEvents: "none",
-            background:
-              "radial-gradient(ellipse 65% 55% at 50% 50%, " +
-              "rgba(255,240,150,0.11) 0%, rgba(255,220,80,0.04) 50%, transparent 100%)",
-          }}
-        />
-        {/* Scanlines */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            pointerEvents: "none",
-            background:
-              "repeating-linear-gradient(0deg,transparent,transparent 2px," +
-              "rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 5px)",
-          }}
-        />
-        {/* Text wipe */}
-        <div
-          ref={screenTextRef}
-          style={{
-            clipPath: "inset(0 100% 0 0)",
-            filter: "url(#ct-grain)",
-            textAlign: "center",
-            padding: "0 6%",
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "'IBM Plex Serif', Georgia, serif",
-              fontSize: "clamp(1.6rem, 3.8vw, 2.8rem)",
-              fontWeight: 700,
-              color: "rgba(248,236,188,0.97)",
-              letterSpacing: "0.04em",
-              lineHeight: 1.1,
-              textShadow:
-                "0 0 35px rgba(255,215,60,0.58), 0 2px 8px rgba(0,0,0,0.95)",
-            }}
-          >
-            AI Film Making
-          </div>
-          <div
-            style={{
-              fontFamily: "monospace",
-              fontSize: "clamp(0.5rem, 1.1vw, 0.78rem)",
-              color: "rgba(200,170,80,0.62)",
-              letterSpacing: "0.3em",
-              marginTop: "0.7em",
-              textTransform: "uppercase",
-            }}
-          >
-            Hackathon &nbsp;·&nbsp; v2
-          </div>
-          <div
-            style={{
-              fontFamily: "monospace",
-              fontSize: "clamp(0.38rem, 0.72vw, 0.58rem)",
-              color: "rgba(180,150,70,0.32)",
-              letterSpacing: "0.25em",
-              marginTop: "0.8em",
-              textTransform: "uppercase",
-            }}
-          >
-            2025 &nbsp;·&nbsp; Dublin, Ireland
           </div>
         </div>
-        {/* Corner registration marks */}
-        {(["tl", "tr", "bl", "br"] as const).map((c) => (
+
+        {/* ════════════════════════════════════════════════════════════════
+          CAMERA on tripod — slides in from left, top-center aligned
+          ════════════════════════════════════════════════════════════════ */}
+        <div
+          ref={cameraGroupRef}
+          style={{
+            position: "absolute",
+            left: "2%",
+            top: "50%",
+            transform: "translateX(-130%) translateY(-50%) rotate(-6deg)",
+            width: "min(300px, 34vw)",
+            opacity: 0,
+            zIndex: 22,
+            filter: "drop-shadow(0 4px 22px rgba(200,150,30,0.22))",
+          }}
+        >
+          <svg
+            viewBox="0 0 300 380"
+            style={{ width: "100%", height: "auto", overflow: "visible" }}
+            aria-label="Vintage film camera on tripod"
+          >
+            {/* Body */}
+            <rect
+              x="40"
+              y="55"
+              width="180"
+              height="130"
+              rx="8"
+              fill="#383838"
+              stroke="#666"
+              strokeWidth="2"
+            />
+            <line
+              x1="40"
+              y1="100"
+              x2="220"
+              y2="100"
+              stroke="#4a4a4a"
+              strokeWidth="1.5"
+            />
+            <line
+              x1="40"
+              y1="135"
+              x2="220"
+              y2="135"
+              stroke="#4a4a4a"
+              strokeWidth="1.5"
+            />
+            {/* Nameplate */}
+            <rect
+              x="52"
+              y="106"
+              width="80"
+              height="18"
+              rx="2"
+              fill="#2a2a2a"
+              stroke="#555"
+              strokeWidth="0.8"
+            />
+            <text
+              x="92"
+              y="119"
+              fontFamily="monospace"
+              fontSize="6.5"
+              fill="#777"
+              textAnchor="middle"
+            >
+              CINE-1600
+            </text>
+            {/* Left reel */}
+            <circle
+              cx="72"
+              cy="75"
+              r="22"
+              fill="#3a3a3a"
+              stroke="#777"
+              strokeWidth="2"
+            />
+            <circle
+              cx="72"
+              cy="75"
+              r="15"
+              fill="#2a2a2a"
+              stroke="#666"
+              strokeWidth="1.5"
+            />
+            {[0, 60, 120, 180, 240, 300].map((a) => (
+              <line
+                key={a}
+                x1="72"
+                y1="75"
+                x2={72 + 12 * Math.cos((a * Math.PI) / 180)}
+                y2={75 + 12 * Math.sin((a * Math.PI) / 180)}
+                stroke="#777"
+                strokeWidth="1.5"
+              />
+            ))}
+            <circle cx="72" cy="75" r="4" fill="#aaa" />
+            {/* Right reel */}
+            <circle
+              cx="188"
+              cy="75"
+              r="22"
+              fill="#3a3a3a"
+              stroke="#777"
+              strokeWidth="2"
+            />
+            <circle
+              cx="188"
+              cy="75"
+              r="15"
+              fill="#2a2a2a"
+              stroke="#666"
+              strokeWidth="1.5"
+            />
+            {[0, 60, 120, 180, 240, 300].map((a) => (
+              <line
+                key={a}
+                x1="188"
+                y1="75"
+                x2={188 + 12 * Math.cos((a * Math.PI) / 180)}
+                y2={75 + 12 * Math.sin((a * Math.PI) / 180)}
+                stroke="#777"
+                strokeWidth="1.5"
+              />
+            ))}
+            <circle cx="188" cy="75" r="4" fill="#aaa" />
+            {/* Viewfinder */}
+            <rect
+              x="100"
+              y="36"
+              width="60"
+              height="25"
+              rx="4"
+              fill="#333"
+              stroke="#666"
+              strokeWidth="1.5"
+            />
+            <rect
+              x="108"
+              y="41"
+              width="44"
+              height="15"
+              rx="2"
+              fill="#222"
+              stroke="#555"
+              strokeWidth="1"
+            />
+            {/* Film perforations */}
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <React.Fragment key={i}>
+                <rect
+                  x={50 + i * 26}
+                  y="55"
+                  width="11"
+                  height="7"
+                  rx="1"
+                  fill="#2e2e2e"
+                  stroke="#555"
+                  strokeWidth="0.5"
+                />
+                <rect
+                  x={50 + i * 26}
+                  y="178"
+                  width="11"
+                  height="7"
+                  rx="1"
+                  fill="#2e2e2e"
+                  stroke="#555"
+                  strokeWidth="0.5"
+                />
+              </React.Fragment>
+            ))}
+            {/* Lens cone */}
+            <polygon
+              points="220,88 268,74 268,168 220,152"
+              fill="#2e2e2e"
+              stroke="#666"
+              strokeWidth="1.5"
+            />
+            {/* Lens rings */}
+            <circle
+              cx="270"
+              cy="121"
+              r="24"
+              fill="#1a1a1a"
+              stroke="#777"
+              strokeWidth="2.5"
+            />
+            <circle
+              cx="270"
+              cy="121"
+              r="18"
+              fill="#222"
+              stroke="#666"
+              strokeWidth="1.5"
+            />
+            <circle
+              cx="270"
+              cy="121"
+              r="12"
+              fill="#1a1a1a"
+              stroke="#888"
+              strokeWidth="1"
+            />
+            <circle
+              cx="270"
+              cy="121"
+              r="7"
+              fill="#222"
+              stroke="#aaa"
+              strokeWidth="1"
+            />
+            <circle
+              cx="270"
+              cy="121"
+              r="3"
+              fill="#1a1a1a"
+              stroke="#bbb"
+              strokeWidth="0.5"
+            />
+            {/* Lens highlight */}
+            <circle cx="262" cy="112" r="4" fill="rgba(255,255,255,0.18)" />
+            <circle cx="259" cy="109" r="2" fill="rgba(255,255,255,0.24)" />
+            {/* Crank */}
+            <line
+              x1="220"
+              y1="138"
+              x2="246"
+              y2="155"
+              stroke="#666"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+            <circle
+              cx="250"
+              cy="158"
+              r="7"
+              fill="#404040"
+              stroke="#777"
+              strokeWidth="1.5"
+            />
+            <circle cx="250" cy="158" r="3" fill="#666" />
+            {/* Corner rivets */}
+            <circle
+              cx="48"
+              cy="63"
+              r="3"
+              fill="#555"
+              stroke="#777"
+              strokeWidth="0.5"
+            />
+            <circle
+              cx="212"
+              cy="63"
+              r="3"
+              fill="#555"
+              stroke="#777"
+              strokeWidth="0.5"
+            />
+            <circle
+              cx="48"
+              cy="177"
+              r="3"
+              fill="#555"
+              stroke="#777"
+              strokeWidth="0.5"
+            />
+            <circle
+              cx="212"
+              cy="177"
+              r="3"
+              fill="#555"
+              stroke="#777"
+              strokeWidth="0.5"
+            />
+            {/* Tripod head */}
+            <rect
+              x="112"
+              y="185"
+              width="36"
+              height="14"
+              rx="3"
+              fill="#333"
+              stroke="#555"
+              strokeWidth="1.5"
+            />
+            {/* Legs */}
+            <line
+              x1="120"
+              y1="196"
+              x2="58"
+              y2="370"
+              stroke="#555"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+            <line
+              x1="130"
+              y1="199"
+              x2="130"
+              y2="370"
+              stroke="#555"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+            <line
+              x1="140"
+              y1="196"
+              x2="202"
+              y2="370"
+              stroke="#555"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+            <line
+              x1="76"
+              y1="300"
+              x2="184"
+              y2="300"
+              stroke="#444"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
+            <ellipse cx="58" cy="372" rx="9" ry="3.5" fill="#333" />
+            <ellipse cx="130" cy="372" rx="9" ry="3.5" fill="#333" />
+            <ellipse cx="202" cy="372" rx="9" ry="3.5" fill="#333" />
+          </svg>
+        </div>
+        <div
+          ref={mobileProjectorRef}
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: "92%",
+            width: "min(180px, 48vw)",
+            height: "74px",
+            transform: "translate3d(-50%, 20%, 0)",
+            transformStyle: "preserve-3d",
+            opacity: 0,
+            zIndex: 22,
+            pointerEvents: "none",
+          }}
+        >
           <div
-            key={c}
             style={{
               position: "absolute",
-              width: 16,
-              height: 16,
-              borderColor: "rgba(230,215,160,0.35)",
-              borderStyle: "solid",
-              borderWidth: 0,
-              ...(c === "tl"
-                ? { top: 6, left: 6, borderTopWidth: 2, borderLeftWidth: 2 }
-                : c === "tr"
-                  ? { top: 6, right: 6, borderTopWidth: 2, borderRightWidth: 2 }
-                  : c === "bl"
-                    ? {
-                        bottom: 6,
-                        left: 6,
-                        borderBottomWidth: 2,
-                        borderLeftWidth: 2,
-                      }
-                    : {
-                        bottom: 6,
-                        right: 6,
-                        borderBottomWidth: 2,
-                        borderRightWidth: 2,
-                      }),
+              inset: 0,
+              borderRadius: 14,
+              background:
+                "linear-gradient(160deg, #3d434d 0%, #2a3039 44%, #161a21 100%)",
+              border: "1px solid rgba(190,200,215,0.22)",
+              boxShadow:
+                "0 14px 28px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              left: "14%",
+              right: "14%",
+              top: 15,
+              height: 11,
+              borderRadius: 999,
+              background:
+                "linear-gradient(90deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.04) 58%, transparent 100%)",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              left: "50%",
+              top: -10,
+              width: 84,
+              height: 42,
+              transform: "translateX(-50%)",
+              borderRadius: 24,
+              background:
+                "linear-gradient(135deg, #212832 0%, #12171f 100%)",
+              border: "1px solid rgba(170,182,200,0.24)",
+              boxShadow:
+                "inset 0 0 0 1px rgba(255,255,255,0.04), 0 8px 18px rgba(0,0,0,0.35)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <div
               style={{
-                position: "absolute",
-                width: 4,
-                height: 4,
+                width: 34,
+                height: 34,
                 borderRadius: "50%",
-                border: "1px solid rgba(230,215,160,0.3)",
-                ...(c === "tl"
-                  ? { bottom: 0, right: 0 }
-                  : c === "tr"
-                    ? { bottom: 0, left: 0 }
-                    : c === "bl"
-                      ? { top: 0, right: 0 }
-                      : { top: 0, left: 0 }),
+                background:
+                  "radial-gradient(circle, #29313d 0%, #11161e 64%, #090d13 100%)",
+                border: "1px solid rgba(175,190,215,0.28)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
-            />
+            >
+              <div
+                ref={mobileProjectorLensRef}
+                style={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: "50%",
+                  background:
+                    "radial-gradient(circle, rgba(255,252,222,0.95) 0%, rgba(255,236,148,0.62) 45%, rgba(255,220,92,0.14) 82%, transparent 100%)",
+                  boxShadow: "0 0 14px rgba(255,236,150,0.46)",
+                  opacity: 0,
+                }}
+              />
+            </div>
           </div>
-        ))}
-      </div>
+          <div
+            style={{
+              position: "absolute",
+              left: "10%",
+              right: "10%",
+              bottom: 6,
+              height: 14,
+              borderRadius: 7,
+              background: "linear-gradient(180deg, #11161d 0%, #0a0e14 100%)",
+              border: "1px solid rgba(120,130,145,0.24)",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              left: "14%",
+              right: "14%",
+              bottom: -12,
+              height: 12,
+              borderRadius: 999,
+              background: "rgba(0,0,0,0.55)",
+              filter: "blur(3px)",
+            }}
+          />
+        </div>
 
-      <style>{`
+        {/* ════════════════════════════════════════════════════════════════
+          PROJECTION SCREEN
+          ════════════════════════════════════════════════════════════════ */}
+        <div
+          ref={screenRef}
+          style={{
+            position: "absolute",
+            right: "3%",
+            top: "50%",
+            transform:
+              "translateY(-50%) perspective(1200px) rotateY(-4deg) scale(0.92)",
+            width: "min(620px, 60vw)",
+            aspectRatio: "16 / 9",
+            opacity: 0,
+            zIndex: 21,
+            border: "2px solid rgba(200,180,100,0.22)",
+            boxShadow:
+              "0 0 60px rgba(255,215,60,0.16), " +
+              "0 0 120px rgba(255,200,40,0.07), " +
+              "inset 0 0 60px rgba(0,0,0,0.70)",
+            background:
+              "linear-gradient(135deg, rgba(22,17,6,0.98) 0%, rgba(10,8,2,1) 100%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {/* Inner bezel */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 7,
+              border: "1px solid rgba(180,155,80,0.12)",
+              pointerEvents: "none",
+            }}
+          />
+          {/* Projected hotspot */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              background:
+                "radial-gradient(ellipse 65% 55% at 50% 50%, " +
+                "rgba(255,240,150,0.11) 0%, rgba(255,220,80,0.04) 50%, transparent 100%)",
+            }}
+          />
+          {/* Scanlines */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              background:
+                "repeating-linear-gradient(0deg,transparent,transparent 2px," +
+                "rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 5px)",
+            }}
+          />
+          {/* Text wipe */}
+          <div
+            ref={screenTextRef}
+            style={{
+              clipPath: "inset(0 100% 0 0)",
+              filter: "url(#ct-grain)",
+              textAlign: "center",
+              padding: "0 6%",
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "'IBM Plex Serif', Georgia, serif",
+                fontSize: "clamp(1.6rem, 3.8vw, 2.8rem)",
+                fontWeight: 700,
+                color: "rgba(248,236,188,0.97)",
+                letterSpacing: "0.04em",
+                lineHeight: 1.1,
+                textShadow:
+                  "0 0 35px rgba(255,215,60,0.58), 0 2px 8px rgba(0,0,0,0.95)",
+              }}
+            >
+              AI Film Making
+            </div>
+            <div
+              style={{
+                fontFamily: "monospace",
+                fontSize: "clamp(0.5rem, 1.1vw, 0.78rem)",
+                color: "rgba(200,170,80,0.62)",
+                letterSpacing: "0.3em",
+                marginTop: "0.7em",
+                textTransform: "uppercase",
+              }}
+            >
+              Hackathon &nbsp;·&nbsp; v2
+            </div>
+            <div
+              style={{
+                fontFamily: "monospace",
+                fontSize: "clamp(0.38rem, 0.72vw, 0.58rem)",
+                color: "rgba(180,150,70,0.32)",
+                letterSpacing: "0.25em",
+                marginTop: "0.8em",
+                textTransform: "uppercase",
+              }}
+            >
+              2025 &nbsp;·&nbsp; Dublin, Ireland
+            </div>
+          </div>
+          {/* Corner registration marks */}
+          {(["tl", "tr", "bl", "br"] as const).map((c) => (
+            <div
+              key={c}
+              style={{
+                position: "absolute",
+                width: 16,
+                height: 16,
+                borderColor: "rgba(230,215,160,0.35)",
+                borderStyle: "solid",
+                borderWidth: 0,
+                ...(c === "tl"
+                  ? { top: 6, left: 6, borderTopWidth: 2, borderLeftWidth: 2 }
+                  : c === "tr"
+                    ? {
+                        top: 6,
+                        right: 6,
+                        borderTopWidth: 2,
+                        borderRightWidth: 2,
+                      }
+                    : c === "bl"
+                      ? {
+                          bottom: 6,
+                          left: 6,
+                          borderBottomWidth: 2,
+                          borderLeftWidth: 2,
+                        }
+                      : {
+                          bottom: 6,
+                          right: 6,
+                          borderBottomWidth: 2,
+                          borderRightWidth: 2,
+                        }),
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  width: 4,
+                  height: 4,
+                  borderRadius: "50%",
+                  border: "1px solid rgba(230,215,160,0.3)",
+                  ...(c === "tl"
+                    ? { bottom: 0, right: 0 }
+                    : c === "tr"
+                      ? { bottom: 0, left: 0 }
+                      : c === "bl"
+                        ? { top: 0, right: 0 }
+                        : { top: 0, left: 0 }),
+                }}
+              />
+            </div>
+          ))}
+        </div>
+
+        <style>{`
         @keyframes ctDustMote {
           0%   { transform: translateY(0px) translateX(0px) scale(1);    opacity: 0;   }
           12%  { opacity: 0.85; }
           50%  { transform: translateY(-6px) translateX(2px) scale(0.82); opacity: 0.9; }
           88%  { opacity: 0.6; }
           100% { transform: translateY(-12px) translateX(-1px) scale(0.6); opacity: 0; }
+        }
+        @keyframes ctFilmGrainDrift {
+          0%   { transform: translate(0, 0); }
+          25%  { transform: translate(-2px, 1px); }
+          50%  { transform: translate(2px, -2px); }
+          75%  { transform: translate(1px, 2px); }
+          100% { transform: translate(0, 0); }
         }
       `}</style>
       </div>
