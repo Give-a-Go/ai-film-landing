@@ -109,14 +109,14 @@ const CinematicTransition: React.FC = () => {
       // CLAPBOARD  p 0.30 → 0.52
       // ─────────────────────────────────────────────────────────────────
       if (clapboardRef.current) {
-        const dropIn = easeOutCubic(phase(timelineP, 0.3, 0.44));
-        const exitOut = easeInCubic(phase(timelineP, 0.46, 0.54));
+        const dropIn = easeOutCubic(phase(timelineP, 0.0, 0.14));
+        const exitOut = easeInCubic(phase(timelineP, 0.16, 0.24));
         const y = -115 + dropIn * 115 + exitOut * 135;
         clapboardRef.current.style.transform = `translateX(-50%) translateY(${y}%)`;
-        clapboardRef.current.style.opacity = timelineP > 0.54 ? "0" : "1";
+        clapboardRef.current.style.opacity = timelineP > 0.24 ? "0" : "1";
       }
       if (clapArmRef.current) {
-        const snapT = easeInOutCubic(phase(timelineP, 0.4, 0.44));
+        const snapT = easeInOutCubic(phase(timelineP, 0.1, 0.14));
         clapArmRef.current.style.transform = `rotate(${-28 * (1 - snapT)}deg)`;
       }
 
@@ -124,7 +124,7 @@ const CinematicTransition: React.FC = () => {
       // FLASH  p 0.43 → 0.50
       // ─────────────────────────────────────────────────────────────────
       if (flashRef.current) {
-        const fp = phase(timelineP, 0.43, 0.5);
+        const fp = phase(timelineP, 0.13, 0.2);
         const spike = fp < 0.4 ? fp / 0.4 : 1 - (fp - 0.4) / 0.6;
         flashRef.current.style.opacity = String(spike * 0.9);
       }
@@ -133,10 +133,10 @@ const CinematicTransition: React.FC = () => {
       // CAMERA  p 0.48 → 0.72
       // ─────────────────────────────────────────────────────────────────
       if (cameraGroupRef.current) {
-        const camIn = easeOutCubic(phase(timelineP, 0.48, 0.72));
+        const camIn = easeOutCubic(phase(timelineP, 0.18, 0.42));
         const tx = (1 - camIn) * -130;
         cameraGroupRef.current.style.opacity = String(
-          easeOutCubic(phase(timelineP, 0.48, 0.6)),
+          easeOutCubic(phase(timelineP, 0.18, 0.3)),
         );
         cameraGroupRef.current.style.transform = `translateX(${tx}%) translateY(-50%) rotate(-6deg)`;
       }
@@ -146,7 +146,7 @@ const CinematicTransition: React.FC = () => {
       // ─────────────────────────────────────────────────────────────────
       if (beamRef.current) {
         beamRef.current.style.opacity = String(
-          easeOutCubic(phase(timelineP, 0.58, 0.76)),
+          easeOutCubic(phase(timelineP, 0.28, 0.5)),
         );
       }
 
@@ -154,7 +154,7 @@ const CinematicTransition: React.FC = () => {
       // SCREEN  p 0.62 → 0.80
       // ─────────────────────────────────────────────────────────────────
       if (screenRef.current) {
-        const sp = easeOutCubic(phase(timelineP, 0.62, 0.8));
+        const sp = easeOutCubic(phase(timelineP, 0.34, 0.56));
         screenRef.current.style.opacity = String(sp);
         screenRef.current.style.transform = `translateY(-50%) perspective(1200px) rotateY(-4deg) scale(${0.92 + sp * 0.08})`;
       }
@@ -163,7 +163,7 @@ const CinematicTransition: React.FC = () => {
       // TEXT WIPE  p 0.76 → 0.96
       // ─────────────────────────────────────────────────────────────────
       if (screenTextRef.current) {
-        const wp = easeOutCubic(phase(timelineP, 0.76, 0.96));
+        const wp = easeOutCubic(phase(timelineP, 0.56, 0.9));
         screenTextRef.current.style.clipPath = `inset(0 ${(1 - wp) * 100}% 0 0)`;
       }
 
@@ -171,7 +171,7 @@ const CinematicTransition: React.FC = () => {
       // FILM GRAIN jitter
       // ─────────────────────────────────────────────────────────────────
       frameCount.current++;
-      if (grainRef.current && frameCount.current % 4 === 0 && timelineP > 0.76) {
+      if (grainRef.current && frameCount.current % 4 === 0 && timelineP > 0.56) {
         const bf = 0.65 + (Math.random() - 0.5) * 0.1;
         grainRef.current.setAttribute("baseFrequency", `${bf} ${bf}`);
       }

@@ -10,16 +10,54 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Serif:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Serif:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <style>
+      :root {
+        --bg: #050505;
+        --surface: #0a0a0a;
+        --gold: rgba(198,153,58,0.97);
+        --gold-raw: #C6993A;
+        --gold-light: #D4AF5A;
+        --gold-pale: #E8D5A3;
+        --gold-dim: #5A4D2E;
+        --bone: #E0D5C0;
+        --muted: #4A4232;
+        --border: #1E1A12;
+      }
+      
       body {
         font-family: "IBM Plex Sans", sans-serif;
-        background-color: #ffffff;
-        color: #0f0f0f;
+        background-color: var(--bg);
+        color: var(--bone);
         overflow-x: hidden;
       }
+      
+      /* Film grain overlay */
+      .film-grain {
+        position: relative;
+      }
+      .film-grain::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        opacity: 0.035;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        background-size: 200px 200px;
+        pointer-events: none;
+        z-index: 9999;
+      }
+      
+      /* Deep vignette */
+      .vignette {
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(ellipse 70% 70% at center, transparent 30%, var(--bg) 100%);
+        pointer-events: none;
+        z-index: 100;
+      }
+      
       .perspective-container {
         perspective: 1200px;
         transform-style: preserve-3d;
@@ -27,10 +65,36 @@
       .preserve-3d {
         transform-style: preserve-3d;
       }
+      
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--bg);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--gold-dim);
+        opacity: 0.3;
+        border-radius: 2px;
+      }
+
       /* Hide scrollbar for cleaner look during dev, optional */
       ::-webkit-scrollbar {
         width: 0px;
         background: transparent;
+      }
+
+      /* ── Projector gate jitter — fires ~every 12s, sub-pixel movement ── */
+      @keyframes gateJitter {
+        0%     { transform: translate(0, 0); }
+        0.15%  { transform: translate(0.5px, -0.8px); }
+        0.30%  { transform: translate(-0.3px, 0.4px); }
+        0.45%  { transform: translate(0, 0); }
+        100%   { transform: translate(0, 0); }
+      }
+      .hero-canvas-jitter {
+        animation: gateJitter 12s linear infinite;
       }
 
       /* Custom scrollbar for teleprompter modal */
@@ -65,13 +129,23 @@
         theme: {
           extend: {
             colors: {
-              accent: "#E85D35", // Warm orange/amber from design
+              accent: "#E85D35",
               muted: "#6B6B6B",
               dark: "#0F0F0F",
+              gold: {
+                DEFAULT: "#C6993A",
+                light: "#D4AF5A",
+                pale: "#E8D5A3",
+                dim: "#5A4D2E",
+              },
+              bone: "#E0D5C0",
+              surface: "#0a0a0a",
+              border: "#1E1A12",
             },
             fontFamily: {
               sans: ["IBM Plex Sans", "sans-serif"],
               serif: ["IBM Plex Serif", "serif"],
+              mono: ["IBM Plex Mono", "monospace"],
             },
           },
         },

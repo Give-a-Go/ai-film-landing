@@ -24,21 +24,22 @@ const Navigation: React.FC<NavigationProps> = ({ onOpenWaitlist }) => {
 
   const closeMenu = () => setMenuOpen(false);
 
+  // All pages have a dark background — use light text throughout
   const linkClass = `block w-full text-left py-3 px-4 text-base font-medium transition-colors duration-300 min-h-[44px] flex items-center text-gray-700 hover:text-black`;
-  const linkClassSmall = `text-sm font-medium transition-colors duration-300 text-gray-600 hover:text-black`;
+  const linkClassSmall = `text-sm font-medium transition-colors duration-300 text-[rgba(224,213,192,0.55)] hover:text-[#E0D5C0]`;
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 px-6 py-6 md:px-12 flex justify-between items-center bg-transparent pointer-events-none">
       {/* Logo */}
       <a
         href="https://giveago.co"
-        className="text-2xl font-serif font-medium tracking-tight pointer-events-auto cursor-pointer transition-colors duration-500 text-black"
+        className="text-2xl font-serif font-medium tracking-tight pointer-events-auto cursor-pointer transition-colors duration-500 text-[#E0D5C0]"
       >
         Give(a)Go
       </a>
 
       {/* Center Links (desktop only) */}
-      <div className="hidden md:flex items-center gap-4 bg-white/0 backdrop-blur-[2px] px-6 py-2 rounded-full pointer-events-auto">
+      <div className="hidden md:flex items-center gap-4 backdrop-blur-[2px] px-6 py-2 rounded-full pointer-events-auto">
         <div className="flex items-center gap-8">
           <a href="https://giveago.co" className={linkClassSmall}>
             About us
@@ -58,14 +59,19 @@ const Navigation: React.FC<NavigationProps> = ({ onOpenWaitlist }) => {
           <button
             type="button"
             onClick={() => onOpenWaitlist?.()}
-            className="px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-1 group bg-black text-white hover:bg-gray-900"
+            className="px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-1 group bg-[#E0D5C0] text-[#050505] hover:bg-white"
           >
             I'm interested{" "}
             <span className="group-hover:translate-x-0.5 transition-transform">→</span>
           </button>
           <a
             href="https://giveago.co/sponsor"
-            className="px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 bg-black/10 text-black hover:bg-black/20"
+            className="px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300"
+            style={{
+              border: '1px solid rgba(198,153,58,0.3)',
+              color: 'rgba(198,153,58,0.8)',
+              background: 'rgba(198,153,58,0.07)',
+            }}
           >
             Sponsor
           </a>
@@ -74,7 +80,7 @@ const Navigation: React.FC<NavigationProps> = ({ onOpenWaitlist }) => {
         {/* Hamburger button (mobile only) */}
         <button
           type="button"
-          className="md:hidden w-11 h-11 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent text-black focus-visible:ring-black/50"
+          className="md:hidden w-11 h-11 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent text-[#E0D5C0] focus-visible:ring-[#E0D5C0]/50"
           onClick={() => setMenuOpen((open) => !open)}
           aria-expanded={menuOpen}
           aria-controls="mobile-nav-menu"

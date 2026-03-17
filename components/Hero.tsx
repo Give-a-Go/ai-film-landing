@@ -19,6 +19,10 @@ const Hero: React.FC<HeroProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const textOverlayRef = useRef<HTMLDivElement>(null);
+  const fadeOverlayRef = useRef<HTMLDivElement>(null);
+  const scrollCueRef = useRef<HTMLDivElement>(null);
+  // Tracks first render time for startup projector-fade effect
+  const startTimeRef = useRef<number | null>(null);
 
   // Store refs for cleanup and animation
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -26,11 +30,11 @@ const Hero: React.FC<HeroProps> = ({
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const segmentsRef = useRef<THREE.Group[]>([]);
   const scrollPosRef = useRef(0);
-  const autoScrollSpeedRef = useRef(0.5); // Auto-scroll speed
+  const autoScrollSpeedRef = useRef(0.5);
   const isUserScrollingRef = useRef(false);
   const lastUserScrollTimeRef = useRef(0);
 
-  // Texture cache for performance - load each texture only once
+  // Texture cache for performance
   const textureLoaderRef = useRef<THREE.TextureLoader>(
     new THREE.TextureLoader(),
   );
@@ -42,28 +46,23 @@ const Hero: React.FC<HeroProps> = ({
   // Track recently used video URLs across segments to avoid close repetition
   const recentVideoUrlsRef = useRef<string[]>([]);
 
-  // Grid line materials for fading during fade-to-black transition
+  // Grid line materials for potential animation
   const lineMaterialsRef = useRef<THREE.LineBasicMaterial[]>([]);
-  // HTML overlay div for uniform cinema-style fade to black over the canvas
-  const fadeOverlayRef = useRef<HTMLDivElement>(null);
 
   // --- CONFIGURATION ---
-  // Tuned to match the reference design's density and scale
   const TUNNEL_WIDTH = 37.5;
   const TUNNEL_HEIGHT = 25.0;
-  const SEGMENT_DEPTH = 6; // Short depth for "square-ish" floor tiles
-  const NUM_SEGMENTS = 8; // Reduced from 14 for faster initial load
-  const FOG_DENSITY = 0.02;
+  const SEGMENT_DEPTH = 6;
+  const NUM_SEGMENTS = 8;
+  const FOG_DENSITY = 0.022;
 
-  // Grid Divisions
-  const FLOOR_COLS = 6; // Number of columns on floor/ceiling
-  const WALL_ROWS = 4; // Number of rows on walls
+  const FLOOR_COLS = 6;
+  const WALL_ROWS = 4;
 
-  // Derived dimensions
   const COL_WIDTH = TUNNEL_WIDTH / FLOOR_COLS;
   const ROW_HEIGHT = TUNNEL_HEIGHT / WALL_ROWS;
 
-  // Cloudinary videos from collection be38947943f4608449e53793e421b109
+  // Cloudinary videos
   const videoUrls = [
     "https://res.cloudinary.com/dwgjwc96q/video/upload/v1769368553/PXL_20250329_140459146_kqw0rn.mp4",
     "https://res.cloudinary.com/dwgjwc96q/video/upload/v1769368527/PXL_20250816_110111789_1_jcfgsa.mp4",
@@ -74,7 +73,6 @@ const Hero: React.FC<HeroProps> = ({
     "https://res.cloudinary.com/dwgjwc96q/video/upload/v1769368550/PXL_20251025_115448039_jgyjr1.mp4",
   ];
 
-  // Optimized local images from public/images-optimized folder
   const imageUrls = [
     "/images-optimized/DSC03927.webp",
     "/images-optimized/DSC03932.webp",
@@ -120,7 +118,6 @@ const Hero: React.FC<HeroProps> = ({
     "/images-optimized/PXL_20250329_141611004.webp",
   ];
 
-  // Helper: Create a segment with grid lines and filled cells
   const createSegment = (zPos: number, fadeDelay = 0) => {
     const group = new THREE.Group();
     group.position.z = zPos;
@@ -129,42 +126,29 @@ const Hero: React.FC<HeroProps> = ({
     const h = TUNNEL_HEIGHT / 2;
     const d = SEGMENT_DEPTH;
 
-    // --- 1. Grid Lines ---
-    // Start with purple accent colors; these will be updated by useEffect immediately on mount
+    // Gold/amber grid lines to match the cinematic palette
     const lineMaterial = new THREE.LineBasicMaterial({
-      color: 0x7c3aed,
+      color: 0xC6993A,
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.22,
     });
     const lineGeo = new THREE.BufferGeometry();
     const vertices: number[] = [];
 
-    // A. Longitudinal Lines (Z-axis)
-    // Floor & Ceiling (varying X)
     for (let i = 0; i <= FLOOR_COLS; i++) {
       const x = -w + i * COL_WIDTH;
-      // Floor line
       vertices.push(x, -h, 0, x, -h, -d);
-      // Ceiling line
       vertices.push(x, h, 0, x, h, -d);
     }
-    // Walls (varying Y) - excluding top/bottom corners already drawn
     for (let i = 1; i < WALL_ROWS; i++) {
       const y = -h + i * ROW_HEIGHT;
-      // Left Wall line
       vertices.push(-w, y, 0, -w, y, -d);
-      // Right Wall line
       vertices.push(w, y, 0, w, y, -d);
     }
 
-    // B. Latitudinal Lines (Ring at z=0)
-    // Floor (Bottom edge)
     vertices.push(-w, -h, 0, w, -h, 0);
-    // Ceiling (Top edge)
     vertices.push(-w, h, 0, w, h, 0);
-    // Left Wall (Left edge)
     vertices.push(-w, -h, 0, -w, h, 0);
-    // Right Wall (Right edge)
     vertices.push(w, -h, 0, w, h, 0);
 
     lineGeo.setAttribute(
@@ -174,18 +158,15 @@ const Hero: React.FC<HeroProps> = ({
     const lines = new THREE.LineSegments(lineGeo, lineMaterial);
     group.add(lines);
 
-    // Initial population of images
     populateImages(group, w, h, d, fadeDelay);
 
     return group;
   };
 
-  // Pick `count` evenly-spaced random slot indices from `total` slots
   const pickSlots = (count: number, total: number): Set<number> => {
     const result = new Set<number>();
     if (count <= 0 || total <= 0) return result;
     const clamped = Math.min(count, total);
-    // Divide slots into equal buckets and pick one random index per bucket
     const bucketSize = total / clamped;
     for (let b = 0; b < clamped; b++) {
       const start = Math.floor(b * bucketSize);
@@ -195,7 +176,6 @@ const Hero: React.FC<HeroProps> = ({
     return result;
   };
 
-  // Helper: Populate images and videos in a segment with caching and optimization
   const populateImages = (
     group: THREE.Group,
     w: number,
@@ -204,29 +184,22 @@ const Hero: React.FC<HeroProps> = ({
     fadeDelay = 0,
   ) => {
     const cellMargin = 0.4;
-
-    // Track used URLs in this segment to prevent duplicates
     const usedUrls = new Set<string>();
 
-    // Create shuffled arrays for variety
     const shuffledVideos = [...videoUrls].sort(() => Math.random() - 0.5);
     const shuffledImages = [...imageUrls].sort(() => Math.random() - 0.5);
     let videoIndex = 0;
     let imageIndex = 0;
 
-    // Helper to add a video element
     const addVideo = (
       pos: THREE.Vector3,
       rot: THREE.Euler,
       wd: number,
       ht: number,
     ) => {
-      // Pick a video URL that hasn't been used in this segment AND isn't in the
-      // global recent list (to avoid the same video appearing in nearby tiles).
       const recentGlobal = recentVideoUrlsRef.current;
       let url = '';
 
-      // First pass: avoid both segment-level and global-recent duplicates
       for (let i = 0; i < shuffledVideos.length; i++) {
         const candidate = shuffledVideos[(videoIndex + i) % shuffledVideos.length];
         if (!usedUrls.has(candidate) && !recentGlobal.includes(candidate)) {
@@ -236,7 +209,6 @@ const Hero: React.FC<HeroProps> = ({
         }
       }
 
-      // Second pass: relax global constraint if no fresh URL found
       if (!url) {
         for (let i = 0; i < shuffledVideos.length; i++) {
           const candidate = shuffledVideos[(videoIndex + i) % shuffledVideos.length];
@@ -248,18 +220,14 @@ const Hero: React.FC<HeroProps> = ({
         }
       }
 
-      // Fallback
       if (!url) {
         url = shuffledVideos[videoIndex % shuffledVideos.length];
         videoIndex++;
       }
 
       usedUrls.add(url);
-
-      // Update global recent list (keep last N = total unique videos to ensure full rotation)
       recentVideoUrlsRef.current = [...recentGlobal, url].slice(-videoUrls.length);
 
-      // Create or reuse video element
       let video = videoElementsRef.current.get(url);
 
       if (!video) {
@@ -270,16 +238,12 @@ const Hero: React.FC<HeroProps> = ({
         video.muted = true;
         video.playsInline = true;
         video.autoplay = false;
-
         videoElementsRef.current.set(url, video);
       }
 
       const playVideo = () => {
         if (video.readyState >= 2) {
-          // Video is already loaded — ensure it's playing (may have been paused)
-          if (video.paused) {
-            video.play().catch(() => {});
-          }
+          if (video.paused) video.play().catch(() => {});
         } else {
           video.addEventListener('loadedmetadata', () => {
             const randomStart = Math.random() * (video.duration || 0);
@@ -290,30 +254,23 @@ const Hero: React.FC<HeroProps> = ({
         }
       };
 
-      // Small staggered delay so not all videos start simultaneously
-      const playDelay = Math.random() * 1000;
-      setTimeout(playVideo, playDelay);
+      setTimeout(playVideo, Math.random() * 1000);
 
-      // Create video texture
       const videoTexture = new THREE.VideoTexture(video);
       videoTexture.minFilter = THREE.LinearFilter;
       videoTexture.magFilter = THREE.LinearFilter;
       videoTexture.encoding = THREE.sRGBEncoding;
 
-      // Calculate "cover" UV mapping - fill entire cell and crop overflow
-      // Portrait videos (9:16) need to fill landscape/square cells
       const videoAspect = video.videoWidth && video.videoHeight
         ? video.videoWidth / video.videoHeight
         : 9 / 16;
       const cellAspect = (wd - cellMargin) / (ht - cellMargin);
 
       if (videoAspect < cellAspect) {
-        // Video is narrower than cell - scale to fill width, crop top/bottom
         const scale = cellAspect / videoAspect;
         videoTexture.repeat.set(1, 1 / scale);
         videoTexture.offset.set(0, (1 - 1 / scale) / 2);
       } else {
-        // Video is wider than cell - scale to fill height, crop sides
         const scale = videoAspect / cellAspect;
         videoTexture.repeat.set(1 / scale, 1);
         videoTexture.offset.set((1 - 1 / scale) / 2, 0);
@@ -326,16 +283,14 @@ const Hero: React.FC<HeroProps> = ({
         side: THREE.DoubleSide,
       });
 
-      // Use full cell dimensions for cover effect
       const geom = new THREE.PlaneGeometry(wd - cellMargin, ht - cellMargin);
       const mesh = new THREE.Mesh(geom, mat);
       mesh.position.copy(pos);
       mesh.rotation.copy(rot);
       mesh.name = "slab_video";
-      mesh.userData.video = video; // Store reference for cleanup
+      mesh.userData.video = video;
       group.add(mesh);
 
-      // Fade in animation
       gsap.to(mat, { opacity: 0.85, duration: 1, delay: fadeDelay });
     };
 
@@ -345,16 +300,14 @@ const Hero: React.FC<HeroProps> = ({
       wd: number,
       ht: number,
     ) => {
-      // Randomly choose between video and image if videos are available
       const hasVideos = videoUrls.length > 0;
-      const useVideo = hasVideos && Math.random() > 0.5; // 50% chance for video
+      const useVideo = hasVideos && Math.random() > 0.5;
 
       if (useVideo) {
         addVideo(pos, rot, wd, ht);
         return;
       }
 
-      // Find next unique image URL that hasn't been used in this segment
       let url = '';
       let attempts = 0;
       const maxAttempts = shuffledImages.length;
@@ -362,7 +315,6 @@ const Hero: React.FC<HeroProps> = ({
       while (attempts < maxAttempts) {
         const candidateUrl = shuffledImages[imageIndex % shuffledImages.length];
         imageIndex++;
-
         if (!usedUrls.has(candidateUrl)) {
           url = candidateUrl;
           break;
@@ -370,7 +322,6 @@ const Hero: React.FC<HeroProps> = ({
         attempts++;
       }
 
-      // If all images are used, just pick the next one (segment has more tiles than unique images)
       if (!url) {
         url = shuffledImages[imageIndex % shuffledImages.length];
         imageIndex++;
@@ -383,15 +334,9 @@ const Hero: React.FC<HeroProps> = ({
         side: THREE.DoubleSide,
       });
 
-      // Helper function to create mesh with proper aspect ratio
       const createMeshWithTexture = (tex: THREE.Texture) => {
-        // Ensure image is loaded and has dimensions
         if (!tex.image || !tex.image.width || !tex.image.height) {
-          // Fallback to cell dimensions if image not ready
-          const geom = new THREE.PlaneGeometry(
-            wd - cellMargin,
-            ht - cellMargin,
-          );
+          const geom = new THREE.PlaneGeometry(wd - cellMargin, ht - cellMargin);
           const m = new THREE.Mesh(geom, mat);
           m.position.copy(pos);
           m.rotation.copy(rot);
@@ -400,19 +345,15 @@ const Hero: React.FC<HeroProps> = ({
           return;
         }
 
-        // Get texture aspect ratio
         const texAspect = tex.image.width / tex.image.height;
         const cellAspect = wd / ht;
 
-        // Calculate dimensions that maintain image aspect ratio while fitting in cell
         let finalWidth = wd - cellMargin;
         let finalHeight = ht - cellMargin;
 
         if (texAspect > cellAspect) {
-          // Image is wider than cell - fit to width
           finalHeight = finalWidth / texAspect;
         } else {
-          // Image is taller than cell - fit to height
           finalWidth = finalHeight * texAspect;
         }
 
@@ -424,16 +365,13 @@ const Hero: React.FC<HeroProps> = ({
         group.add(m);
       };
 
-      // Check cache first, then load if not cached
       const cachedTexture = textureCacheRef.current.get(url);
       if (cachedTexture) {
-        // Use cached texture immediately
         mat.map = cachedTexture;
         mat.needsUpdate = true;
         createMeshWithTexture(cachedTexture);
         gsap.to(mat, { opacity: 0.85, duration: 0.5, delay: fadeDelay });
       } else {
-        // Load texture and cache it
         textureLoaderRef.current.load(url, (tex) => {
           tex.minFilter = THREE.LinearFilter;
           tex.magFilter = THREE.LinearFilter;
@@ -450,61 +388,52 @@ const Hero: React.FC<HeroProps> = ({
       }
     };
 
-    // Pick exactly N evenly-spaced slots per surface for consistent, non-clumpy density
     const isMobile = window.innerWidth < 768;
-    const floorCount   = isMobile ? 2 : 2; // out of FLOOR_COLS (6)
-    const ceilingCount = isMobile ? 1 : 1; // out of FLOOR_COLS (6)
-    const wallCount    = isMobile ? 1 : 1; // out of WALL_ROWS (4) per wall
+    const floorCount   = isMobile ? 2 : 2;
+    const ceilingCount = isMobile ? 1 : 1;
+    const wallCount    = isMobile ? 1 : 1;
 
     const floorSlots      = pickSlots(floorCount, FLOOR_COLS);
     const ceilingSlots    = pickSlots(ceilingCount, FLOOR_COLS);
     const leftWallSlots   = pickSlots(wallCount, WALL_ROWS);
     const rightWallSlots  = pickSlots(wallCount, WALL_ROWS);
 
-    // Floor
     for (let i = 0; i < FLOOR_COLS; i++) {
       if (floorSlots.has(i)) {
         addImg(
           new THREE.Vector3(-w + i * COL_WIDTH + COL_WIDTH / 2, -h, -d / 2),
           new THREE.Euler(-Math.PI / 2, 0, 0),
-          COL_WIDTH,
-          d,
+          COL_WIDTH, d,
         );
       }
     }
 
-    // Ceiling
     for (let i = 0; i < FLOOR_COLS; i++) {
       if (ceilingSlots.has(i)) {
         addImg(
           new THREE.Vector3(-w + i * COL_WIDTH + COL_WIDTH / 2, h, -d / 2),
           new THREE.Euler(Math.PI / 2, 0, 0),
-          COL_WIDTH,
-          d,
+          COL_WIDTH, d,
         );
       }
     }
 
-    // Left Wall
     for (let i = 0; i < WALL_ROWS; i++) {
       if (leftWallSlots.has(i)) {
         addImg(
           new THREE.Vector3(-w, -h + i * ROW_HEIGHT + ROW_HEIGHT / 2, -d / 2),
           new THREE.Euler(0, Math.PI / 2, 0),
-          d,
-          ROW_HEIGHT,
+          d, ROW_HEIGHT,
         );
       }
     }
 
-    // Right Wall
     for (let i = 0; i < WALL_ROWS; i++) {
       if (rightWallSlots.has(i)) {
         addImg(
           new THREE.Vector3(w, -h + i * ROW_HEIGHT + ROW_HEIGHT / 2, -d / 2),
           new THREE.Euler(0, -Math.PI / 2, 0),
-          d,
-          ROW_HEIGHT,
+          d, ROW_HEIGHT,
         );
       }
     }
@@ -514,15 +443,14 @@ const Hero: React.FC<HeroProps> = ({
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current) return;
 
-    // Prevent browser scroll-restoration from triggering blackout on refresh
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
     window.scrollTo(0, 0);
 
-    // THREE JS SETUP
     const scene = new THREE.Scene();
     sceneRef.current = scene;
-    scene.background = new THREE.Color(0xffffff);
-    scene.fog = new THREE.FogExp2(0xffffff, FOG_DENSITY);
+    // Pure black background — cinematic dark tunnel
+    scene.background = new THREE.Color(0x000000);
+    scene.fog = new THREE.FogExp2(0x000000, FOG_DENSITY);
 
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -530,9 +458,6 @@ const Hero: React.FC<HeroProps> = ({
     camera.position.set(0, 0, 0);
     cameraRef.current = camera;
 
-    // On portrait screens the horizontal FOV gets very narrow, which can push the
-    // side walls outside the camera frustum. We compensate by scaling the scene
-    // narrower on the X axis based on aspect ratio (desktop remains unchanged).
     const updateResponsiveSceneScale = (aspect: number) => {
       const scaleX = THREE.MathUtils.clamp(aspect * 1.2, 0.55, 1);
       scene.scale.set(scaleX, 1, 1);
@@ -549,18 +474,16 @@ const Hero: React.FC<HeroProps> = ({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     rendererRef.current = renderer;
 
-    // Generate segments — stagger fade-in so tiles don't all appear at once
     const segments: THREE.Group[] = [];
     for (let i = 0; i < NUM_SEGMENTS; i++) {
       const z = -i * SEGMENT_DEPTH;
-      const fadeDelay = i * 0.35; // Each segment's tiles appear 350ms after the previous
+      const fadeDelay = i * 0.35;
       const segment = createSegment(z, fadeDelay);
       scene.add(segment);
       segments.push(segment);
     }
     segmentsRef.current = segments;
 
-    // Collect grid line materials for animation loop
     lineMaterialsRef.current = [];
     segments.forEach(segment => {
       segment.traverse(child => {
@@ -574,41 +497,56 @@ const Hero: React.FC<HeroProps> = ({
     let frameId: number;
     const animate = () => {
       frameId = requestAnimationFrame(animate);
-      if (!cameraRef.current || !sceneRef.current || !rendererRef.current)
-        return;
+      if (!cameraRef.current || !sceneRef.current || !rendererRef.current) return;
 
       const vh = window.innerHeight;
       const scrollY = window.scrollY;
 
-      // Auto-scroll: keep original infinite fly behaviour
+      // ── Startup projector fade ─────────────────────────────────────────
+      // First render captures the start time; overlay fades from opaque→clear
+      if (startTimeRef.current === null) startTimeRef.current = Date.now();
+      const elapsed = Date.now() - startTimeRef.current;
+      const startupOp = Math.max(0, 1 - elapsed / 1400);
+
+      // ── Scroll-driven blackout ─────────────────────────────────────────
+      // Sticky scroll range = container (200vh) - viewport (1vh) = 100vh.
+      // Blackout starts at 0.52vh, completes at 0.82vh — well within
+      // the sticky range so the tunnel is fully black before it slides off.
+      const scrollBlackout = Math.max(0, Math.min(1, (scrollY - vh * 0.52) / (vh * 0.3)));
+
+      const totalBlackout = Math.max(startupOp, scrollBlackout);
+      if (fadeOverlayRef.current) {
+        fadeOverlayRef.current.style.opacity = String(totalBlackout);
+      }
+
+      // ── Scroll cue (chevron at bottom of first viewport) ──────────────
+      // Visible at page load, fades as user starts scrolling
+      const scrollCueOp = Math.max(0, 1 - scrollY / (vh * 0.12));
+      if (scrollCueRef.current) {
+        scrollCueRef.current.style.opacity = String(scrollCueOp);
+      }
+
+      // ── Auto-scroll ────────────────────────────────────────────────────
       const now = Date.now();
       const timeSinceLastScroll = now - lastUserScrollTimeRef.current;
-
       if (timeSinceLastScroll > 100 && !isUserScrollingRef.current) {
         scrollPosRef.current += autoScrollSpeedRef.current;
       }
 
-      // Camera target combines auto-scroll offset + page scroll so user scroll
-      // never causes a backward jump when auto-scroll has been running
       const targetZ = -(scrollPosRef.current + scrollY) * 0.05;
       const currentZ = cameraRef.current.position.z;
       cameraRef.current.position.z += (targetZ - currentZ) * 0.1;
 
-      // Bidirectional Infinite Logic
+      // ── Bidirectional infinite segment recycling ───────────────────────
       const tunnelLength = NUM_SEGMENTS * SEGMENT_DEPTH;
-
       const camZ = cameraRef.current.position.z;
 
       segmentsRef.current.forEach((segment) => {
-        // 1. Moving Forward
         if (segment.position.z > camZ + SEGMENT_DEPTH) {
           let minZ = 0;
-          segmentsRef.current.forEach(
-            (s) => (minZ = Math.min(minZ, s.position.z)),
-          );
+          segmentsRef.current.forEach((s) => (minZ = Math.min(minZ, s.position.z)));
           segment.position.z = minZ - SEGMENT_DEPTH;
 
-          // Re-populate
           const toRemove: THREE.Object3D[] = [];
           segment.traverse((c) => {
             if (c.name === "slab_image" || c.name === "slab_video") toRemove.push(c);
@@ -616,28 +554,19 @@ const Hero: React.FC<HeroProps> = ({
           toRemove.forEach((c) => {
             segment.remove(c);
             if (c instanceof THREE.Mesh) {
-              // For videos: dispose only the VideoTexture, NOT the underlying video
-              // element (it's cached in videoElementsRef and should keep looping)
               c.geometry.dispose();
               if (c.material.map) c.material.map.dispose();
               c.material.dispose();
             }
           });
-          const w = TUNNEL_WIDTH / 2;
-          const h = TUNNEL_HEIGHT / 2;
-          const d = SEGMENT_DEPTH;
-          populateImages(segment, w, h, d);
+          populateImages(segment, TUNNEL_WIDTH / 2, TUNNEL_HEIGHT / 2, SEGMENT_DEPTH);
         }
 
-        // 2. Moving Backward
         if (segment.position.z < camZ - tunnelLength - SEGMENT_DEPTH) {
           let maxZ = -999999;
-          segmentsRef.current.forEach(
-            (s) => (maxZ = Math.max(maxZ, s.position.z)),
-          );
+          segmentsRef.current.forEach((s) => (maxZ = Math.max(maxZ, s.position.z)));
           segment.position.z = maxZ + SEGMENT_DEPTH;
 
-          // Re-populate
           const toRemove: THREE.Object3D[] = [];
           segment.traverse((c) => {
             if (c.name === "slab_image" || c.name === "slab_video") toRemove.push(c);
@@ -645,70 +574,40 @@ const Hero: React.FC<HeroProps> = ({
           toRemove.forEach((c) => {
             segment.remove(c);
             if (c instanceof THREE.Mesh) {
-              // For videos: dispose only the VideoTexture, NOT the underlying video
-              // element (it's cached in videoElementsRef and should keep looping)
               c.geometry.dispose();
               if (c.material.map) c.material.map.dispose();
               c.material.dispose();
             }
           });
-          const w = TUNNEL_WIDTH / 2;
-          const h = TUNNEL_HEIGHT / 2;
-          const d = SEGMENT_DEPTH;
-          populateImages(segment, w, h, d);
+          populateImages(segment, TUNNEL_WIDTH / 2, TUNNEL_HEIGHT / 2, SEGMENT_DEPTH);
         }
       });
 
-      // Fade starts after 2.5 screen-heights of scroll, completes at 3.5
-      // This gives the tunnel plenty of flight time before darkening begins
-      const FADE_START = 2.5 * vh;
-      const FADE_END   = 3.5 * vh;
-
-      const fp = Math.max(0, Math.min(1, (scrollY - FADE_START) / (FADE_END - FADE_START)));
-      const eased = fp < 0.005 ? 0 : fp * fp * (3 - 2 * fp);
-
-      // Fade grid lines as scene darkens
-      if (lineMaterialsRef.current.length > 0) {
-        lineMaterialsRef.current.forEach(mat => {
-          mat.opacity = 0.5 * (1 - eased);
-          mat.needsUpdate = true;
-        });
-      }
-
-      // Scene background + fog shift toward black (makes distant tunnel naturally dark)
-      if (sceneRef.current) {
-        const bg = 1 - eased;
-        (sceneRef.current.background as THREE.Color).setRGB(bg, bg, bg);
-        (sceneRef.current.fog as THREE.FogExp2).color.setRGB(bg, bg, bg);
-      }
-
-      // HTML overlay fades to black uniformly over the entire canvas — no per-tile slabs
-      if (fadeOverlayRef.current) {
-        fadeOverlayRef.current.style.opacity = String(eased);
-      }
-
-      // Text fades out in the first half of the transition
+      // ── Scroll-driven text fade ────────────────────────────────────────
+      // Text fades out between 0.15vh–0.42vh, cleared before blackout starts
+      const textOp = Math.max(0, Math.min(1, 1 - (scrollY - vh * 0.15) / (vh * 0.27)));
       if (textOverlayRef.current) {
-        textOverlayRef.current.style.opacity = String(Math.max(0, 1 - eased * 2));
+        textOverlayRef.current.style.opacity = String(textOp);
+      }
+      if (contentRef.current) {
+        contentRef.current.style.pointerEvents = textOp < 0.05 ? 'none' : 'auto';
       }
 
       rendererRef.current.render(sceneRef.current, cameraRef.current);
     };
+
     animate();
 
     const onScroll = () => {
       isUserScrollingRef.current = true;
       lastUserScrollTimeRef.current = Date.now();
-      // Don't override scrollPosRef here — auto-scroll accumulates separately,
-      // and window.scrollY is added directly in the camera target above.
-
-      // Reset user scrolling flag after scroll ends
       clearTimeout((window as any).scrollTimeout);
       (window as any).scrollTimeout = setTimeout(() => {
         isUserScrollingRef.current = false;
       }, 150);
     };
     window.addEventListener("scroll", onScroll);
+
     const handleResize = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
@@ -723,18 +622,10 @@ const Hero: React.FC<HeroProps> = ({
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", handleResize);
       cancelAnimationFrame(frameId);
-      if ((window as any).scrollTimeout) {
-        clearTimeout((window as any).scrollTimeout);
-      }
+      if ((window as any).scrollTimeout) clearTimeout((window as any).scrollTimeout);
       renderer.dispose();
-
-      // Clean up texture cache
-      textureCacheRef.current.forEach((texture) => {
-        texture.dispose();
-      });
+      textureCacheRef.current.forEach((texture) => texture.dispose());
       textureCacheRef.current.clear();
-
-      // Clean up video elements
       videoElementsRef.current.forEach((video) => {
         video.pause();
         video.src = '';
@@ -742,21 +633,21 @@ const Hero: React.FC<HeroProps> = ({
       });
       videoElementsRef.current.clear();
     };
-  }, []); // Run once on mount
+  }, []);
 
-  // Text Entrance Animation
+  // Text entrance — delayed to let the startup fade reveal the scene first
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
       gsap.fromTo(
         contentRef.current,
-        { opacity: 0, y: 30, scale: 0.95 },
+        { opacity: 0, y: 24, scale: 0.97 },
         {
           opacity: 1,
           y: 0,
           scale: 1,
-          duration: 1.2,
+          duration: 1.4,
           ease: "power3.out",
-          delay: 0.5,
+          delay: 1.0, // after startup overlay has largely faded
         },
       );
     }, containerRef);
@@ -765,73 +656,141 @@ const Hero: React.FC<HeroProps> = ({
 
   return (
     <>
-    <div
-      ref={containerRef}
-      className="relative w-full h-[450vh] bg-black"
-    >
-      <div className="sticky top-0 h-screen w-full overflow-hidden">
+      <style>{`
+        @keyframes heroScrollCuePulse {
+          0%, 100% { transform: translateY(0); opacity: 0.5; }
+          50%       { transform: translateY(5px); opacity: 1; }
+        }
+      `}</style>
+
+      <div
+        ref={containerRef}
+        className="relative w-full"
+        style={{ height: '200vh', background: '#000' }}
+      >
         <div
-          className={`absolute inset-0 w-full h-full overflow-hidden z-0 transition-[filter,transform] duration-300 ease-out ${
-            isTeleprompterOpen ? "blur-sm scale-[1.01]" : "blur-0 scale-100"
-          }`}
+          className="sticky top-0 h-screen w-full overflow-hidden"
+          style={{ background: '#000' }}
         >
-          <canvas ref={canvasRef} className="w-full h-full block" />
-        </div>
-
-        {/* Cinema-style fade-to-black overlay — covers the entire canvas uniformly */}
-        <div
-          ref={fadeOverlayRef}
-          className="absolute inset-0 bg-black pointer-events-none"
-          style={{ opacity: 0, zIndex: 5 }}
-        />
-
-        <div ref={textOverlayRef} className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+          {/* Three.js canvas */}
           <div
-            ref={contentRef}
-            className="text-center flex flex-col items-center max-w-4xl px-6 pointer-events-auto mix-blend-multiply-normal"
+            className={`absolute inset-0 w-full h-full overflow-hidden z-0 transition-[filter,transform] duration-300 ease-out ${
+              isTeleprompterOpen ? "blur-sm scale-[1.01]" : "blur-0 scale-100"
+            }`}
           >
-          <h1
-            className="text-[2.5rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] leading-[0.95] font-serif tracking-tight mb-4 text-dark"
-          >
-            <span className="block font-bold">AI Film Making</span>
-            <span className="block italic font-light">
-              Hackathon{" "}
-              <span className="text-[1.25rem] sm:text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] font-light align-baseline ml-1">
-                v2
-              </span>
-            </span>
-          </h1>
-
-          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
-            <WaitlistMorph
-              open={waitlistOpen}
-              onOpenChange={onWaitlistOpenChange}
-            />
-            <a
-              href="https://giveago.co/sponsor"
-              className="w-full sm:w-auto rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-1 bg-purple-600 text-white hover:bg-purple-700"
-            >
-              Sponsor <span>→</span>
-            </a>
+            <canvas ref={canvasRef} className="w-full h-full block hero-canvas-jitter" />
           </div>
 
-          <button
-            onClick={() => setIsTeleprompterOpen(true)}
-            className="mt-4 text-sm font-medium underline underline-offset-4 hover:opacity-70 transition-opacity duration-300 text-gray-600"
-          >
-            More about the event
-          </button>
-
-          <TeleprompterModal
-            isOpen={isTeleprompterOpen}
-            onClose={() => setIsTeleprompterOpen(false)}
-            isDarkMode={false}
+          {/* Cinema-style fade overlay — startup projector effect + scroll blackout.
+              z:15 so it covers both canvas and text overlay during startup. */}
+          <div
+            ref={fadeOverlayRef}
+            className="absolute inset-0 bg-black pointer-events-none"
+            style={{ opacity: 1, zIndex: 15 }}
           />
+
+          {/* Hero text + CTAs */}
+          <div
+            ref={textOverlayRef}
+            className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
+          >
+            <div
+              ref={contentRef}
+              className="text-center flex flex-col items-center max-w-4xl px-6 pointer-events-auto"
+            >
+              <h1
+                className="text-[2.5rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] leading-[0.95] font-serif tracking-tight mb-4"
+                style={{ color: '#E0D5C0' }}
+              >
+                <span className="block font-bold">AI Film Making</span>
+                <span className="block italic font-light">
+                  Hackathon{" "}
+                  <span
+                    className="font-light align-baseline ml-1"
+                    style={{ fontSize: '0.5em' }}
+                  >
+                    v2
+                  </span>
+                </span>
+              </h1>
+
+              <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                <WaitlistMorph
+                  open={waitlistOpen}
+                  onOpenChange={onWaitlistOpenChange}
+                />
+                <a
+                  href="https://giveago.co/sponsor"
+                  className="w-full sm:w-auto rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-1"
+                  style={{
+                    background: 'rgba(198,153,58,0.15)',
+                    color: 'rgba(198,153,58,0.9)',
+                    border: '1px solid rgba(198,153,58,0.3)',
+                  }}
+                >
+                  Sponsor <span>→</span>
+                </a>
+              </div>
+
+              <button
+                onClick={() => setIsTeleprompterOpen(true)}
+                className="mt-4 text-sm font-medium underline underline-offset-4 hover:opacity-70 transition-opacity duration-300"
+                style={{ color: 'rgba(224,213,192,0.5)' }}
+              >
+                More about the event
+              </button>
+
+              <TeleprompterModal
+                isOpen={isTeleprompterOpen}
+                onClose={() => setIsTeleprompterOpen(false)}
+                isDarkMode={false}
+              />
+            </div>
+          </div>
+
+          {/* Scroll cue — fades once user starts scrolling */}
+          <div
+            ref={scrollCueRef}
+            className="absolute pointer-events-none"
+            style={{
+              bottom: '2.5rem',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.4rem',
+              zIndex: 12,
+            }}
+          >
+            <span style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: '0.42rem',
+              letterSpacing: '0.45em',
+              color: 'rgba(248,236,188,0.35)',
+              textTransform: 'uppercase',
+            }}>
+              Scroll
+            </span>
+            <svg
+              width="14"
+              height="20"
+              viewBox="0 0 14 20"
+              fill="none"
+              style={{ animation: 'heroScrollCuePulse 2s ease-in-out infinite' }}
+            >
+              <line x1="7" y1="0" x2="7" y2="13" stroke="rgba(248,236,188,0.35)" strokeWidth="1" />
+              <polyline
+                points="3,9 7,15 11,9"
+                stroke="rgba(248,236,188,0.35)"
+                strokeWidth="1"
+                fill="none"
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
         </div>
       </div>
-    </div>
-    <div className="h-screen bg-black" />
     </>
   );
 };
