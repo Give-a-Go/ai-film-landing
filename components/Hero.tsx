@@ -1,18 +1,9 @@
 import React, { useRef, useLayoutEffect, useEffect, useState } from "react";
 import gsap from "gsap";
 import * as THREE from "three";
-import WaitlistMorph from "./WaitlistMorph";
 import TeleprompterModal from "./TeleprompterModal";
 
-interface HeroProps {
-  waitlistOpen?: boolean;
-  onWaitlistOpenChange?: (open: boolean) => void;
-}
-
-const Hero: React.FC<HeroProps> = ({
-  waitlistOpen,
-  onWaitlistOpenChange,
-}) => {
+const Hero: React.FC = () => {
   const [isTeleprompterOpen, setIsTeleprompterOpen] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -128,7 +119,7 @@ const Hero: React.FC<HeroProps> = ({
 
     // Gold/amber grid lines to match the cinematic palette
     const lineMaterial = new THREE.LineBasicMaterial({
-      color: 0xC6993A,
+      color: 0xc6993a,
       transparent: true,
       opacity: 0.22,
     });
@@ -198,10 +189,11 @@ const Hero: React.FC<HeroProps> = ({
       ht: number,
     ) => {
       const recentGlobal = recentVideoUrlsRef.current;
-      let url = '';
+      let url = "";
 
       for (let i = 0; i < shuffledVideos.length; i++) {
-        const candidate = shuffledVideos[(videoIndex + i) % shuffledVideos.length];
+        const candidate =
+          shuffledVideos[(videoIndex + i) % shuffledVideos.length];
         if (!usedUrls.has(candidate) && !recentGlobal.includes(candidate)) {
           url = candidate;
           videoIndex += i + 1;
@@ -211,7 +203,8 @@ const Hero: React.FC<HeroProps> = ({
 
       if (!url) {
         for (let i = 0; i < shuffledVideos.length; i++) {
-          const candidate = shuffledVideos[(videoIndex + i) % shuffledVideos.length];
+          const candidate =
+            shuffledVideos[(videoIndex + i) % shuffledVideos.length];
           if (!usedUrls.has(candidate)) {
             url = candidate;
             videoIndex += i + 1;
@@ -226,14 +219,16 @@ const Hero: React.FC<HeroProps> = ({
       }
 
       usedUrls.add(url);
-      recentVideoUrlsRef.current = [...recentGlobal, url].slice(-videoUrls.length);
+      recentVideoUrlsRef.current = [...recentGlobal, url].slice(
+        -videoUrls.length,
+      );
 
       let video = videoElementsRef.current.get(url);
 
       if (!video) {
-        video = document.createElement('video');
+        video = document.createElement("video");
         video.src = url;
-        video.crossOrigin = 'anonymous';
+        video.crossOrigin = "anonymous";
         video.loop = true;
         video.muted = true;
         video.playsInline = true;
@@ -245,11 +240,15 @@ const Hero: React.FC<HeroProps> = ({
         if (video.readyState >= 2) {
           if (video.paused) video.play().catch(() => {});
         } else {
-          video.addEventListener('loadedmetadata', () => {
-            const randomStart = Math.random() * (video.duration || 0);
-            video.currentTime = randomStart;
-            video.play().catch(() => {});
-          }, { once: true });
+          video.addEventListener(
+            "loadedmetadata",
+            () => {
+              const randomStart = Math.random() * (video.duration || 0);
+              video.currentTime = randomStart;
+              video.play().catch(() => {});
+            },
+            { once: true },
+          );
           video.load();
         }
       };
@@ -261,9 +260,10 @@ const Hero: React.FC<HeroProps> = ({
       videoTexture.magFilter = THREE.LinearFilter;
       videoTexture.encoding = THREE.sRGBEncoding;
 
-      const videoAspect = video.videoWidth && video.videoHeight
-        ? video.videoWidth / video.videoHeight
-        : 9 / 16;
+      const videoAspect =
+        video.videoWidth && video.videoHeight
+          ? video.videoWidth / video.videoHeight
+          : 9 / 16;
       const cellAspect = (wd - cellMargin) / (ht - cellMargin);
 
       if (videoAspect < cellAspect) {
@@ -308,7 +308,7 @@ const Hero: React.FC<HeroProps> = ({
         return;
       }
 
-      let url = '';
+      let url = "";
       let attempts = 0;
       const maxAttempts = shuffledImages.length;
 
@@ -336,7 +336,10 @@ const Hero: React.FC<HeroProps> = ({
 
       const createMeshWithTexture = (tex: THREE.Texture) => {
         if (!tex.image || !tex.image.width || !tex.image.height) {
-          const geom = new THREE.PlaneGeometry(wd - cellMargin, ht - cellMargin);
+          const geom = new THREE.PlaneGeometry(
+            wd - cellMargin,
+            ht - cellMargin,
+          );
           const m = new THREE.Mesh(geom, mat);
           m.position.copy(pos);
           m.rotation.copy(rot);
@@ -389,21 +392,22 @@ const Hero: React.FC<HeroProps> = ({
     };
 
     const isMobile = window.innerWidth < 768;
-    const floorCount   = isMobile ? 2 : 2;
+    const floorCount = isMobile ? 2 : 2;
     const ceilingCount = isMobile ? 1 : 1;
-    const wallCount    = isMobile ? 1 : 1;
+    const wallCount = isMobile ? 1 : 1;
 
-    const floorSlots      = pickSlots(floorCount, FLOOR_COLS);
-    const ceilingSlots    = pickSlots(ceilingCount, FLOOR_COLS);
-    const leftWallSlots   = pickSlots(wallCount, WALL_ROWS);
-    const rightWallSlots  = pickSlots(wallCount, WALL_ROWS);
+    const floorSlots = pickSlots(floorCount, FLOOR_COLS);
+    const ceilingSlots = pickSlots(ceilingCount, FLOOR_COLS);
+    const leftWallSlots = pickSlots(wallCount, WALL_ROWS);
+    const rightWallSlots = pickSlots(wallCount, WALL_ROWS);
 
     for (let i = 0; i < FLOOR_COLS; i++) {
       if (floorSlots.has(i)) {
         addImg(
           new THREE.Vector3(-w + i * COL_WIDTH + COL_WIDTH / 2, -h, -d / 2),
           new THREE.Euler(-Math.PI / 2, 0, 0),
-          COL_WIDTH, d,
+          COL_WIDTH,
+          d,
         );
       }
     }
@@ -413,7 +417,8 @@ const Hero: React.FC<HeroProps> = ({
         addImg(
           new THREE.Vector3(-w + i * COL_WIDTH + COL_WIDTH / 2, h, -d / 2),
           new THREE.Euler(Math.PI / 2, 0, 0),
-          COL_WIDTH, d,
+          COL_WIDTH,
+          d,
         );
       }
     }
@@ -423,7 +428,8 @@ const Hero: React.FC<HeroProps> = ({
         addImg(
           new THREE.Vector3(-w, -h + i * ROW_HEIGHT + ROW_HEIGHT / 2, -d / 2),
           new THREE.Euler(0, Math.PI / 2, 0),
-          d, ROW_HEIGHT,
+          d,
+          ROW_HEIGHT,
         );
       }
     }
@@ -433,7 +439,8 @@ const Hero: React.FC<HeroProps> = ({
         addImg(
           new THREE.Vector3(w, -h + i * ROW_HEIGHT + ROW_HEIGHT / 2, -d / 2),
           new THREE.Euler(0, -Math.PI / 2, 0),
-          d, ROW_HEIGHT,
+          d,
+          ROW_HEIGHT,
         );
       }
     }
@@ -443,7 +450,7 @@ const Hero: React.FC<HeroProps> = ({
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current) return;
 
-    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
     window.scrollTo(0, 0);
 
     const scene = new THREE.Scene();
@@ -485,10 +492,12 @@ const Hero: React.FC<HeroProps> = ({
     segmentsRef.current = segments;
 
     lineMaterialsRef.current = [];
-    segments.forEach(segment => {
-      segment.traverse(child => {
+    segments.forEach((segment) => {
+      segment.traverse((child) => {
         if (child instanceof THREE.LineSegments) {
-          lineMaterialsRef.current.push(child.material as THREE.LineBasicMaterial);
+          lineMaterialsRef.current.push(
+            child.material as THREE.LineBasicMaterial,
+          );
         }
       });
     });
@@ -497,7 +506,8 @@ const Hero: React.FC<HeroProps> = ({
     let frameId: number;
     const animate = () => {
       frameId = requestAnimationFrame(animate);
-      if (!cameraRef.current || !sceneRef.current || !rendererRef.current) return;
+      if (!cameraRef.current || !sceneRef.current || !rendererRef.current)
+        return;
 
       const vh = window.innerHeight;
       const scrollY = window.scrollY;
@@ -512,7 +522,10 @@ const Hero: React.FC<HeroProps> = ({
       // Sticky scroll range = container (200vh) - viewport (1vh) = 100vh.
       // Blackout starts at 0.52vh, completes at 0.82vh — well within
       // the sticky range so the tunnel is fully black before it slides off.
-      const scrollBlackout = Math.max(0, Math.min(1, (scrollY - vh * 0.52) / (vh * 0.3)));
+      const scrollBlackout = Math.max(
+        0,
+        Math.min(1, (scrollY - vh * 0.52) / (vh * 0.3)),
+      );
 
       const totalBlackout = Math.max(startupOp, scrollBlackout);
       if (fadeOverlayRef.current) {
@@ -544,12 +557,15 @@ const Hero: React.FC<HeroProps> = ({
       segmentsRef.current.forEach((segment) => {
         if (segment.position.z > camZ + SEGMENT_DEPTH) {
           let minZ = 0;
-          segmentsRef.current.forEach((s) => (minZ = Math.min(minZ, s.position.z)));
+          segmentsRef.current.forEach(
+            (s) => (minZ = Math.min(minZ, s.position.z)),
+          );
           segment.position.z = minZ - SEGMENT_DEPTH;
 
           const toRemove: THREE.Object3D[] = [];
           segment.traverse((c) => {
-            if (c.name === "slab_image" || c.name === "slab_video") toRemove.push(c);
+            if (c.name === "slab_image" || c.name === "slab_video")
+              toRemove.push(c);
           });
           toRemove.forEach((c) => {
             segment.remove(c);
@@ -559,17 +575,25 @@ const Hero: React.FC<HeroProps> = ({
               c.material.dispose();
             }
           });
-          populateImages(segment, TUNNEL_WIDTH / 2, TUNNEL_HEIGHT / 2, SEGMENT_DEPTH);
+          populateImages(
+            segment,
+            TUNNEL_WIDTH / 2,
+            TUNNEL_HEIGHT / 2,
+            SEGMENT_DEPTH,
+          );
         }
 
         if (segment.position.z < camZ - tunnelLength - SEGMENT_DEPTH) {
           let maxZ = -999999;
-          segmentsRef.current.forEach((s) => (maxZ = Math.max(maxZ, s.position.z)));
+          segmentsRef.current.forEach(
+            (s) => (maxZ = Math.max(maxZ, s.position.z)),
+          );
           segment.position.z = maxZ + SEGMENT_DEPTH;
 
           const toRemove: THREE.Object3D[] = [];
           segment.traverse((c) => {
-            if (c.name === "slab_image" || c.name === "slab_video") toRemove.push(c);
+            if (c.name === "slab_image" || c.name === "slab_video")
+              toRemove.push(c);
           });
           toRemove.forEach((c) => {
             segment.remove(c);
@@ -579,18 +603,27 @@ const Hero: React.FC<HeroProps> = ({
               c.material.dispose();
             }
           });
-          populateImages(segment, TUNNEL_WIDTH / 2, TUNNEL_HEIGHT / 2, SEGMENT_DEPTH);
+          populateImages(
+            segment,
+            TUNNEL_WIDTH / 2,
+            TUNNEL_HEIGHT / 2,
+            SEGMENT_DEPTH,
+          );
         }
       });
 
       // ── Scroll-driven text fade ────────────────────────────────────────
       // Text fades out between 0.15vh–0.42vh, cleared before blackout starts
-      const textOp = Math.max(0, Math.min(1, 1 - (scrollY - vh * 0.15) / (vh * 0.27)));
+      const textOp = Math.max(
+        0,
+        Math.min(1, 1 - (scrollY - vh * 0.15) / (vh * 0.27)),
+      );
       if (textOverlayRef.current) {
         textOverlayRef.current.style.opacity = String(textOp);
       }
       if (contentRef.current) {
-        contentRef.current.style.pointerEvents = textOp < 0.05 ? 'none' : 'auto';
+        contentRef.current.style.pointerEvents =
+          textOp < 0.05 ? "none" : "auto";
       }
 
       rendererRef.current.render(sceneRef.current, cameraRef.current);
@@ -622,13 +655,14 @@ const Hero: React.FC<HeroProps> = ({
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", handleResize);
       cancelAnimationFrame(frameId);
-      if ((window as any).scrollTimeout) clearTimeout((window as any).scrollTimeout);
+      if ((window as any).scrollTimeout)
+        clearTimeout((window as any).scrollTimeout);
       renderer.dispose();
       textureCacheRef.current.forEach((texture) => texture.dispose());
       textureCacheRef.current.clear();
       videoElementsRef.current.forEach((video) => {
         video.pause();
-        video.src = '';
+        video.src = "";
         video.load();
       });
       videoElementsRef.current.clear();
@@ -654,6 +688,28 @@ const Hero: React.FC<HeroProps> = ({
     return () => ctx.revert();
   }, []);
 
+  const scrollToInfoSections = () => {
+    if (!containerRef.current) return;
+    const startY = window.scrollY;
+    // Jump to the section immediately after Hero, not deep into content.
+    const targetY = containerRef.current.offsetTop + containerRef.current.offsetHeight - 16;
+    const distance = targetY - startY;
+    const duration = 1400;
+    const start = performance.now();
+    const easeInOutCubic = (t: number) =>
+      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+    const step = (now: number) => {
+      const elapsed = now - start;
+      const p = Math.min(elapsed / duration, 1);
+      const eased = easeInOutCubic(p);
+      window.scrollTo(0, startY + distance * eased);
+      if (p < 1) requestAnimationFrame(step);
+    };
+
+    requestAnimationFrame(step);
+  };
+
   return (
     <>
       <style>{`
@@ -666,11 +722,11 @@ const Hero: React.FC<HeroProps> = ({
       <div
         ref={containerRef}
         className="relative w-full"
-        style={{ height: '200vh', background: '#000' }}
+        style={{ height: "200vh", background: "#000" }}
       >
         <div
           className="sticky top-0 h-screen w-full overflow-hidden"
-          style={{ background: '#000' }}
+          style={{ background: "#000" }}
         >
           {/* Three.js canvas */}
           <div
@@ -678,7 +734,10 @@ const Hero: React.FC<HeroProps> = ({
               isTeleprompterOpen ? "blur-sm scale-[1.01]" : "blur-0 scale-100"
             }`}
           >
-            <canvas ref={canvasRef} className="w-full h-full block hero-canvas-jitter" />
+            <canvas
+              ref={canvasRef}
+              className="w-full h-full block hero-canvas-jitter"
+            />
           </div>
 
           {/* Cinema-style fade overlay — startup projector effect + scroll blackout.
@@ -700,42 +759,39 @@ const Hero: React.FC<HeroProps> = ({
             >
               <h1
                 className="text-[2.5rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] leading-[0.95] font-serif tracking-tight mb-4"
-                style={{ color: '#E0D5C0' }}
+                style={{ color: "#E0D5C0" }}
               >
                 <span className="block font-bold">AI Film Making</span>
                 <span className="block italic font-light">
                   Hackathon{" "}
                   <span
                     className="font-light align-baseline ml-1"
-                    style={{ fontSize: '0.5em' }}
+                    style={{ fontSize: "0.5em" }}
                   >
                     v2
                   </span>
                 </span>
               </h1>
 
-              <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
-                <WaitlistMorph
-                  open={waitlistOpen}
-                  onOpenChange={onWaitlistOpenChange}
-                />
-                <a
-                  href="https://giveago.co/sponsor"
+              <div className="flex items-center justify-center w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={scrollToInfoSections}
                   className="w-full sm:w-auto rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-1"
                   style={{
-                    background: 'rgba(198,153,58,0.15)',
-                    color: 'rgba(198,153,58,0.9)',
-                    border: '1px solid rgba(198,153,58,0.3)',
+                    background: "rgba(198,153,58,0.18)",
+                    color: "rgba(248,236,188,0.95)",
+                    border: "1px solid rgba(198,153,58,0.38)",
                   }}
                 >
-                  Sponsor <span>→</span>
-                </a>
+                  Apply to Join <span>↓</span>
+                </button>
               </div>
 
               <button
                 onClick={() => setIsTeleprompterOpen(true)}
                 className="mt-4 text-sm font-medium underline underline-offset-4 hover:opacity-70 transition-opacity duration-300"
-                style={{ color: 'rgba(224,213,192,0.5)' }}
+                style={{ color: "rgba(224,213,192,0.5)" }}
               >
                 More about the event
               </button>
@@ -748,28 +804,242 @@ const Hero: React.FC<HeroProps> = ({
             </div>
           </div>
 
+          {/* Partner logos / support line */}
+          <div
+            className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
+            style={{
+              bottom: "5.25rem",
+              zIndex: 13,
+              width: "min(94vw, 980px)",
+            }}
+          >
+            <div
+              className="mx-auto sm:hidden px-3 py-2.5 rounded-2xl"
+              style={{
+                background: "rgba(0,0,0,0.58)",
+                border: "1px solid rgba(248,236,188,0.24)",
+                boxShadow:
+                  "0 0 46px rgba(198,153,58,0.20), inset 0 0 24px rgba(0,0,0,0.45)",
+                backdropFilter: "blur(7px)",
+                WebkitBackdropFilter: "blur(7px)",
+              }}
+            >
+              <div className="text-center mb-2.5">
+                <span
+                  style={{
+                    color: "rgba(248,236,188,0.70)",
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "0.46rem",
+                    letterSpacing: "0.2em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Sponsored by
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div
+                  className="rounded-xl flex items-center justify-center"
+                  style={{
+                    background: "rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(255,255,255,0.24)",
+                    height: 42,
+                  }}
+                >
+                  <img
+                    src="/partners/elevenlabs-logo-white.svg"
+                    alt="ElevenLabs"
+                    className="w-[84%] h-[72%] object-contain"
+                  />
+                </div>
+                <div
+                  className="rounded-xl flex items-center justify-center"
+                  style={{
+                    background: "rgba(40,35,90,0.24)",
+                    border: "1px solid rgba(120,115,255,0.36)",
+                    height: 42,
+                  }}
+                >
+                  <img
+                    src="/partners/wan.png"
+                    alt="Wan"
+                    className="w-[76%] h-[72%] object-contain"
+                  />
+                </div>
+                <div
+                  className="col-span-2 rounded-xl flex items-center justify-center"
+                  style={{
+                    background: "rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(255,255,255,0.24)",
+                    height: 44,
+                  }}
+                >
+                  <img
+                    src="/partners/wolfpack-digital-light.png"
+                    alt="Wolfpack Digital"
+                    className="w-[108%] h-[100%] object-contain"
+                  />
+                </div>
+              </div>
+              <div
+                style={{
+                  margin: "0.6rem auto 0.5rem",
+                  width: "86%",
+                  height: 1,
+                  background: "rgba(248,236,188,0.16)",
+                }}
+              />
+              <div className="text-center mb-2">
+                <span
+                  style={{
+                    color: "rgba(248,236,188,0.56)",
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "0.46rem",
+                    letterSpacing: "0.16em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Fueled by
+                </span>
+              </div>
+              <div
+                className="rounded-xl flex items-center justify-center mx-auto"
+                style={{
+                  background: "rgba(255,255,255,0.94)",
+                  border: "1px solid rgba(255,255,255,0.5)",
+                  width: "min(136px, 44vw)",
+                  height: 42,
+                }}
+              >
+                <img
+                  src="/partners/redbull.png"
+                  alt="Red Bull"
+                  className="w-[78%] h-[62%] object-contain"
+                />
+              </div>
+            </div>
+            <div
+              className="mx-auto hidden sm:flex flex-wrap items-center justify-center gap-2 sm:gap-3 px-3 py-2.5 rounded-2xl"
+              style={{
+                background: "rgba(0,0,0,0.58)",
+                border: "1px solid rgba(248,236,188,0.24)",
+                boxShadow:
+                  "0 0 46px rgba(198,153,58,0.20), inset 0 0 24px rgba(0,0,0,0.45)",
+                backdropFilter: "blur(7px)",
+                WebkitBackdropFilter: "blur(7px)",
+              }}
+            >
+              <span
+                style={{
+                  color: "rgba(248,236,188,0.70)",
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "0.5rem",
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                  padding: "0 0.5rem",
+                }}
+              >
+                Sponsored by
+              </span>
+              <div
+                className="rounded-xl flex items-center justify-center"
+                style={{
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.24)",
+                  width: "clamp(104px, 13.5vw, 156px)",
+                  height: "clamp(40px, 5.2vw, 52px)",
+                }}
+              >
+                <img
+                  src="/partners/elevenlabs-logo-white.svg"
+                  alt="ElevenLabs"
+                  className="w-[86%] h-[72%] object-contain"
+                />
+              </div>
+              <div
+                className="rounded-xl flex items-center justify-center"
+                style={{
+                  background: "rgba(40,35,90,0.24)",
+                  border: "1px solid rgba(120,115,255,0.36)",
+                  width: "clamp(106px, 14vw, 160px)",
+                  height: "clamp(40px, 5.2vw, 52px)",
+                }}
+              >
+                <img
+                  src="/partners/wan.png"
+                  alt="Wan"
+                  className="w-[78%] h-[76%] object-contain"
+                />
+              </div>
+              <div
+                className="rounded-xl flex items-center justify-center"
+                style={{
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.24)",
+                  width: "clamp(124px, 16.8vw, 198px)",
+                  height: "clamp(40px, 5.2vw, 54px)",
+                }}
+              >
+                <img
+                  src="/partners/wolfpack-digital-light.png"
+                  alt="Wolfpack Digital"
+                  className="w-[112%] h-[100%] object-contain"
+                />
+              </div>
+              <span
+                style={{
+                  color: "rgba(248,236,188,0.56)",
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "0.5rem",
+                  letterSpacing: "0.16em",
+                  textTransform: "uppercase",
+                  padding: "0 0.45rem",
+                }}
+              >
+                Fueled by
+              </span>
+              <div
+                className="rounded-xl flex items-center justify-center"
+                style={{
+                  background: "rgba(255,255,255,0.94)",
+                  border: "1px solid rgba(255,255,255,0.5)",
+                  width: "clamp(118px, 15.5vw, 180px)",
+                  height: "clamp(40px, 5.2vw, 52px)",
+                }}
+              >
+                <img
+                  src="/partners/redbull.png"
+                  alt="Red Bull"
+                  className="w-[76%] h-[62%] object-contain"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Scroll cue — fades once user starts scrolling */}
           <div
             ref={scrollCueRef}
             className="absolute pointer-events-none"
             style={{
-              bottom: '2.5rem',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '0.4rem',
+              bottom: "2.5rem",
+              left: "50%",
+              transform: "translateX(-50%)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "0.4rem",
               zIndex: 12,
             }}
           >
-            <span style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: '0.42rem',
-              letterSpacing: '0.45em',
-              color: 'rgba(248,236,188,0.35)',
-              textTransform: 'uppercase',
-            }}>
+            <span
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: "0.42rem",
+                letterSpacing: "0.45em",
+                color: "rgba(248,236,188,0.35)",
+                textTransform: "uppercase",
+              }}
+            >
               Scroll
             </span>
             <svg
@@ -777,9 +1047,18 @@ const Hero: React.FC<HeroProps> = ({
               height="20"
               viewBox="0 0 14 20"
               fill="none"
-              style={{ animation: 'heroScrollCuePulse 2s ease-in-out infinite' }}
+              style={{
+                animation: "heroScrollCuePulse 2s ease-in-out infinite",
+              }}
             >
-              <line x1="7" y1="0" x2="7" y2="13" stroke="rgba(248,236,188,0.35)" strokeWidth="1" />
+              <line
+                x1="7"
+                y1="0"
+                x2="7"
+                y2="13"
+                stroke="rgba(248,236,188,0.35)"
+                strokeWidth="1"
+              />
               <polyline
                 points="3,9 7,15 11,9"
                 stroke="rgba(248,236,188,0.35)"

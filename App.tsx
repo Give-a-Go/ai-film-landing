@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import Navigation from "./components/Navigation";
 import Hero from "./components/Hero";
 import CinematicTransition from "./components/CinematicTransition";
@@ -8,7 +8,6 @@ import EventPage from "./pages/EventPage";
 import gsap from "gsap";
 
 const App: React.FC = () => {
-  const [waitlistOpen, setWaitlistOpen] = useState(false);
   const markerRefs = useRef<Array<HTMLDivElement | null>>([]);
   const isEventPage = window.location.pathname === "/event";
 
@@ -53,6 +52,28 @@ const App: React.FC = () => {
   if (isEventPage) {
     return <EventPage />;
   }
+
+  const scrollToInfoSections = () => {
+    const target = document.getElementById("feature-presentation");
+    if (!target) return;
+    const startY = window.scrollY;
+    const targetY = target.getBoundingClientRect().top + window.scrollY - 24;
+    const distance = targetY - startY;
+    const duration = 1400;
+    const start = performance.now();
+    const easeInOutCubic = (t: number) =>
+      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+    const step = (now: number) => {
+      const elapsed = now - start;
+      const p = Math.min(elapsed / duration, 1);
+      const eased = easeInOutCubic(p);
+      window.scrollTo(0, startY + distance * eased);
+      if (p < 1) requestAnimationFrame(step);
+    };
+
+    requestAnimationFrame(step);
+  };
 
   return (
     <div className="min-h-screen bg-[#050505] text-[#E0D5C0] selection:bg-[#C6993A] selection:text-[#050505] overflow-x-hidden">
@@ -123,12 +144,9 @@ const App: React.FC = () => {
           }}
         />
       ))}
-      <Navigation onOpenWaitlist={() => setWaitlistOpen(true)} />
+      <Navigation onOpenWaitlist={scrollToInfoSections} />
       <main>
-        <Hero
-          waitlistOpen={waitlistOpen}
-          onWaitlistOpenChange={setWaitlistOpen}
-        />
+        <Hero />
         <CinematicTransition />
         <EventContent />
       </main>
