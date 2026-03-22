@@ -10,6 +10,7 @@
     "optimize-images": "node scripts/optimize-images.js"
   },
   "dependencies": {
+    "animejs": "^4.3.6",
     "framer-motion": "^12.38.0",
     "gsap": "^3.14.2",
     "react": "^19.2.3",

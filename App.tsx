@@ -3,6 +3,7 @@ import Navigation from "./components/Navigation";
 import Hero from "./components/Hero";
 import CinematicTransition from "./components/CinematicTransition";
 import EventContent from "./components/EventContent";
+import CollisionSection from "./components/CollisionSection";
 import EventPage from "./pages/EventPage";
 import gsap from "gsap";
 
@@ -131,6 +132,7 @@ const App: React.FC = () => {
         <Hero />
         <CinematicTransition />
         <EventContent />
+        <CollisionSection />
       </main>
     </div>
   );
