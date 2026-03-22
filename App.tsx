@@ -1,15 +1,13 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import Navigation from "./components/Navigation";
 import Hero from "./components/Hero";
 import CinematicTransition from "./components/CinematicTransition";
 import EventContent from "./components/EventContent";
 import EventPage from "./pages/EventPage";
-import LumaModal from "./components/LumaModal";
 import gsap from "gsap";
 
 const App: React.FC = () => {
   const markerRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const [lumaOpen, setLumaOpen] = useState(false);
   const isEventPage = window.location.pathname === "/event";
 
   useEffect(() => {
@@ -66,6 +64,8 @@ const App: React.FC = () => {
           backgroundSize: "200px",
           pointerEvents: "none",
           zIndex: 9999,
+          willChange: "transform",
+          contain: "strict",
         }}
       />
       {/* Global vignette */}
@@ -77,6 +77,8 @@ const App: React.FC = () => {
             "radial-gradient(ellipse 85% 85% at center, transparent 45%, rgba(5,5,5,0.55) 100%)",
           pointerEvents: "none",
           zIndex: 100,
+          willChange: "transform",
+          contain: "strict",
         }}
       />
       {/* Cinematic registration corner marks */}
@@ -119,17 +121,17 @@ const App: React.FC = () => {
             height: 32,
             pointerEvents: "none",
             zIndex: 9998,
+            willChange: "transform",
             ...style,
           }}
         />
       ))}
-      <Navigation onOpenWaitlist={() => setLumaOpen(true)} />
+      <Navigation />
       <main>
         <Hero />
         <CinematicTransition />
-        <EventContent onOpenLuma={() => setLumaOpen(true)} />
+        <EventContent />
       </main>
-      <LumaModal isOpen={lumaOpen} onClose={() => setLumaOpen(false)} />
     </div>
   );
 };

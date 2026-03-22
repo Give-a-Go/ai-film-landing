@@ -37,8 +37,12 @@ const Hero: React.FC = () => {
   // Track recently used video URLs across segments to avoid close repetition
   const recentVideoUrlsRef = useRef<string[]>([]);
 
+  // Shared grid line material (one for all segments)
+  const sharedLineMaterialRef = useRef<THREE.LineBasicMaterial | null>(null);
   // Grid line materials for potential animation
   const lineMaterialsRef = useRef<THREE.LineBasicMaterial[]>([]);
+  // Videos are deferred until after the initial image load pass completes
+  const videosEnabledRef = useRef(false);
 
   // --- CONFIGURATION ---
   const TUNNEL_WIDTH = 37.5;
@@ -109,7 +113,7 @@ const Hero: React.FC = () => {
     "/images-optimized/PXL_20250329_141611004.webp",
   ];
 
-  const createSegment = (zPos: number, fadeDelay = 0) => {
+  const createSegment = (zPos: number, fadeDelay = 0, withMedia = true) => {
     const group = new THREE.Group();
     group.position.z = zPos;
 
@@ -117,12 +121,14 @@ const Hero: React.FC = () => {
     const h = TUNNEL_HEIGHT / 2;
     const d = SEGMENT_DEPTH;
 
-    // Gold/amber grid lines to match the cinematic palette
-    const lineMaterial = new THREE.LineBasicMaterial({
-      color: 0xc6993a,
-      transparent: true,
-      opacity: 0.22,
-    });
+    if (!sharedLineMaterialRef.current) {
+      sharedLineMaterialRef.current = new THREE.LineBasicMaterial({
+        color: 0xc6993a,
+        transparent: true,
+        opacity: 0.22,
+      });
+    }
+    const lineMaterial = sharedLineMaterialRef.current;
     const lineGeo = new THREE.BufferGeometry();
     const vertices: number[] = [];
 
@@ -149,7 +155,7 @@ const Hero: React.FC = () => {
     const lines = new THREE.LineSegments(lineGeo, lineMaterial);
     group.add(lines);
 
-    populateImages(group, w, h, d, fadeDelay);
+    if (withMedia) populateImages(group, w, h, d, fadeDelay);
 
     return group;
   };
@@ -173,14 +179,13 @@ const Hero: React.FC = () => {
     h: number,
     d: number,
     fadeDelay = 0,
+    allowVideos = true,
   ) => {
     const cellMargin = 0.4;
     const usedUrls = new Set<string>();
 
-    const shuffledVideos = [...videoUrls].sort(() => Math.random() - 0.5);
-    const shuffledImages = [...imageUrls].sort(() => Math.random() - 0.5);
-    let videoIndex = 0;
-    let imageIndex = 0;
+    let videoOffset = Math.floor(Math.random() * videoUrls.length);
+    let imageOffset = Math.floor(Math.random() * imageUrls.length);
 
     const addVideo = (
       pos: THREE.Vector3,
@@ -191,31 +196,29 @@ const Hero: React.FC = () => {
       const recentGlobal = recentVideoUrlsRef.current;
       let url = "";
 
-      for (let i = 0; i < shuffledVideos.length; i++) {
-        const candidate =
-          shuffledVideos[(videoIndex + i) % shuffledVideos.length];
+      for (let i = 0; i < videoUrls.length; i++) {
+        const candidate = videoUrls[(videoOffset + i) % videoUrls.length];
         if (!usedUrls.has(candidate) && !recentGlobal.includes(candidate)) {
           url = candidate;
-          videoIndex += i + 1;
+          videoOffset += i + 1;
           break;
         }
       }
 
       if (!url) {
-        for (let i = 0; i < shuffledVideos.length; i++) {
-          const candidate =
-            shuffledVideos[(videoIndex + i) % shuffledVideos.length];
+        for (let i = 0; i < videoUrls.length; i++) {
+          const candidate = videoUrls[(videoOffset + i) % videoUrls.length];
           if (!usedUrls.has(candidate)) {
             url = candidate;
-            videoIndex += i + 1;
+            videoOffset += i + 1;
             break;
           }
         }
       }
 
       if (!url) {
-        url = shuffledVideos[videoIndex % shuffledVideos.length];
-        videoIndex++;
+        url = videoUrls[videoOffset % videoUrls.length];
+        videoOffset++;
       }
 
       usedUrls.add(url);
@@ -254,12 +257,13 @@ const Hero: React.FC = () => {
         }
       };
 
-      setTimeout(playVideo, Math.random() * 1000);
+      setTimeout(playVideo, fadeDelay * 1000 + Math.random() * 800 + 200);
 
       const videoTexture = new THREE.VideoTexture(video);
       videoTexture.minFilter = THREE.LinearFilter;
       videoTexture.magFilter = THREE.LinearFilter;
       videoTexture.encoding = THREE.sRGBEncoding;
+      videoTexture.generateMipmaps = false;
 
       const videoAspect =
         video.videoWidth && video.videoHeight
@@ -281,7 +285,7 @@ const Hero: React.FC = () => {
         map: videoTexture,
         transparent: true,
         opacity: 0,
-        side: THREE.DoubleSide,
+        side: THREE.FrontSide,
       });
 
       const geom = new THREE.PlaneGeometry(wd - cellMargin, ht - cellMargin);
@@ -302,7 +306,7 @@ const Hero: React.FC = () => {
       ht: number,
     ) => {
       const hasVideos = videoUrls.length > 0;
-      const useVideo = hasVideos && Math.random() > 0.5;
+      const useVideo = allowVideos && hasVideos && Math.random() > 0.5;
 
       if (useVideo) {
         addVideo(pos, rot, wd, ht);
@@ -310,29 +314,25 @@ const Hero: React.FC = () => {
       }
 
       let url = "";
-      let attempts = 0;
-      const maxAttempts = shuffledImages.length;
-
-      while (attempts < maxAttempts) {
-        const candidateUrl = shuffledImages[imageIndex % shuffledImages.length];
-        imageIndex++;
-        if (!usedUrls.has(candidateUrl)) {
-          url = candidateUrl;
+      for (let i = 0; i < imageUrls.length; i++) {
+        const candidate = imageUrls[(imageOffset + i) % imageUrls.length];
+        if (!usedUrls.has(candidate)) {
+          url = candidate;
+          imageOffset += i + 1;
           break;
         }
-        attempts++;
       }
 
       if (!url) {
-        url = shuffledImages[imageIndex % shuffledImages.length];
-        imageIndex++;
+        url = imageUrls[imageOffset % imageUrls.length];
+        imageOffset++;
       }
 
       usedUrls.add(url);
       const mat = new THREE.MeshBasicMaterial({
         transparent: true,
         opacity: 0,
-        side: THREE.DoubleSide,
+        side: THREE.FrontSide,
       });
 
       const createMeshWithTexture = (tex: THREE.Texture) => {
@@ -462,7 +462,7 @@ const Hero: React.FC = () => {
 
     const width = window.innerWidth;
     const height = window.innerHeight;
-    const camera = new THREE.PerspectiveCamera(70, width / height, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(70, width / height, 0.1, 100);
     camera.position.set(0, 0, 0);
     cameraRef.current = camera;
 
@@ -474,173 +474,225 @@ const Hero: React.FC = () => {
 
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
-      antialias: window.devicePixelRatio < 1.5,
+      antialias: false,
       alpha: false,
       powerPreference: "high-performance",
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    const isMobileDevice = width < 768;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileDevice ? 1 : 1.5));
     rendererRef.current = renderer;
 
     const segments: THREE.Group[] = [];
 
-    // Create first 2 segments immediately — these are visible on initial load
-    for (let i = 0; i < 2; i++) {
-      const segment = createSegment(-i * SEGMENT_DEPTH, i * 0.35);
-      scene.add(segment);
-      segments.push(segment);
+    const collectLineMaterials = () => {
+      lineMaterialsRef.current = sharedLineMaterialRef.current
+        ? [sharedLineMaterialRef.current]
+        : [];
+    };
+
+    // Phase 1: Build ALL grid shells synchronously (no media).
+    // The first 2 segments (nearest to camera) get images immediately
+    // (~8-10 small WebP images — fast, no videos, no jank).
+    const IMMEDIATE_SEGMENTS = 1;
+    for (let i = 0; i < NUM_SEGMENTS; i++) {
+      const withMedia = i < IMMEDIATE_SEGMENTS;
+      const seg = createSegment(-i * SEGMENT_DEPTH, 0, false);
+      scene.add(seg);
+      segments.push(seg);
+      if (withMedia) {
+        populateImages(seg, TUNNEL_WIDTH / 2, TUNNEL_HEIGHT / 2, SEGMENT_DEPTH, 0, false);
+      }
     }
     segmentsRef.current = segments;
-
-    const collectLineMaterials = () => {
-      lineMaterialsRef.current = [];
-      segmentsRef.current.forEach((seg) => {
-        seg.traverse((child) => {
-          if (child instanceof THREE.LineSegments) {
-            lineMaterialsRef.current.push(
-              child.material as THREE.LineBasicMaterial,
-            );
-          }
-        });
-      });
-    };
     collectLineMaterials();
 
-    // Defer remaining segments until after first paint
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        for (let i = 2; i < NUM_SEGMENTS; i++) {
-          const segment = createSegment(-i * SEGMENT_DEPTH, i * 0.35);
-          scene.add(segment);
-          segments.push(segment);
+    // Phase 2: Fill remaining segments after the startup fade lifts,
+    // one at a time with staggered delays (images only — no videos yet).
+    const MEDIA_START_DELAY = 1200;
+    const MEDIA_STAGGER = 200;
+    const deferredTimers: ReturnType<typeof setTimeout>[] = [];
+
+    for (let i = IMMEDIATE_SEGMENTS; i < segments.length; i++) {
+      const timer = setTimeout(() => {
+        const seg = segments[i];
+        const hasMedia = seg.children.some(
+          (c) => c.name === "slab_image" || c.name === "slab_video",
+        );
+        if (!hasMedia) {
+          populateImages(
+            seg,
+            TUNNEL_WIDTH / 2,
+            TUNNEL_HEIGHT / 2,
+            SEGMENT_DEPTH,
+            0.4,
+            false,
+          );
         }
-        segmentsRef.current = [...segments];
-        collectLineMaterials();
-      });
-    });
+      }, MEDIA_START_DELAY + (i - IMMEDIATE_SEGMENTS) * MEDIA_STAGGER);
+      deferredTimers.push(timer);
+    }
+
+    // Phase 3: After all initial images are placed, enable videos.
+    // Future recycled segments will use the normal image/video mix.
+    const videoEnableTimer = setTimeout(() => {
+      videosEnabledRef.current = true;
+    }, MEDIA_START_DELAY + (segments.length - IMMEDIATE_SEGMENTS) * MEDIA_STAGGER + 500);
+    deferredTimers.push(videoEnableTimer);
 
     // Animation Loop
     let frameId: number;
+    let cachedVh = window.innerHeight;
+    let cachedScrollY = window.scrollY;
+    let lastFadeOpacity = -1;
+    let lastScrollCueOp = -1;
+    let lastTextOp = -1;
+    let videoThrottleCounter = 0;
+
+    const onScrollCapture = () => { cachedScrollY = window.scrollY; };
+    const onResizeCapture = () => { cachedVh = window.innerHeight; };
+    window.addEventListener("scroll", onScrollCapture, { passive: true });
+    window.addEventListener("resize", onResizeCapture);
+
+    const disposeSegmentSlabs = (segment: THREE.Group) => {
+      for (let i = segment.children.length - 1; i >= 0; i--) {
+        const c = segment.children[i];
+        if (c.name !== "slab_image" && c.name !== "slab_video") continue;
+        if ((c as THREE.Mesh).userData?.video) {
+          ((c as THREE.Mesh).userData.video as HTMLVideoElement).pause();
+        }
+        segment.remove(c);
+        if (c instanceof THREE.Mesh) {
+          c.geometry.dispose();
+          if (c.material.map) c.material.map.dispose();
+          c.material.dispose();
+        }
+      }
+    };
+
     const animate = () => {
       frameId = requestAnimationFrame(animate);
       if (!cameraRef.current || !sceneRef.current || !rendererRef.current)
         return;
 
-      const vh = window.innerHeight;
-      const scrollY = window.scrollY;
+      const vh = cachedVh;
+      const scrollY = cachedScrollY;
 
       // ── Startup projector fade ─────────────────────────────────────────
-      // First render captures the start time; overlay fades from opaque→clear
       if (startTimeRef.current === null) startTimeRef.current = Date.now();
       const elapsed = Date.now() - startTimeRef.current;
-      const startupOp = Math.max(0, 1 - elapsed / 1400);
+      const startupOp = Math.max(0, 1 - elapsed / 900);
 
       // ── Scroll-driven blackout ─────────────────────────────────────────
-      // Sticky scroll range = container (200vh) - viewport (1vh) = 100vh.
-      // Blackout starts at 0.52vh, completes at 0.82vh — well within
-      // the sticky range so the tunnel is fully black before it slides off.
       const scrollBlackout = Math.max(
         0,
         Math.min(1, (scrollY - vh * 0.52) / (vh * 0.3)),
       );
 
       const totalBlackout = Math.max(startupOp, scrollBlackout);
-      if (fadeOverlayRef.current) {
-        fadeOverlayRef.current.style.opacity = String(totalBlackout);
+
+      // Only touch DOM when value actually changed (avoid style recalc)
+      const roundedFade = Math.round(totalBlackout * 1000) / 1000;
+      if (roundedFade !== lastFadeOpacity) {
+        lastFadeOpacity = roundedFade;
+        if (fadeOverlayRef.current) {
+          fadeOverlayRef.current.style.opacity = String(roundedFade);
+        }
       }
 
-      // ── Scroll cue (chevron at bottom of first viewport) ──────────────
-      // Visible at page load, fades as user starts scrolling
-      const scrollCueOp = Math.max(0, 1 - scrollY / (vh * 0.12));
-      if (scrollCueRef.current) {
-        scrollCueRef.current.style.opacity = String(scrollCueOp);
+      // ── Skip Three.js render when hero is fully blacked out ────────────
+      const heroFullyHidden = scrollBlackout >= 1;
+
+      // ── Scroll cue ────────────────────────────────────────────────────
+      const scrollCueOp = Math.round(Math.max(0, 1 - scrollY / (vh * 0.12)) * 100) / 100;
+      if (scrollCueOp !== lastScrollCueOp) {
+        lastScrollCueOp = scrollCueOp;
+        if (scrollCueRef.current) {
+          scrollCueRef.current.style.opacity = String(scrollCueOp);
+        }
       }
 
       // ── Auto-scroll ────────────────────────────────────────────────────
       const now = Date.now();
       const timeSinceLastScroll = now - lastUserScrollTimeRef.current;
-      if (timeSinceLastScroll > 100 && !isUserScrollingRef.current) {
+      if (timeSinceLastScroll > 100 && !isUserScrollingRef.current && !heroFullyHidden) {
         scrollPosRef.current += autoScrollSpeedRef.current;
       }
 
       const targetZ = -(scrollPosRef.current + scrollY) * 0.05;
       const currentZ = cameraRef.current.position.z;
-      cameraRef.current.position.z += (targetZ - currentZ) * 0.1;
+      const delta = targetZ - currentZ;
+      if (Math.abs(delta) > 0.001) {
+        cameraRef.current.position.z += delta * 0.1;
+      }
+
+      // ── Scroll-driven text fade ────────────────────────────────────────
+      const textOp = Math.round(Math.max(
+        0,
+        Math.min(1, 1 - (scrollY - vh * 0.15) / (vh * 0.27)),
+      ) * 100) / 100;
+      if (textOp !== lastTextOp) {
+        lastTextOp = textOp;
+        if (textOverlayRef.current) {
+          textOverlayRef.current.style.opacity = String(textOp);
+        }
+        if (contentRef.current) {
+          contentRef.current.style.pointerEvents =
+            textOp < 0.05 ? "none" : "auto";
+        }
+      }
+
+      // ── Skip expensive Three.js work when fully hidden ─────────────────
+      if (heroFullyHidden) return;
+
+      // ── Pause/resume videos based on distance (throttled, not every frame)
+      videoThrottleCounter++;
+      if (videoThrottleCounter >= 30) {
+        videoThrottleCounter = 0;
+        const camZNow = cameraRef.current.position.z;
+        const videoVisibleRange = SEGMENT_DEPTH * 3;
+        for (let si = 0; si < segmentsRef.current.length; si++) {
+          const segment = segmentsRef.current[si];
+          const dist = Math.abs(segment.position.z - camZNow);
+          const children = segment.children;
+          for (let ci = 0; ci < children.length; ci++) {
+            const c = children[ci];
+            if ((c as THREE.Mesh).userData?.video) {
+              const v = (c as THREE.Mesh).userData.video as HTMLVideoElement;
+              if (dist > videoVisibleRange) {
+                if (!v.paused) v.pause();
+              } else {
+                if (v.paused && v.src) v.play().catch(() => {});
+              }
+            }
+          }
+        }
+      }
 
       // ── Bidirectional infinite segment recycling ───────────────────────
       const tunnelLength = NUM_SEGMENTS * SEGMENT_DEPTH;
       const camZ = cameraRef.current.position.z;
+      const segs = segmentsRef.current;
 
-      segmentsRef.current.forEach((segment) => {
+      for (let si = 0; si < segs.length; si++) {
+        const segment = segs[si];
         if (segment.position.z > camZ + SEGMENT_DEPTH) {
           let minZ = 0;
-          segmentsRef.current.forEach(
-            (s) => (minZ = Math.min(minZ, s.position.z)),
-          );
+          for (let j = 0; j < segs.length; j++) {
+            if (segs[j].position.z < minZ) minZ = segs[j].position.z;
+          }
           segment.position.z = minZ - SEGMENT_DEPTH;
-
-          const toRemove: THREE.Object3D[] = [];
-          segment.traverse((c) => {
-            if (c.name === "slab_image" || c.name === "slab_video")
-              toRemove.push(c);
-          });
-          toRemove.forEach((c) => {
-            segment.remove(c);
-            if (c instanceof THREE.Mesh) {
-              c.geometry.dispose();
-              if (c.material.map) c.material.map.dispose();
-              c.material.dispose();
-            }
-          });
-          populateImages(
-            segment,
-            TUNNEL_WIDTH / 2,
-            TUNNEL_HEIGHT / 2,
-            SEGMENT_DEPTH,
-          );
-        }
-
-        if (segment.position.z < camZ - tunnelLength - SEGMENT_DEPTH) {
+          disposeSegmentSlabs(segment);
+          populateImages(segment, TUNNEL_WIDTH / 2, TUNNEL_HEIGHT / 2, SEGMENT_DEPTH, 0, videosEnabledRef.current);
+        } else if (segment.position.z < camZ - tunnelLength - SEGMENT_DEPTH) {
           let maxZ = -999999;
-          segmentsRef.current.forEach(
-            (s) => (maxZ = Math.max(maxZ, s.position.z)),
-          );
+          for (let j = 0; j < segs.length; j++) {
+            if (segs[j].position.z > maxZ) maxZ = segs[j].position.z;
+          }
           segment.position.z = maxZ + SEGMENT_DEPTH;
-
-          const toRemove: THREE.Object3D[] = [];
-          segment.traverse((c) => {
-            if (c.name === "slab_image" || c.name === "slab_video")
-              toRemove.push(c);
-          });
-          toRemove.forEach((c) => {
-            segment.remove(c);
-            if (c instanceof THREE.Mesh) {
-              c.geometry.dispose();
-              if (c.material.map) c.material.map.dispose();
-              c.material.dispose();
-            }
-          });
-          populateImages(
-            segment,
-            TUNNEL_WIDTH / 2,
-            TUNNEL_HEIGHT / 2,
-            SEGMENT_DEPTH,
-          );
+          disposeSegmentSlabs(segment);
+          populateImages(segment, TUNNEL_WIDTH / 2, TUNNEL_HEIGHT / 2, SEGMENT_DEPTH, 0, videosEnabledRef.current);
         }
-      });
-
-      // ── Scroll-driven text fade ────────────────────────────────────────
-      // Text fades out between 0.15vh–0.42vh, cleared before blackout starts
-      const textOp = Math.max(
-        0,
-        Math.min(1, 1 - (scrollY - vh * 0.15) / (vh * 0.27)),
-      );
-      if (textOverlayRef.current) {
-        textOverlayRef.current.style.opacity = String(textOp);
-      }
-      if (contentRef.current) {
-        contentRef.current.style.pointerEvents =
-          textOp < 0.05 ? "none" : "auto";
       }
 
       rendererRef.current.render(sceneRef.current, cameraRef.current);
@@ -669,8 +721,11 @@ const Hero: React.FC = () => {
     window.addEventListener("resize", handleResize);
 
     return () => {
+      deferredTimers.forEach(clearTimeout);
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScrollCapture);
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("resize", onResizeCapture);
       cancelAnimationFrame(frameId);
       if ((window as any).scrollTimeout)
         clearTimeout((window as any).scrollTimeout);
@@ -691,14 +746,14 @@ const Hero: React.FC = () => {
     const ctx = gsap.context(() => {
       gsap.fromTo(
         contentRef.current,
-        { opacity: 0, y: 24, scale: 0.97 },
+        { opacity: 0, y: 18, scale: 0.98 },
         {
           opacity: 1,
           y: 0,
           scale: 1,
-          duration: 1.4,
+          duration: 1.0,
           ease: "power3.out",
-          delay: 1.0, // after startup overlay has largely faded
+          delay: 0.35,
         },
       );
     }, containerRef);
@@ -764,9 +819,12 @@ const Hero: React.FC = () => {
         >
           {/* Three.js canvas */}
           <div
-            className={`absolute inset-0 w-full h-full overflow-hidden z-0 transition-[filter,transform] duration-300 ease-out ${
-              isTeleprompterOpen ? "blur-sm scale-[1.01]" : "blur-0 scale-100"
-            }`}
+            className="absolute inset-0 w-full h-full overflow-hidden z-0"
+            style={{
+              filter: isTeleprompterOpen ? "blur(4px)" : "none",
+              transform: isTeleprompterOpen ? "scale(1.01)" : "none",
+              transition: "filter 300ms ease-out, transform 300ms ease-out",
+            }}
           >
             <canvas ref={canvasRef} className="w-full h-full block" />
           </div>

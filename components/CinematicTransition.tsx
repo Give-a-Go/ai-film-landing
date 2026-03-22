@@ -149,16 +149,28 @@ const CinematicTransition: React.FC = () => {
       return { dx, dy, dist };
     };
 
+    let cachedVh = window.innerHeight;
+    let cachedVw = window.innerWidth;
+    const onResizeCt = () => { cachedVh = window.innerHeight; cachedVw = window.innerWidth; };
+    window.addEventListener("resize", onResizeCt);
+
     const tick = () => {
       raf = requestAnimationFrame(tick);
-      const vh = window.innerHeight;
-      const vw = window.innerWidth;
+      const vh = cachedVh;
+      const vw = cachedVw;
       const isMobile = vw <= 768;
       const sectionRect = sectionRef.current?.getBoundingClientRect();
+
+      // Skip all work if section is far from viewport
+      if (sectionRect && (sectionRect.bottom < -vh || sectionRect.top > vh * 3)) {
+        if (rootRef.current && rootRef.current.style.opacity !== "0") {
+          rootRef.current.style.opacity = "0";
+        }
+        return;
+      }
+
       const PRE_ENTRY_VH = 1.32;
       const entryStart = vh * PRE_ENTRY_VH;
-      // End timeline when next content is about to enter viewport
-      // (i.e. when this section has only 1 viewport height remaining).
       const activeScrollRange = sectionRect
         ? Math.max(1, sectionRect.height - vh)
         : 1;
@@ -166,8 +178,6 @@ const CinematicTransition: React.FC = () => {
       const p = sectionRect
         ? clamp((entryStart - sectionRect.top) / totalRange, 0, 1)
         : 0;
-      // Pre-roll the cinematic timeline so clapboard is already entering
-      // as soon as users scroll into this section (avoids initial dead-black beat).
       const TIMELINE_DELAY = 0.02;
       const timelineP = clamp((p - TIMELINE_DELAY) / (1 - TIMELINE_DELAY), 0, 1);
       const endFade = 1 - phase(p, 0.88, 1.0);
@@ -405,6 +415,7 @@ const CinematicTransition: React.FC = () => {
     raf = requestAnimationFrame(tick);
     return () => {
       cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onResizeCt);
       void clapAudioCtxRef.current?.close();
       clapAudioCtxRef.current = null;
     };
