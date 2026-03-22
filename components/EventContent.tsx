@@ -596,7 +596,9 @@ function SponsorLogoCard({
 // ─────────────────────────────────────────────────────────────────────────────
 // FinScene — animated Fin label + gold-amber CTA with ticket-tear hover
 // ─────────────────────────────────────────────────────────────────────────────
-function FinScene({ onOpenLuma }: { onOpenLuma?: () => void }) {
+const LUMA_EVENT_URL = "https://lu.ma/evt-tRkE3lQWZiSHobe";
+
+function FinScene() {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -633,9 +635,10 @@ function FinScene({ onOpenLuma }: { onOpenLuma?: () => void }) {
           transition: "transform 1.4s cubic-bezier(0.16,1,0.3,1)",
         }} />
       </div>
-      <button
-        type="button"
-        onClick={() => onOpenLuma?.()}
+      <a
+        href={LUMA_EVENT_URL}
+        target="_blank"
+        rel="noopener noreferrer"
         style={{
           display: "inline-block",
           position: "relative",
@@ -648,6 +651,7 @@ function FinScene({ onOpenLuma }: { onOpenLuma?: () => void }) {
           fontSize: "0.88rem",
           letterSpacing: "0.1em",
           textTransform: "uppercase",
+          textDecoration: "none",
           cursor: "pointer",
           borderRadius: 2,
           border: "1px solid rgba(198,153,58,0.45)",
@@ -676,7 +680,7 @@ function FinScene({ onOpenLuma }: { onOpenLuma?: () => void }) {
         }}>
           Apply to Join →
         </span>
-      </button>
+      </a>
     </div>
   );
 }
@@ -693,107 +697,94 @@ function smoothstep(edge0: number, edge1: number, x: number) {
   return t * t * (3 - 2 * t);
 }
 
-function FPRule({ progress, flip }: { progress: number; flip?: boolean }) {
-  const lineProgress = smoothstep(0.06, 0.88, progress);
-  const sparkleProgress = smoothstep(0.34, 0.88, progress);
-
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", width: "min(600px, 84vw)" }}>
-      <div style={{
-        flex: 1, height: "0.5px",
-        background: flip
-          ? "linear-gradient(90deg, rgba(198,153,58,0.8), transparent)"
-          : "linear-gradient(90deg, transparent, rgba(198,153,58,0.8))",
-        transform: `scaleX(${lineProgress})`,
-        transformOrigin: flip ? "left" : "right",
-        opacity: 0.35 + lineProgress * 0.65,
-        willChange: "transform",
-      }} />
-      <span style={{
-        fontFamily: "monospace",
-        fontSize: "0.5rem",
-        color: "rgba(198,153,58,0.45)",
-        opacity: sparkleProgress,
-        willChange: "opacity",
-      }}>✦</span>
-      <div style={{
-        flex: 1, height: "0.5px",
-        background: flip
-          ? "linear-gradient(90deg, transparent, rgba(198,153,58,0.8))"
-          : "linear-gradient(90deg, rgba(198,153,58,0.8), transparent)",
-        transform: `scaleX(${lineProgress})`,
-        transformOrigin: flip ? "right" : "left",
-        opacity: 0.35 + lineProgress * 0.65,
-        willChange: "transform",
-      }} />
-    </div>
-  );
-}
-
 function FeaturePresentationBridge() {
   const ref = useRef<HTMLDivElement>(null);
-  const [armed, setArmed] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const titleRef = useRef<HTMLDivElement>(null);
+  const topLineLeftRef = useRef<HTMLDivElement>(null);
+  const topSparkleRef = useRef<HTMLSpanElement>(null);
+  const topLineRightRef = useRef<HTMLDivElement>(null);
+  const bottomLineLeftRef = useRef<HTMLDivElement>(null);
+  const bottomSparkleRef = useRef<HTMLSpanElement>(null);
+  const bottomLineRightRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
 
+    let rafId = 0;
+    const targetVal = { current: 0 };
+    const currentVal = { current: 0 };
+    let started = false;
+
+    const applyProgress = (progress: number) => {
+      const topP = smoothstep(0.02, 0.55, progress);
+      const titleP = smoothstep(0.04, 0.62, progress);
+      const bottomP = smoothstep(0.08, 0.68, progress);
+
+      const topLine = smoothstep(0.06, 0.88, topP);
+      const topSparkle = smoothstep(0.34, 0.88, topP);
+      const bottomLine = smoothstep(0.06, 0.88, bottomP);
+      const bottomSparkle = smoothstep(0.34, 0.88, bottomP);
+
+      if (titleRef.current) {
+        titleRef.current.style.opacity = String(titleP);
+        titleRef.current.style.transform = `translateY(${(1 - titleP) * 24}px) scale(${0.975 + titleP * 0.025})`;
+      }
+      if (topLineLeftRef.current) {
+        topLineLeftRef.current.style.transform = `scaleX(${topLine})`;
+        topLineLeftRef.current.style.opacity = String(0.35 + topLine * 0.65);
+      }
+      if (topSparkleRef.current) topSparkleRef.current.style.opacity = String(topSparkle);
+      if (topLineRightRef.current) {
+        topLineRightRef.current.style.transform = `scaleX(${topLine})`;
+        topLineRightRef.current.style.opacity = String(0.35 + topLine * 0.65);
+      }
+      if (bottomLineLeftRef.current) {
+        bottomLineLeftRef.current.style.transform = `scaleX(${bottomLine})`;
+        bottomLineLeftRef.current.style.opacity = String(0.35 + bottomLine * 0.65);
+      }
+      if (bottomSparkleRef.current) bottomSparkleRef.current.style.opacity = String(bottomSparkle);
+      if (bottomLineRightRef.current) {
+        bottomLineRightRef.current.style.transform = `scaleX(${bottomLine})`;
+        bottomLineRightRef.current.style.opacity = String(0.35 + bottomLine * 0.65);
+      }
+    };
+
+    const updateTarget = () => {
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight || 1;
+      targetVal.current = clamp01((vh * 1.15 - rect.top) / (vh * 1.15 - vh * 0.22));
+    };
+
+    const tick = () => {
+      rafId = window.requestAnimationFrame(tick);
+      const next = currentVal.current + (targetVal.current - currentVal.current) * 0.22;
+      currentVal.current = Math.abs(targetVal.current - next) < 0.0008 ? targetVal.current : next;
+      applyProgress(currentVal.current);
+    };
+
     const obs = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setArmed(true);
+        if (entry.isIntersecting && !started) {
+          started = true;
           obs.disconnect();
+          updateTarget();
+          tick();
+          window.addEventListener("scroll", updateTarget, { passive: true });
+          window.addEventListener("resize", updateTarget);
         }
       },
       { threshold: 0.01, rootMargin: "0px 0px 20% 0px" },
     );
     obs.observe(el);
 
-    return () => obs.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!armed) return;
-
-    const targetRef = { current: 0 };
-    const currentRef = { current: 0 };
-    let rafId = 0;
-
-    const updateTarget = () => {
-      const el = ref.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const vh = window.innerHeight || 1;
-      const start = vh * 1.15;
-      const end = vh * 0.22;
-      targetRef.current = clamp01((start - rect.top) / (start - end));
-    };
-
-    const tick = () => {
-      rafId = window.requestAnimationFrame(tick);
-      const target = targetRef.current;
-      const current = currentRef.current;
-      const next = current + (target - current) * 0.22;
-      currentRef.current = Math.abs(target - next) < 0.0008 ? target : next;
-      setProgress((prev) => (Math.abs(prev - currentRef.current) > 0.0008 ? currentRef.current : prev));
-    };
-
-    updateTarget();
-    tick();
-    window.addEventListener("scroll", updateTarget, { passive: true });
-    window.addEventListener("resize", updateTarget);
-
     return () => {
+      obs.disconnect();
       window.removeEventListener("scroll", updateTarget);
       window.removeEventListener("resize", updateTarget);
       if (rafId) window.cancelAnimationFrame(rafId);
     };
-  }, [armed]);
-
-  const topRuleProgress = smoothstep(0.02, 0.55, progress);
-  const titleProgress = smoothstep(0.04, 0.62, progress);
-  const bottomRuleProgress = smoothstep(0.08, 0.68, progress);
+  }, []);
 
   return (
     <div
@@ -809,9 +800,27 @@ function FeaturePresentationBridge() {
         background: "#000",
       }}
     >
-      <FPRule progress={topRuleProgress} />
+      {/* Top rule */}
+      <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", width: "min(600px, 84vw)" }}>
+        <div ref={topLineLeftRef} style={{
+          flex: 1, height: "0.5px",
+          background: "linear-gradient(90deg, transparent, rgba(198,153,58,0.8))",
+          transform: "scaleX(0)", transformOrigin: "right", opacity: 0.35,
+          willChange: "transform",
+        }} />
+        <span ref={topSparkleRef} style={{
+          fontFamily: "monospace", fontSize: "0.5rem",
+          color: "rgba(198,153,58,0.45)", opacity: 0, willChange: "opacity",
+        }}>✦</span>
+        <div ref={topLineRightRef} style={{
+          flex: 1, height: "0.5px",
+          background: "linear-gradient(90deg, rgba(198,153,58,0.8), transparent)",
+          transform: "scaleX(0)", transformOrigin: "left", opacity: 0.35,
+          willChange: "transform",
+        }} />
+      </div>
 
-      <div style={{
+      <div ref={titleRef} style={{
         fontFamily: "'IBM Plex Serif', Georgia, serif",
         fontSize: "clamp(1.45rem, 3.1vw, 2.7rem)",
         fontWeight: 300,
@@ -820,14 +829,31 @@ function FeaturePresentationBridge() {
         textTransform: "uppercase",
         textAlign: "center",
         textShadow: "0 0 36px rgba(198,153,58,0.2), 0 0 72px rgba(198,153,58,0.08)",
-        opacity: titleProgress,
-        transform: `translateY(${(1 - titleProgress) * 24}px) scale(${0.975 + titleProgress * 0.025})`,
+        opacity: 0,
         willChange: "opacity, transform",
       }}>
         Feature Presentation
       </div>
 
-      <FPRule progress={bottomRuleProgress} flip />
+      {/* Bottom rule (flipped) */}
+      <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", width: "min(600px, 84vw)" }}>
+        <div ref={bottomLineLeftRef} style={{
+          flex: 1, height: "0.5px",
+          background: "linear-gradient(90deg, rgba(198,153,58,0.8), transparent)",
+          transform: "scaleX(0)", transformOrigin: "left", opacity: 0.35,
+          willChange: "transform",
+        }} />
+        <span ref={bottomSparkleRef} style={{
+          fontFamily: "monospace", fontSize: "0.5rem",
+          color: "rgba(198,153,58,0.45)", opacity: 0, willChange: "opacity",
+        }}>✦</span>
+        <div ref={bottomLineRightRef} style={{
+          flex: 1, height: "0.5px",
+          background: "linear-gradient(90deg, transparent, rgba(198,153,58,0.8))",
+          transform: "scaleX(0)", transformOrigin: "right", opacity: 0.35,
+          willChange: "transform",
+        }} />
+      </div>
     </div>
   );
 }
@@ -836,7 +862,7 @@ function FeaturePresentationBridge() {
 // EventContent
 // ─────────────────────────────────────────────────────────────────────────────
 
-const EventContent: React.FC<{ onOpenLuma?: () => void }> = ({ onOpenLuma }) => {
+const EventContent: React.FC = () => {
   return (
     <div
       className="ec-content-shell"
@@ -1035,13 +1061,14 @@ const EventContent: React.FC<{ onOpenLuma?: () => void }> = ({ onOpenLuma }) => 
                   flexWrap: "wrap",
                 }}
               >
-                <button
-                  type="button"
-                  onClick={() => onOpenLuma?.()}
-                  className="rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap bg-dark text-white"
+                <a
+                  href={LUMA_EVENT_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap bg-dark text-white no-underline"
                 >
                   I'm interested
-                </button>
+                </a>
                 <a
                   href="https://giveago.co/sponsor"
                   style={{
@@ -1754,7 +1781,7 @@ const EventContent: React.FC<{ onOpenLuma?: () => void }> = ({ onOpenLuma }) => 
                 zIndex: 2,
                 overflow: "hidden",
               }}>
-                {Array.from({ length: 40 }).map((_, i) => (
+                {Array.from({ length: 100 }).map((_, i) => (
                   <div key={i} style={{
                     width: 14,
                     height: 10,
@@ -1987,34 +2014,23 @@ const EventContent: React.FC<{ onOpenLuma?: () => void }> = ({ onOpenLuma }) => 
                     margin: "0 0 1.5rem",
                   }}>{quote}</p>
                   <div style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.75rem",
+                    borderTop: `1px solid ${T.border}`,
+                    paddingTop: "1rem",
                   }}>
                     <div style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: "50%",
-                      background: "rgba(200,170,80,0.1)",
-                      border: "1px solid rgba(200,170,80,0.2)",
-                      flexShrink: 0,
-                    }} />
-                    <div>
-                      <div style={{
-                        fontFamily: T.sans,
-                        fontSize: "0.8rem",
-                        color: "rgba(255,255,255,0.55)",
-                        fontWeight: 500,
-                      }}>{name}</div>
-                      <div style={{
-                        fontFamily: T.mono,
-                        fontSize: "0.55rem",
-                        letterSpacing: "0.15em",
-                        textTransform: "uppercase",
-                        color: "rgba(200,170,80,0.45)",
-                        marginTop: "0.15rem",
-                      }}>{role}</div>
-                    </div>
+                      fontFamily: T.sans,
+                      fontSize: "0.8rem",
+                      color: "rgba(255,255,255,0.55)",
+                      fontWeight: 500,
+                    }}>{name}</div>
+                    <div style={{
+                      fontFamily: T.mono,
+                      fontSize: "0.55rem",
+                      letterSpacing: "0.15em",
+                      textTransform: "uppercase",
+                      color: "rgba(200,170,80,0.45)",
+                      marginTop: "0.3rem",
+                    }}>{role}</div>
                   </div>
                 </div>
               </SectionReveal>
@@ -2037,7 +2053,7 @@ const EventContent: React.FC<{ onOpenLuma?: () => void }> = ({ onOpenLuma }) => 
         }}
       >
         <SectionReveal>
-          <FinScene onOpenLuma={onOpenLuma} />
+          <FinScene />
           <div
             style={{
               fontFamily: T.serif,
