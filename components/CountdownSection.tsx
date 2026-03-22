@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useMemo, useCallback } from "react";
+import React, { useRef, useEffect, useState, useMemo } from "react";
 
 const ARC_R = 75;
 
@@ -10,74 +10,83 @@ function tryVibrate(pattern: number[]) {
 
 const CountdownSection: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scrollY, setScrollY] = useState(0);
   const [currentNumber, setCurrentNumber] = useState(3);
   const [isComplete, setIsComplete] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  
+  const [isFlickering, setIsFlickering] = useState(false);
+
   const lastNumberRef = useRef(3);
   const hasCompletedRef = useRef(false);
-  const isTransitioningRef = useRef(false);
+  const flickerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rafPendingRef = useRef(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
+    const getProgress = () => {
+      const container = containerRef.current;
+      if (!container) return 0;
+      const rect = container.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const startOffset = vh;
+      const endOffset = vh * -0.3;
+      const totalDistance = startOffset - endOffset;
+      const position = rect.top - startOffset;
+      return Math.max(0, Math.min(1, -position / totalDistance));
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    const update = () => {
+      const progress = getProgress();
+
+      if (progress < 0.05 && hasCompletedRef.current) {
+        hasCompletedRef.current = false;
+        setIsComplete(false);
+      }
+
+      const newNumber = Math.max(1, Math.ceil(3 - progress * 3));
+
+      if (newNumber !== lastNumberRef.current) {
+        lastNumberRef.current = newNumber;
+        tryVibrate([30]);
+        setIsFlickering(true);
+        if (flickerTimerRef.current) clearTimeout(flickerTimerRef.current);
+        flickerTimerRef.current = setTimeout(() => setIsFlickering(false), 220);
+      }
+
+      setCurrentNumber(newNumber);
+
+      if (newNumber === 1 && progress > 0.9 && !hasCompletedRef.current) {
+        hasCompletedRef.current = true;
+        setIsComplete(true);
+      }
+    };
+
+    const handleScroll = () => {
+      if (rafPendingRef.current) return;
+      rafPendingRef.current = true;
+      requestAnimationFrame(() => {
+        rafPendingRef.current = false;
+        update();
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (flickerTimerRef.current) clearTimeout(flickerTimerRef.current);
+    };
   }, []);
 
-  // Calculate scroll progress through countdown zone
-  const getProgress = useCallback(() => {
+  // Derive display values directly without storing scrollY in state
+  const progress = (() => {
     const container = containerRef.current;
     if (!container) return 0;
-    
     const rect = container.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    
-    // Start as soon as the section enters the viewport
-    // End when top reaches -30% (fully scrolled past)
-    const startOffset = viewportHeight;
-    const endOffset = viewportHeight * -0.3;
+    const vh = window.innerHeight;
+    const startOffset = vh;
+    const endOffset = vh * -0.3;
     const totalDistance = startOffset - endOffset;
-    
     const position = rect.top - startOffset;
-    let progress = -position / totalDistance;
-    return Math.max(0, Math.min(1, progress));
-  }, []);
+    return Math.max(0, Math.min(1, -position / totalDistance));
+  })();
 
-  // Handle scroll-driven countdown
-  useEffect(() => {
-    if (isTransitioningRef.current) return;
-
-    const progress = getProgress();
-
-    // Reset completed state if user scrolls back up to the beginning
-    if (progress < 0.05 && hasCompletedRef.current) {
-      hasCompletedRef.current = false;
-      setIsComplete(false);
-    }
-
-    const numberProgress = progress * 3;
-    const newNumber = Math.max(1, Math.ceil(3 - numberProgress));
-
-    // Trigger haptic on number change
-    if (newNumber !== lastNumberRef.current) {
-      lastNumberRef.current = newNumber;
-      tryVibrate([30]);
-    }
-
-    setCurrentNumber(newNumber);
-
-    // When reaching "1" and past 90% of countdown zone, mark complete
-    if (newNumber === 1 && progress > 0.9 && !hasCompletedRef.current) {
-      hasCompletedRef.current = true;
-      setIsComplete(true);
-    }
-
-  }, [scrollY, getProgress]);
-
-  const progress = getProgress();
   const withinNumberProgress = (progress * 3) % 1;
   const circumference = 2 * Math.PI * ARC_R;
   const sweepPerNumber = circumference / 3;
@@ -114,15 +123,36 @@ const CountdownSection: React.FC = () => {
         gap: '1.5rem',
       }}
     >
+      {/* Scan lines overlay */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.18) 2px, rgba(0,0,0,0.18) 3px)',
+        opacity: 0.4,
+        mixBlendMode: 'multiply',
+        pointerEvents: 'none',
+        zIndex: 0,
+      }} />
+      <style>{`
+        @keyframes projectorFlicker {
+          0%   { opacity: 1;    filter: brightness(1);   }
+          15%  { opacity: 0.7;  filter: brightness(1.45); }
+          30%  { opacity: 0.92; filter: brightness(0.95); }
+          55%  { opacity: 0.82; filter: brightness(1.2);  }
+          100% { opacity: 1;    filter: brightness(1);   }
+        }
+        .countdown-flicker { animation: projectorFlicker 180ms ease-out forwards; }
+      `}</style>
       <svg
         viewBox="0 0 200 200"
+        className={isFlickering ? 'countdown-flicker' : ''}
         style={{
           width: 'min(65vw,65vh)',
           height: 'min(65vw,65vh)',
           position: 'relative',
           zIndex: 1,
-          opacity: isTransitioning ? 0.3 : 1,
-          transition: 'opacity 300ms ease-out',
+          opacity: 1,
+          transition: isFlickering ? 'none' : 'opacity 300ms ease-out',
         }}
         aria-hidden="true"
       >
@@ -168,31 +198,46 @@ const CountdownSection: React.FC = () => {
         ))}
       </svg>
 
-      <div style={{ 
-        fontFamily: "'IBM Plex Mono', monospace", 
-        fontSize: '0.45rem', 
-        letterSpacing: '0.45em', 
-        color: 'rgba(248,236,188,0.25)', 
-        textTransform: 'uppercase', 
-        position: 'relative', 
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '0.3rem',
+        position: 'relative',
         zIndex: 1,
-        opacity: isTransitioning ? 0.3 : 1,
         transition: 'opacity 300ms ease-out',
       }}>
-        Picture Start
+        <div style={{
+          fontFamily: "'IBM Plex Mono', monospace",
+          fontSize: '0.6rem',
+          letterSpacing: '0.45em',
+          color: 'rgba(248,236,188,0.45)',
+          textTransform: 'uppercase',
+        }}>
+          Picture Start
+        </div>
+        <div style={{
+          fontFamily: "'IBM Plex Mono', monospace",
+          fontSize: '0.38rem',
+          letterSpacing: '0.28em',
+          color: 'rgba(248,236,188,0.18)',
+          textTransform: 'uppercase',
+        }}>
+          Silence on set
+        </div>
       </div>
 
       <div style={{ position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '0.5rem' }}>
         {[3, 2, 1].map((n) => (
-          <div 
-            key={n} 
-            style={{ 
-              width: 5, 
-              height: 5, 
-              borderRadius: '50%', 
+          <div
+            key={n}
+            style={{
+              width: 5,
+              height: 5,
+              borderRadius: '50%',
               background: (isComplete ? 1 : currentNumber) >= n ? 'rgba(248,236,188,0.8)' : 'rgba(248,236,188,0.15)',
               transition: 'background 150ms ease',
-            }} 
+            }}
           />
         ))}
       </div>

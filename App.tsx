@@ -1,14 +1,15 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Navigation from "./components/Navigation";
 import Hero from "./components/Hero";
 import CinematicTransition from "./components/CinematicTransition";
-import CountdownSection from "./components/CountdownSection";
 import EventContent from "./components/EventContent";
 import EventPage from "./pages/EventPage";
+import LumaModal from "./components/LumaModal";
 import gsap from "gsap";
 
 const App: React.FC = () => {
   const markerRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const [lumaOpen, setLumaOpen] = useState(false);
   const isEventPage = window.location.pathname === "/event";
 
   useEffect(() => {
@@ -53,28 +54,6 @@ const App: React.FC = () => {
     return <EventPage />;
   }
 
-  const scrollToInfoSections = () => {
-    const target = document.getElementById("feature-presentation");
-    if (!target) return;
-    const startY = window.scrollY;
-    const targetY = target.getBoundingClientRect().top + window.scrollY - 24;
-    const distance = targetY - startY;
-    const duration = 1400;
-    const start = performance.now();
-    const easeInOutCubic = (t: number) =>
-      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
-    const step = (now: number) => {
-      const elapsed = now - start;
-      const p = Math.min(elapsed / duration, 1);
-      const eased = easeInOutCubic(p);
-      window.scrollTo(0, startY + distance * eased);
-      if (p < 1) requestAnimationFrame(step);
-    };
-
-    requestAnimationFrame(step);
-  };
-
   return (
     <div className="min-h-screen bg-[#050505] text-[#E0D5C0] selection:bg-[#C6993A] selection:text-[#050505] overflow-x-hidden">
       {/* Global film grain */}
@@ -106,26 +85,26 @@ const App: React.FC = () => {
           {
             top: "1rem",
             left: "1rem",
-            borderTop: "1px solid rgba(198,153,58,0.22)",
-            borderLeft: "1px solid rgba(198,153,58,0.22)",
+            borderTop: "1px solid rgba(198,153,58,0.38)",
+            borderLeft: "1px solid rgba(198,153,58,0.38)",
           },
           {
             top: "1rem",
             right: "1rem",
-            borderTop: "1px solid rgba(198,153,58,0.22)",
-            borderRight: "1px solid rgba(198,153,58,0.22)",
+            borderTop: "1px solid rgba(198,153,58,0.38)",
+            borderRight: "1px solid rgba(198,153,58,0.38)",
           },
           {
             bottom: "1rem",
             left: "1rem",
-            borderBottom: "1px solid rgba(198,153,58,0.22)",
-            borderLeft: "1px solid rgba(198,153,58,0.22)",
+            borderBottom: "1px solid rgba(198,153,58,0.38)",
+            borderLeft: "1px solid rgba(198,153,58,0.38)",
           },
           {
             bottom: "1rem",
             right: "1rem",
-            borderBottom: "1px solid rgba(198,153,58,0.22)",
-            borderRight: "1px solid rgba(198,153,58,0.22)",
+            borderBottom: "1px solid rgba(198,153,58,0.38)",
+            borderRight: "1px solid rgba(198,153,58,0.38)",
           },
         ] as React.CSSProperties[]
       ).map((style, i) => (
@@ -136,20 +115,21 @@ const App: React.FC = () => {
           }}
           style={{
             position: "fixed",
-            width: 20,
-            height: 20,
+            width: 32,
+            height: 32,
             pointerEvents: "none",
             zIndex: 9998,
             ...style,
           }}
         />
       ))}
-      <Navigation onOpenWaitlist={scrollToInfoSections} />
+      <Navigation onOpenWaitlist={() => setLumaOpen(true)} />
       <main>
         <Hero />
         <CinematicTransition />
-        <EventContent />
+        <EventContent onOpenLuma={() => setLumaOpen(true)} />
       </main>
+      <LumaModal isOpen={lumaOpen} onClose={() => setLumaOpen(false)} />
     </div>
   );
 };

@@ -116,7 +116,7 @@ const CinematicIntro: React.FC = () => {
                 fontWeight: 700, color: 'rgba(255,255,255,0.9)',
                 letterSpacing: '0.02em', lineHeight: 1.05, textAlign: 'center',
               }}>
-                AI Film Making<br />
+                AI Filmmaking<br />
                 <span style={{ fontWeight: 300, fontStyle: 'italic', fontSize: '0.75em' }}>Hackathon v2</span>
               </div>
               <div style={{ marginTop: '2.5rem', width: 1, height: 56, background: 'linear-gradient(to bottom, rgba(255,255,255,0.35), transparent)' }} />
@@ -244,7 +244,7 @@ const CinematicIntro: React.FC = () => {
                 letterSpacing: '0.04em', lineHeight: 1.1,
                 textShadow: '0 0 40px rgba(255,215,60,0.55), 0 2px 8px rgba(0,0,0,0.95)',
               }}>
-                AI Film Making
+                AI Filmmaking
               </div>
               <div style={{
                 fontFamily: "'IBM Plex Mono', monospace",

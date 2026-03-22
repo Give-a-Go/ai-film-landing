@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
+import LumaModal from "../components/LumaModal";
 
 // ── Easing ───────────────────────────────────────────────────────────────────
 const easeOutCubic   = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -323,8 +324,164 @@ function SponsorBox({ name }: { name: string }) {
   );
 }
 
+// ── Clap snap sound (Web Audio, no external assets) ──────────────────────────
+function playClapSnap() {
+  try {
+    const AudioCtx = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.06), ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      const t = i / ctx.sampleRate;
+      data[i] = (
+        Math.sin(2 * Math.PI * 820 * t) * Math.exp(-t * 80) +
+        Math.sin(2 * Math.PI * 210 * t) * Math.exp(-t * 40)
+      ) * (Math.random() * 0.3 + 0.7) * 0.5;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start();
+  } catch (_) {}
+}
+
+// ── FeaturePresentationBridge ─────────────────────────────────────────────────
+function FeaturePresentationBridge() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [armed, setArmed] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setArmed(true);
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.01, rootMargin: "0px 0px 20% 0px" },
+    );
+    obs.observe(el);
+
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!armed) return;
+
+    const targetRef = { current: 0 };
+    const currentRef = { current: 0 };
+    let rafId = 0;
+
+    const updateTarget = () => {
+      const el = ref.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight || 1;
+
+      const start = vh * 1.15;
+      const end = vh * 0.22;
+      targetRef.current = phase(start - rect.top, 0, start - end);
+    };
+
+    const tick = () => {
+      rafId = window.requestAnimationFrame(tick);
+      const target = targetRef.current;
+      const current = currentRef.current;
+      const next = current + (target - current) * 0.22;
+      currentRef.current = Math.abs(target - next) < 0.0008 ? target : next;
+      setProgress((prev) => (Math.abs(prev - currentRef.current) > 0.0008 ? currentRef.current : prev));
+    };
+
+    updateTarget();
+    tick();
+
+    window.addEventListener("scroll", updateTarget, { passive: true });
+    window.addEventListener("resize", updateTarget);
+    return () => {
+      window.removeEventListener("scroll", updateTarget);
+      window.removeEventListener("resize", updateTarget);
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
+  }, [armed]);
+
+  const topRuleProgress = easeInOutCubic(phase(progress, 0.02, 0.55));
+  const titleProgress = easeOutCubic(phase(progress, 0.04, 0.62));
+  const bottomRuleProgress = easeInOutCubic(phase(progress, 0.08, 0.68));
+
+  const renderRule = (lineProgress: number, flip?: boolean) => (
+    <div style={{ display: "flex", alignItems: "center", gap: "1.3rem", width: "min(620px, 84vw)" }}>
+      <div style={{
+        flex: 1,
+        height: "0.5px",
+        background: flip
+          ? "linear-gradient(90deg, rgba(200,170,80,0.78), transparent)"
+          : "linear-gradient(90deg, transparent, rgba(200,170,80,0.78))",
+        transform: `scaleX(${lineProgress})`,
+        transformOrigin: flip ? "left" : "right",
+        opacity: 0.35 + lineProgress * 0.65,
+      }} />
+      <span style={{
+        fontFamily: "monospace",
+        fontSize: "0.5rem",
+        color: "rgba(200,170,80,0.45)",
+        opacity: phase(lineProgress, 0.42, 1),
+      }}>
+        ✦
+      </span>
+      <div style={{
+        flex: 1,
+        height: "0.5px",
+        background: flip
+          ? "linear-gradient(90deg, transparent, rgba(200,170,80,0.78))"
+          : "linear-gradient(90deg, rgba(200,170,80,0.78), transparent)",
+        transform: `scaleX(${lineProgress})`,
+        transformOrigin: flip ? "right" : "left",
+        opacity: 0.35 + lineProgress * 0.65,
+      }} />
+    </div>
+  );
+
+  return (
+    <div
+      id="feature-presentation"
+      ref={ref}
+      style={{
+        padding: "4rem 2rem",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "0.85rem",
+      }}
+    >
+      {renderRule(topRuleProgress)}
+      <div style={{
+        fontFamily: "'IBM Plex Serif', Georgia, serif",
+        fontSize: "clamp(1.3rem, 2.8vw, 2.15rem)",
+        fontWeight: 300,
+        letterSpacing: "clamp(0.14em, 1vw, 0.32em)",
+        color: "rgba(232,213,163,0.95)",
+        textTransform: "uppercase",
+        textAlign: "center",
+        textShadow: "0 0 36px rgba(200,170,80,0.2), 0 0 72px rgba(200,170,80,0.08)",
+        opacity: titleProgress,
+        transform: `translateY(${(1 - titleProgress) * 24}px) scale(${0.975 + titleProgress * 0.025})`,
+        willChange: "opacity, transform",
+      }}>
+        Feature Presentation
+      </div>
+      {renderRule(bottomRuleProgress, true)}
+    </div>
+  );
+}
+
 // ── EventPage ─────────────────────────────────────────────────────────────────
 const EventPage: React.FC = () => {
+  const [lumaOpen, setLumaOpen] = useState(false);
   const sceneRef       = useRef<HTMLDivElement>(null);
   const clapboardRef   = useRef<SVGSVGElement>(null);
   const clapArmRef     = useRef<SVGGElement>(null);
@@ -338,6 +495,7 @@ const EventPage: React.FC = () => {
   const cameraGlowRef  = useRef<HTMLDivElement>(null);
   const screenGlowRef  = useRef<HTMLDivElement>(null);
   const frameCount     = useRef(0);
+  const clapSoundFiredRef = useRef(false);
 
   const CINEMATIC_START = 0;
   const CINEMATIC_END   = 3.0;
@@ -372,6 +530,18 @@ const EventPage: React.FC = () => {
       if (clapArmRef.current) {
         const snapT = easeInOutCubic(phase(p, 0.20, 0.25));
         clapArmRef.current.style.transform = `rotate(${-28 * (1 - snapT)}deg)`;
+        // Fire clap snap sound once when arm snaps shut
+        if (p >= 0.20 && p <= 0.40) {
+          if (!clapSoundFiredRef.current) {
+            clapSoundFiredRef.current = true;
+            playClapSnap();
+            if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+              navigator.vibrate?.([25]);
+            }
+          }
+        } else if (p < 0.20) {
+          clapSoundFiredRef.current = false;
+        }
       }
 
       // ── Flash ──
@@ -659,65 +829,180 @@ const EventPage: React.FC = () => {
               filter: "drop-shadow(0 4px 28px rgba(200,150,30,0.28))",
               zIndex: 3,
             }}>
-              <svg viewBox="0 0 300 380" style={{ width: "100%", height: "auto", overflow: "visible" }}
-                aria-label="Vintage film camera on tripod">
-                <rect x="40" y="55" width="180" height="130" rx="8" fill="#404040" stroke="#666" strokeWidth="2" />
-                <line x1="40" y1="100" x2="220" y2="100" stroke="#4a4a4a" strokeWidth="1.5" />
-                <line x1="40" y1="135" x2="220" y2="135" stroke="#4a4a4a" strokeWidth="1.5" />
-                <rect x="55" y="108" width="82" height="20" rx="3" fill="#2a2a2a" stroke="#555" strokeWidth="1" />
-                <text x="96" y="122" fontFamily="monospace" fontSize="7" fill="#888" textAnchor="middle">CINE-1600</text>
-                <circle cx="48"  cy="63"  r="3" fill="#555" stroke="#777" strokeWidth="0.5" />
-                <circle cx="212" cy="63"  r="3" fill="#555" stroke="#777" strokeWidth="0.5" />
-                <circle cx="48"  cy="177" r="3" fill="#555" stroke="#777" strokeWidth="0.5" />
-                <circle cx="212" cy="177" r="3" fill="#555" stroke="#777" strokeWidth="0.5" />
-                {Array.from({ length: 6 }, (_, i) => (
-                  <rect key={`ft${i}`} x={50 + i * 26} y="55" width="12" height="8" rx="1"
-                    fill="#333" stroke="#555" strokeWidth="0.5" />
+              <svg viewBox="0 0 340 420" style={{ width: "100%", height: "auto", overflow: "visible" }}
+                aria-label="Vintage 16mm film projector on plinth">
+                {/* ── Plinth / base ── */}
+                <rect x="60" y="355" width="200" height="22" rx="4" fill="rgba(28,22,12,0.98)" stroke="rgba(198,153,58,0.35)" strokeWidth="1.2" />
+                <rect x="72" y="358" width="10" height="6" rx="1" fill="rgba(198,153,58,0.18)" />
+                <rect x="88" y="358" width="10" height="6" rx="1" fill="rgba(198,153,58,0.18)" />
+                <rect x="240" y="358" width="10" height="6" rx="1" fill="rgba(198,153,58,0.18)" />
+                <rect x="256" y="358" width="10" height="6" rx="1" fill="rgba(198,153,58,0.18)" />
+                <rect x="72" y="375" width="176" height="5" rx="2" fill="rgba(40,35,28,0.95)" stroke="rgba(198,153,58,0.2)" strokeWidth="0.8" />
+
+                {/* ── Main body — chunky with beveled panels ── */}
+                {/* Outer shell */}
+                <path d="M55,120 L55,350 Q55,358 63,358 L277,358 Q285,358 285,350 L285,120 Q285,112 277,112 L63,112 Q55,112 55,120 Z"
+                  fill="rgba(40,35,28,0.95)" stroke="rgba(198,153,58,0.3)" strokeWidth="1.5" />
+                {/* Top bevel */}
+                <path d="M63,112 L277,112 L285,120 L55,120 Z" fill="rgba(198,153,58,0.12)" />
+                {/* Side highlight stripe */}
+                <rect x="56" y="130" width="4" height="180" rx="1" fill="rgba(198,153,58,0.08)" />
+                <rect x="280" y="130" width="4" height="180" rx="1" fill="rgba(30,25,15,0.6)" />
+
+                {/* Panel division lines */}
+                <line x1="55" y1="200" x2="285" y2="200" stroke="rgba(198,153,58,0.18)" strokeWidth="0.8" />
+                <line x1="55" y1="270" x2="285" y2="270" stroke="rgba(198,153,58,0.18)" strokeWidth="0.8" />
+                <line x1="170" y1="200" x2="170" y2="270" stroke="rgba(198,153,58,0.1)" strokeWidth="0.6" />
+
+                {/* ── Ventilation louvres — left side ── */}
+                {[0,1,2,3,4,5,6].map(i => (
+                  <rect key={`lvl${i}`} x="62" y={216 + i * 7} width="18" height="3" rx="1"
+                    fill="rgba(15,12,8,0.9)" stroke="rgba(198,153,58,0.12)" strokeWidth="0.5" />
                 ))}
-                {Array.from({ length: 6 }, (_, i) => (
-                  <rect key={`fb${i}`} x={50 + i * 26} y="177" width="12" height="8" rx="1"
-                    fill="#333" stroke="#555" strokeWidth="0.5" />
+                {/* Ventilation louvres — right side */}
+                {[0,1,2,3,4,5,6].map(i => (
+                  <rect key={`lvr${i}`} x="260" y={216 + i * 7} width="18" height="3" rx="1"
+                    fill="rgba(15,12,8,0.9)" stroke="rgba(198,153,58,0.12)" strokeWidth="0.5" />
                 ))}
-                <circle cx="72"  cy="75" r="22" fill="#3a3a3a" stroke="#777" strokeWidth="2" />
-                <circle cx="72"  cy="75" r="16" fill="#2a2a2a" stroke="#666" strokeWidth="1.5" />
-                <Spokes cx={72} cy={75} r={13} count={8} />
-                <circle cx="72"  cy="75" r="5" fill="#aaa" stroke="#ccc" strokeWidth="0.5" />
-                <circle cx="188" cy="75" r="22" fill="#3a3a3a" stroke="#777" strokeWidth="2" />
-                <circle cx="188" cy="75" r="16" fill="#2a2a2a" stroke="#666" strokeWidth="1.5" />
-                <Spokes cx={188} cy={75} r={13} count={8} />
-                <circle cx="188" cy="75" r="5" fill="#aaa" stroke="#ccc" strokeWidth="0.5" />
-                <rect x="95"  y="36" width="70" height="26" rx="4" fill="#333" stroke="#666" strokeWidth="1.5" />
-                <rect x="103" y="41" width="54" height="16" rx="2" fill="#1a1a1a" stroke="#555" strokeWidth="1" />
-                <rect x="107" y="44" width="46" height="10" rx="1" fill="#111" />
-                <polygon points="220,88 268,72 268,168 220,152" fill="#2e2e2e" stroke="#666" strokeWidth="1.5" />
-                <circle cx="270" cy="120" r="24" fill="#1a1a1a" stroke="#777" strokeWidth="2.5" />
-                <circle cx="270" cy="120" r="19" fill="#222"   stroke="#666" strokeWidth="1.5" />
-                <circle cx="270" cy="120" r="14" fill="#1a1a1a" stroke="#888" strokeWidth="1" />
-                <circle cx="270" cy="120" r="9"  fill="#222"   stroke="#aaa" strokeWidth="1" />
-                <circle cx="270" cy="120" r="4"  fill="#1a1a1a" stroke="#bbb" strokeWidth="0.5" />
-                {[0, 45, 90, 135].map(a => (
-                  <line key={a}
-                    x1={270 + 6  * Math.cos((a * Math.PI) / 180)}
-                    y1={120 + 6  * Math.sin((a * Math.PI) / 180)}
-                    x2={270 + 19 * Math.cos((a * Math.PI) / 180)}
-                    y2={120 + 19 * Math.sin((a * Math.PI) / 180)}
-                    stroke="#555" strokeWidth="0.5" />
+
+                {/* ── Aperture / gate area ── */}
+                <rect x="95" y="215" width="70" height="48" rx="2"
+                  fill="rgba(12,9,4,0.92)" stroke="rgba(198,153,58,0.45)" strokeWidth="1.2" />
+                {/* Gate frame inner */}
+                <rect x="102" y="222" width="56" height="34" rx="1"
+                  fill="rgba(5,4,2,0.98)" stroke="rgba(198,153,58,0.22)" strokeWidth="0.6" />
+                {/* Crosshairs */}
+                <line x1="130" y1="222" x2="130" y2="256" stroke="rgba(198,153,58,0.35)" strokeWidth="0.5" />
+                <line x1="102" y1="239" x2="158" y2="239" stroke="rgba(198,153,58,0.35)" strokeWidth="0.5" />
+                {/* Corner registration marks */}
+                {[[102,222],[155,222],[102,253],[155,253]].map(([rx2,ry2],i)=>(
+                  <rect key={`gm${i}`} x={rx2-1} y={ry2-1} width="5" height="5" rx="0.5"
+                    fill="none" stroke="rgba(248,236,188,0.55)" strokeWidth="0.8" />
                 ))}
-                <circle cx="263" cy="112" r="4"   fill="rgba(255,255,255,0.15)" />
-                <circle cx="260" cy="109" r="2"   fill="rgba(255,255,255,0.22)" />
-                <line x1="220" y1="138" x2="246" y2="155" stroke="#666" strokeWidth="3" strokeLinecap="round" />
-                <circle cx="250" cy="158" r="7" fill="#404040" stroke="#777" strokeWidth="1.5" />
-                <circle cx="250" cy="158" r="3" fill="#666" />
-                <rect x="108" y="185" width="44" height="16" rx="4" fill="#333" stroke="#555" strokeWidth="1.5" />
-                <line x1="118" y1="198" x2="52"  y2="375" stroke="#555" strokeWidth="3.5" strokeLinecap="round" />
-                <line x1="130" y1="201" x2="130" y2="375" stroke="#555" strokeWidth="3.5" strokeLinecap="round" />
-                <line x1="142" y1="198" x2="208" y2="375" stroke="#555" strokeWidth="3.5" strokeLinecap="round" />
-                <line x1="74"  y1="302" x2="186" y2="302" stroke="#444" strokeWidth="2" strokeLinecap="round" />
-                <line x1="74"  y1="302" x2="52"  y2="375" stroke="#444" strokeWidth="1.5" strokeLinecap="round" />
-                <line x1="186" y1="302" x2="208" y2="375" stroke="#444" strokeWidth="1.5" strokeLinecap="round" />
-                <ellipse cx="52"  cy="377" rx="10" ry="4" fill="#333" />
-                <ellipse cx="130" cy="377" rx="10" ry="4" fill="#333" />
-                <ellipse cx="208" cy="377" rx="10" ry="4" fill="#333" />
+
+                {/* ── Control knobs — body panel ── */}
+                <circle cx="185" cy="225" r="7" fill="rgba(28,22,12,0.95)" stroke="rgba(198,153,58,0.5)" strokeWidth="1.2" />
+                <circle cx="185" cy="225" r="3.5" fill="rgba(198,153,58,0.22)" />
+                <line x1="185" y1="219" x2="185" y2="224" stroke="rgba(248,236,188,0.6)" strokeWidth="1" strokeLinecap="round" />
+
+                <circle cx="205" cy="225" r="7" fill="rgba(28,22,12,0.95)" stroke="rgba(198,153,58,0.5)" strokeWidth="1.2" />
+                <circle cx="205" cy="225" r="3.5" fill="rgba(198,153,58,0.22)" />
+                <line x1="208" y1="220" x2="205" y2="225" stroke="rgba(248,236,188,0.6)" strokeWidth="1" strokeLinecap="round" />
+
+                <circle cx="225" cy="225" r="7" fill="rgba(28,22,12,0.95)" stroke="rgba(198,153,58,0.5)" strokeWidth="1.2" />
+                <circle cx="225" cy="225" r="3.5" fill="rgba(198,153,58,0.22)" />
+                <line x1="225" y1="218" x2="226" y2="224" stroke="rgba(248,236,188,0.6)" strokeWidth="1" strokeLinecap="round" />
+
+                {/* Knob labels */}
+                <text x="185" y="237" textAnchor="middle" fontFamily="monospace" fontSize="4"
+                  fill="rgba(198,153,58,0.38)" letterSpacing="0.2">FPS</text>
+                <text x="205" y="237" textAnchor="middle" fontFamily="monospace" fontSize="4"
+                  fill="rgba(198,153,58,0.38)" letterSpacing="0.2">EXP</text>
+                <text x="225" y="237" textAnchor="middle" fontFamily="monospace" fontSize="4"
+                  fill="rgba(198,153,58,0.38)" letterSpacing="0.2">VOL</text>
+
+                {/* ── Nameplate ── */}
+                <rect x="88" y="280" width="144" height="26" rx="2"
+                  fill="rgba(20,16,8,0.92)" stroke="rgba(198,153,58,0.32)" strokeWidth="0.9" />
+                <text x="160" y="290" textAnchor="middle" fontFamily="monospace" fontSize="6.5"
+                  fill="rgba(248,236,188,0.75)" letterSpacing="1.5">KINOTON · 16mm</text>
+                <text x="160" y="301" textAnchor="middle" fontFamily="monospace" fontSize="5"
+                  fill="rgba(198,153,58,0.45)" letterSpacing="0.8">PROFESSIONAL SERIES</text>
+
+                {/* ── Film reel LEFT ── */}
+                {/* Reel outer rim */}
+                <circle cx="100" cy="155" r="34" fill="rgba(32,26,16,0.95)" stroke="rgba(198,153,58,0.45)" strokeWidth="1.8" />
+                {/* Inner track */}
+                <circle cx="100" cy="155" r="27" fill="none" stroke="rgba(198,153,58,0.15)" strokeWidth="0.6" />
+                {/* Hub ring */}
+                <circle cx="100" cy="155" r="10" fill="rgba(28,22,12,0.98)" stroke="rgba(198,153,58,0.55)" strokeWidth="1.2" />
+                {/* Spokes */}
+                {[0,51.4,102.8,154.2,205.7,257.1,308.5].map((a,i) => (
+                  <line key={`lrs${i}`}
+                    x1={100 + 11 * Math.cos(a * Math.PI / 180)}
+                    y1={155 + 11 * Math.sin(a * Math.PI / 180)}
+                    x2={100 + 26 * Math.cos(a * Math.PI / 180)}
+                    y2={155 + 26 * Math.sin(a * Math.PI / 180)}
+                    stroke="rgba(198,153,58,0.38)" strokeWidth="2.2" strokeLinecap="round" />
+                ))}
+                {/* Hub center pin */}
+                <circle cx="100" cy="155" r="4" fill="rgba(198,153,58,0.6)" stroke="rgba(248,236,188,0.4)" strokeWidth="0.8" />
+                {/* Sprocket holes suggestion — 8 dots on rim */}
+                {[0,45,90,135,180,225,270,315].map((a,i) => (
+                  <rect key={`lsp${i}`}
+                    x={100 + 30.5 * Math.cos(a * Math.PI / 180) - 2}
+                    y={155 + 30.5 * Math.sin(a * Math.PI / 180) - 1.5}
+                    width="4" height="3" rx="0.8"
+                    fill="rgba(12,9,4,0.95)" stroke="rgba(198,153,58,0.2)" strokeWidth="0.4" />
+                ))}
+
+                {/* ── Film reel RIGHT ── */}
+                <circle cx="240" cy="155" r="34" fill="rgba(32,26,16,0.95)" stroke="rgba(198,153,58,0.45)" strokeWidth="1.8" />
+                <circle cx="240" cy="155" r="27" fill="none" stroke="rgba(198,153,58,0.15)" strokeWidth="0.6" />
+                <circle cx="240" cy="155" r="10" fill="rgba(28,22,12,0.98)" stroke="rgba(198,153,58,0.55)" strokeWidth="1.2" />
+                {[25.7,77.1,128.5,180,231.4,282.8,334.2].map((a,i) => (
+                  <line key={`rrs${i}`}
+                    x1={240 + 11 * Math.cos(a * Math.PI / 180)}
+                    y1={155 + 11 * Math.sin(a * Math.PI / 180)}
+                    x2={240 + 26 * Math.cos(a * Math.PI / 180)}
+                    y2={155 + 26 * Math.sin(a * Math.PI / 180)}
+                    stroke="rgba(198,153,58,0.38)" strokeWidth="2.2" strokeLinecap="round" />
+                ))}
+                <circle cx="240" cy="155" r="4" fill="rgba(198,153,58,0.6)" stroke="rgba(248,236,188,0.4)" strokeWidth="0.8" />
+                {[0,45,90,135,180,225,270,315].map((a,i) => (
+                  <rect key={`rsp${i}`}
+                    x={240 + 30.5 * Math.cos(a * Math.PI / 180) - 2}
+                    y={155 + 30.5 * Math.sin(a * Math.PI / 180) - 1.5}
+                    width="4" height="3" rx="0.8"
+                    fill="rgba(12,9,4,0.95)" stroke="rgba(198,153,58,0.2)" strokeWidth="0.4" />
+                ))}
+
+                {/* ── Film path channel between reels ── */}
+                <rect x="130" y="178" width="80" height="8" rx="2"
+                  fill="rgba(15,12,8,0.92)" stroke="rgba(198,153,58,0.2)" strokeWidth="0.6" />
+                <rect x="134" y="180" width="6" height="4" rx="1" fill="rgba(198,153,58,0.12)" />
+                <rect x="200" y="180" width="6" height="4" rx="1" fill="rgba(198,153,58,0.12)" />
+
+                {/* ── Lens assembly — projecting to the right ── */}
+                {/* Lens hood / snoot */}
+                <path d="M285,220 L320,208 L320,242 L285,230 Z"
+                  fill="rgba(28,22,12,0.98)" stroke="rgba(198,153,58,0.28)" strokeWidth="1" />
+                {/* Outer barrel */}
+                <circle cx="322" cy="225" r="22" fill="rgba(22,17,10,0.98)" stroke="rgba(198,153,58,0.55)" strokeWidth="1.8" />
+                {/* Barrel grip rings */}
+                {[0,1,2].map(i => (
+                  <circle key={`bg${i}`} cx="322" cy="225" r={19 - i * 3}
+                    fill="none" stroke="rgba(198,153,58,0.14)" strokeWidth="0.6" />
+                ))}
+                {/* Lens element ring 1 */}
+                <circle cx="322" cy="225" r="14" fill="rgba(15,11,6,0.98)" stroke="rgba(198,153,58,0.4)" strokeWidth="1.2" />
+                {/* Lens element ring 2 */}
+                <circle cx="322" cy="225" r="10" fill="rgba(248,236,188,0.04)" stroke="rgba(198,153,58,0.3)" strokeWidth="0.8" />
+                {/* Glass element — warm amber tint */}
+                <circle cx="322" cy="225" r="7"
+                  fill="rgba(248,236,188,0.85)" stroke="rgba(198,153,58,0.6)" strokeWidth="0.8" />
+                {/* Lens flare highlight */}
+                <ellipse cx="318" cy="220" rx="3.5" ry="2.5" fill="rgba(255,255,255,0.55)" />
+                <circle cx="316" cy="218" r="1.2" fill="rgba(255,255,255,0.7)" />
+                {/* Lens aperture cross */}
+                <line x1="322" y1="217" x2="322" y2="233" stroke="rgba(40,35,28,0.5)" strokeWidth="0.5" />
+                <line x1="314" y1="225" x2="330" y2="225" stroke="rgba(40,35,28,0.5)" strokeWidth="0.5" />
+
+                {/* ── Tripod head ── */}
+                <rect x="148" y="358" width="44" height="14" rx="3"
+                  fill="rgba(35,28,18,0.98)" stroke="rgba(198,153,58,0.3)" strokeWidth="1" />
+                {/* Tripod legs */}
+                <line x1="156" y1="370" x2="88" y2="415" stroke="rgba(50,42,28,0.95)" strokeWidth="3.5" strokeLinecap="round" />
+                <line x1="170" y1="372" x2="170" y2="415" stroke="rgba(50,42,28,0.95)" strokeWidth="3.5" strokeLinecap="round" />
+                <line x1="184" y1="370" x2="252" y2="415" stroke="rgba(50,42,28,0.95)" strokeWidth="3.5" strokeLinecap="round" />
+                {/* Cross brace */}
+                <line x1="106" y1="398" x2="234" y2="398" stroke="rgba(40,34,22,0.85)" strokeWidth="2" strokeLinecap="round" />
+                <line x1="106" y1="398" x2="88" y2="415" stroke="rgba(40,34,22,0.75)" strokeWidth="1.5" strokeLinecap="round" />
+                <line x1="234" y1="398" x2="252" y2="415" stroke="rgba(40,34,22,0.75)" strokeWidth="1.5" strokeLinecap="round" />
+                {/* Feet */}
+                <ellipse cx="88"  cy="416" rx="10" ry="3.5" fill="rgba(35,28,18,0.95)" />
+                <ellipse cx="170" cy="416" rx="10" ry="3.5" fill="rgba(35,28,18,0.95)" />
+                <ellipse cx="252" cy="416" rx="10" ry="3.5" fill="rgba(35,28,18,0.95)" />
               </svg>
             </div>
 
@@ -818,25 +1103,7 @@ const EventPage: React.FC = () => {
       {/* ════════════════════════════════════════════════════════════════════════
           FEATURE PRESENTATION  — cinematic bridge
           ════════════════════════════════════════════════════════════════════════ */}
-      <div style={{
-        padding: "4rem 2rem",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: "0.75rem",
-      }}>
-        <div style={{ width: "min(520px,80vw)", height: 1, background: "rgba(200,170,80,0.18)" }} />
-        <div style={{
-          fontFamily: "monospace",
-          fontSize: "0.65rem",
-          letterSpacing: "0.5em",
-          color: "rgba(200,170,80,0.38)",
-          textTransform: "uppercase",
-        }}>
-          Feature Presentation
-        </div>
-        <div style={{ width: "min(520px,80vw)", height: 1, background: "rgba(200,170,80,0.18)" }} />
-      </div>
+      <FeaturePresentationBridge />
 
       {/* ════════════════════════════════════════════════════════════════════════
           ACT I  — Event overview
@@ -938,7 +1205,7 @@ const EventPage: React.FC = () => {
 
         <SectionReveal delay={0.48}>
           <div style={{ marginTop: "3rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
-            <a href="/" style={{
+            <button type="button" onClick={() => setLumaOpen(true)} style={{
               display: "inline-block",
               padding: "1rem 3rem",
               background: "#E85D35",
@@ -947,8 +1214,9 @@ const EventPage: React.FC = () => {
               fontWeight: 600,
               fontSize: "0.9rem",
               letterSpacing: "0.08em",
-              textDecoration: "none",
               textTransform: "uppercase",
+              cursor: "pointer",
+              border: "none",
               borderRadius: 3,
               boxShadow: "0 0 36px rgba(232,93,53,0.28), 0 2px 12px rgba(0,0,0,0.6)",
               transition: "transform 0.18s, box-shadow 0.18s",
@@ -963,7 +1231,7 @@ const EventPage: React.FC = () => {
               }}
             >
               Apply to Join →
-            </a>
+            </button>
             <div style={{
               fontFamily: "monospace",
               fontSize: "0.6rem",
@@ -1050,7 +1318,7 @@ const EventPage: React.FC = () => {
         </SectionReveal>
         <SectionReveal delay={0.1}>
           <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", justifyContent: "center", marginBottom: "1rem" }}>
-            {["ElevenLabs", "Wan AI", "Fal"].map(n => <SponsorBox key={n} name={n} />)}
+            {["ElevenLabs", "Wan AI", "fal.ai"].map(n => <SponsorBox key={n} name={n} />)}
           </div>
         </SectionReveal>
 
@@ -1171,7 +1439,7 @@ const EventPage: React.FC = () => {
           }}>
             — Fin —
           </div>
-          <a href="/" style={{
+          <button type="button" onClick={() => setLumaOpen(true)} style={{
             display: "inline-block",
             padding: "1rem 3rem",
             background: "#E85D35",
@@ -1181,7 +1449,8 @@ const EventPage: React.FC = () => {
             fontSize: "0.9rem",
             letterSpacing: "0.08em",
             textTransform: "uppercase",
-            textDecoration: "none",
+            cursor: "pointer",
+            border: "none",
             borderRadius: 3,
             boxShadow: "0 0 36px rgba(232,93,53,0.25)",
             transition: "transform 0.18s, box-shadow 0.18s",
@@ -1196,7 +1465,7 @@ const EventPage: React.FC = () => {
             }}
           >
             Apply to Join →
-          </a>
+          </button>
         </SectionReveal>
 
         <SectionReveal delay={0.15}>
@@ -1243,6 +1512,7 @@ const EventPage: React.FC = () => {
           body > div > div:nth-child(2) { display: none !important; }
         }
       `}</style>
+      <LumaModal isOpen={lumaOpen} onClose={() => setLumaOpen(false)} />
     </div>
   );
 };

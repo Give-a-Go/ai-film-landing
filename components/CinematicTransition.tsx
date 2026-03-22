@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useCallback } from "react";
 
 // ─── Easing ───────────────────────────────────────────────────────────────────
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -70,6 +70,7 @@ const CinematicTransition: React.FC = () => {
   const frameCount = useRef(0);
   const clapFxTriggeredRef = useRef(false);
   const clapAudioCtxRef = useRef<AudioContext | null>(null);
+  const beamParallaxRef = useRef<HTMLDivElement>(null);
 
   // Arc constants (viewBox 0 0 100 100, r=38)
   const ARC_R = 38;
@@ -86,51 +87,42 @@ const CinematicTransition: React.FC = () => {
         navigator.vibrate?.([10, 20, 18]);
       }
 
-      // Short synthetic clap so we don't rely on external assets.
+      // Sharp synthetic clapboard snap — 820 Hz impact + 210 Hz body resonance.
       try {
-        if (!clapAudioCtxRef.current) {
-          const Ctx = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-          if (Ctx) clapAudioCtxRef.current = new Ctx();
-        }
+        const Ctx = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+        if (!Ctx) return;
+        if (!clapAudioCtxRef.current) clapAudioCtxRef.current = new Ctx();
         const ctx = clapAudioCtxRef.current;
-        if (!ctx) return;
-        if (ctx.state === "suspended") void ctx.resume();
 
-        const now = ctx.currentTime;
-        const duration = 0.09;
-        const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * duration), ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < data.length; i++) {
-          const t = i / data.length;
-          const envelope = Math.pow(1 - t, 2.2);
-          data[i] = (Math.random() * 2 - 1) * envelope;
+        const play = () => {
+          const sr = ctx.sampleRate;
+          const dur = 0.07;
+          const buf = ctx.createBuffer(1, Math.floor(sr * dur), sr);
+          const data = buf.getChannelData(0);
+          for (let i = 0; i < data.length; i++) {
+            const t = i / sr;
+            data[i] = (
+              Math.sin(2 * Math.PI * 820 * t) * Math.exp(-t * 85) +
+              Math.sin(2 * Math.PI * 210 * t) * Math.exp(-t * 42)
+            ) * (Math.random() * 0.25 + 0.75) * 0.55;
+          }
+          const src = ctx.createBufferSource();
+          src.buffer = buf;
+          const gain = ctx.createGain();
+          gain.gain.setValueAtTime(0.9, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+          src.connect(gain);
+          gain.connect(ctx.destination);
+          src.start();
+        };
+
+        if (ctx.state === "suspended") {
+          ctx.resume().then(play).catch(() => {});
+        } else {
+          play();
         }
-
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-
-        const band = ctx.createBiquadFilter();
-        band.type = "bandpass";
-        band.frequency.value = 1900;
-        band.Q.value = 0.8;
-
-        const high = ctx.createBiquadFilter();
-        high.type = "highpass";
-        high.frequency.value = 700;
-
-        const gain = ctx.createGain();
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.35, now + 0.008);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-
-        source.connect(band);
-        band.connect(high);
-        high.connect(gain);
-        gain.connect(ctx.destination);
-        source.start(now);
-        source.stop(now + duration);
       } catch {
-        // Silently ignore if audio is blocked or unavailable.
+        // Silently ignore if audio is blocked.
       }
     };
     const setBeamSegment = (
@@ -418,8 +410,22 @@ const CinematicTransition: React.FC = () => {
     };
   }, []);
 
+  // ── Beam mouse parallax ───────────────────────────────────────────────────
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!beamParallaxRef.current) return;
+    const mx = e.clientX / window.innerWidth - 0.5;
+    const my = e.clientY / window.innerHeight - 0.5;
+    beamParallaxRef.current.style.setProperty("--beam-mx", String(mx));
+    beamParallaxRef.current.style.setProperty("--beam-my", String(my));
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [handleMouseMove]);
+
   return (
-    <div ref={sectionRef} className="relative h-[240vh] bg-black">
+    <div id="cinematic-transition" ref={sectionRef} className="relative h-[240vh] bg-black">
       <div
         ref={rootRef}
         style={{
@@ -468,7 +474,7 @@ const CinematicTransition: React.FC = () => {
           style={{ opacity: 0, zIndex: 30, pointerEvents: "none" }}
         />
 
-        {/* Subtle old-school film/TV texture so black moments feel intentional */}
+        {/* Minimal dark background with soft vignette */}
         <div
           ref={staticNoiseRef}
           style={{
@@ -476,14 +482,7 @@ const CinematicTransition: React.FC = () => {
             inset: 0,
             zIndex: 4,
             pointerEvents: "none",
-            opacity: 0.52,
-            mixBlendMode: "normal",
-            filter: "grayscale(1) contrast(2.4) brightness(1.28)",
-            backgroundColor: "#0a0a0a",
-            backgroundImage:
-              'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 160 160\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'s\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'1.35\' numOctaves=\'1\' seed=\'8\'/%3E%3CfeColorMatrix type=\'saturate\' values=\'0\'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type=\'discrete\' tableValues=\'0 0 1 1\'/%3E%3CfeFuncG type=\'discrete\' tableValues=\'0 0 1 1\'/%3E%3CfeFuncB type=\'discrete\' tableValues=\'0 0 1 1\'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23s)\'/%3E%3C/svg%3E")',
-            backgroundSize: "96px 96px",
-            animation: "ctFilmGrainDrift 0.045s steps(2, end) infinite",
+            background: "radial-gradient(ellipse 80% 70% at 50% 50%, rgba(12,10,6,1) 0%, #000 100%)",
           }}
         />
         <div
@@ -493,9 +492,9 @@ const CinematicTransition: React.FC = () => {
             inset: 0,
             zIndex: 5,
             pointerEvents: "none",
-            opacity: 0.07,
+            opacity: 0.025,
             background:
-              "repeating-linear-gradient(0deg, rgba(210,210,210,0.08) 0px, rgba(210,210,210,0.08) 1px, transparent 1px, transparent 3px)",
+              "repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 1px, transparent 1px, transparent 4px)",
           }}
         />
 
@@ -820,7 +819,7 @@ const CinematicTransition: React.FC = () => {
             TITLE: AI FILM HACKATHON v2
           </text>
           <text x="10" y="155" fontFamily="monospace" fontSize="7" fill="#888">
-            DATE: 2025 · DUBLIN, IRELAND
+            DATE: 18–19 APR 2026 · DUBLIN, IRELAND
           </text>
           <circle
             cx="8"
@@ -939,96 +938,71 @@ const CinematicTransition: React.FC = () => {
             ref={desktopBeamRef}
             style={{ position: "absolute", inset: 0, opacity: 1 }}
           >
-          {/* Layer 1: Atmospheric outer haze */}
+          <div
+            ref={beamParallaxRef}
+            style={{
+              position: "absolute",
+              inset: 0,
+              transform: "translate(calc(var(--beam-mx, 0) * 14px), calc(var(--beam-my, 0) * 8px))",
+              transition: "transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
+          >
+          {/* Outer atmospheric halo — wide fan, centered on screen */}
           <div
             style={{
               position: "absolute",
               inset: 0,
-              background:
-                "conic-gradient(from 0deg at 20% 44%, transparent 68deg, rgba(255,215,70,0.05) 82deg, rgba(255,210,60,0.10) 97deg, rgba(255,215,70,0.05) 112deg, transparent 126deg)",
-              filter: "blur(34px)",
-              maskImage:
-                "radial-gradient(ellipse 95% 60% at 20% 44%, black 0%, black 25%, transparent 88%)",
-              WebkitMaskImage:
-                "radial-gradient(ellipse 95% 60% at 20% 44%, black 0%, black 25%, transparent 88%)",
+              clipPath: "polygon(20% 40%, 100% 17%, 100% 83%)",
+              background: "linear-gradient(to right, rgba(220,185,90,0.12) 0%, rgba(220,185,90,0.03) 50%, transparent 100%)",
+              filter: "blur(36px)",
             }}
           />
-          {/* Layer 2: Main beam body */}
+          {/* Main beam body — covers full screen height */}
           <div
             style={{
               position: "absolute",
               inset: 0,
-              background:
-                "conic-gradient(from 0deg at 20% 44%, transparent 80deg, rgba(255,232,100,0.12) 88deg, rgba(255,228,90,0.28) 97deg, rgba(255,232,100,0.12) 106deg, transparent 114deg)",
-              filter: "blur(15px)",
-              maskImage:
-                "radial-gradient(ellipse 90% 55% at 20% 44%, black 0%, black 18%, transparent 84%)",
-              WebkitMaskImage:
-                "radial-gradient(ellipse 90% 55% at 20% 44%, black 0%, black 18%, transparent 84%)",
+              clipPath: "polygon(20% 40%, 100% 27%, 100% 73%)",
+              background: "linear-gradient(to right, rgba(240,220,140,0.25) 0%, rgba(240,220,140,0.06) 55%, transparent 100%)",
+              filter: "blur(14px)",
             }}
           />
-          {/* Layer 3: Inner bright beam */}
+          {/* Mid beam — volumetric body, angled at screen center */}
           <div
             style={{
               position: "absolute",
               inset: 0,
-              background:
-                "conic-gradient(from 0deg at 20% 44%, transparent 86deg, rgba(255,242,128,0.22) 91deg, rgba(255,240,118,0.50) 97deg, rgba(255,242,128,0.22) 103deg, transparent 108deg)",
-              filter: "blur(7px)",
-              maskImage:
-                "radial-gradient(ellipse 80% 48% at 20% 44%, black 0%, black 10%, transparent 80%)",
-              WebkitMaskImage:
-                "radial-gradient(ellipse 80% 48% at 20% 44%, black 0%, black 10%, transparent 80%)",
+              clipPath: "polygon(20% 40%, 100% 37%, 100% 63%)",
+              background: "linear-gradient(to right, rgba(255,245,190,0.35) 0%, rgba(255,245,190,0.08) 52%, transparent 100%)",
+              filter: "blur(6px)",
             }}
           />
-          {/* Layer 4: Bright core */}
+          {/* Core beam — bright centre, aims at screen midpoint */}
           <div
             style={{
               position: "absolute",
               inset: 0,
-              background:
-                "conic-gradient(from 0deg at 20% 44%, transparent 92deg, rgba(255,252,195,0.28) 95deg, rgba(255,252,195,0.68) 97deg, rgba(255,252,195,0.28) 99deg, transparent 102deg)",
-              filter: "blur(2.5px)",
-              maskImage:
-                "radial-gradient(ellipse 65% 38% at 20% 44%, black 0%, black 8%, transparent 72%)",
-              WebkitMaskImage:
-                "radial-gradient(ellipse 65% 38% at 20% 44%, black 0%, black 8%, transparent 72%)",
+              clipPath: "polygon(20% 40%, 100% 44%, 100% 56%)",
+              background: "linear-gradient(to right, rgba(255,252,210,0.75) 0%, rgba(255,248,180,0.20) 44%, transparent 100%)",
+              filter: "blur(1.5px)",
             }}
           />
-          {/* Lens hot-spot glow */}
+          {/* Lens source glow */}
           <div
             style={{
               position: "absolute",
               left: "20%",
-              top: "44%",
-              width: 58,
-              height: 46,
-              transform: "translate(-50%,-50%)",
+              top: "40%",
+              width: 56,
+              height: 56,
+              transform: "translate(-50%, -50%)",
               borderRadius: "50%",
-              background:
-                "radial-gradient(ellipse, rgba(255,255,218,0.92) 0%, rgba(255,248,160,0.58) 28%, rgba(255,228,90,0.22) 58%, transparent 82%)",
-              filter: "blur(5px)",
+              background: "radial-gradient(ellipse, rgba(255,252,220,1) 0%, rgba(240,210,100,0.72) 28%, rgba(220,185,90,0.22) 60%, transparent 80%)",
+              filter: "blur(7px)",
               zIndex: 1,
             }}
           />
-          {/* Dust motes */}
-          {DUST_MOTES.map((m, i) => (
-            <div
-              key={i}
-              style={{
-                position: "absolute",
-                left: `${m.x}%`,
-                top: `${m.y}%`,
-                width: m.size,
-                height: m.size,
-                borderRadius: "50%",
-                background: "rgba(255,250,180,0.75)",
-                filter: "blur(0.4px)",
-                boxShadow: `0 0 ${m.size * 3}px rgba(255,244,150,0.55)`,
-                animation: `ctDustMote ${m.dur}s ${m.delay}s ease-in-out infinite`,
-              }}
-            />
-          ))}
+          </div>
           </div>
         </div>
 
@@ -1053,312 +1027,157 @@ const CinematicTransition: React.FC = () => {
             style={{ width: "100%", height: "auto", overflow: "visible" }}
             aria-label="Vintage film camera on tripod"
           >
-            {/* Body */}
-            <rect
-              x="40"
-              y="55"
-              width="180"
-              height="130"
-              rx="8"
-              fill="#383838"
-              stroke="#666"
-              strokeWidth="2"
-            />
-            <line
-              x1="40"
-              y1="100"
-              x2="220"
-              y2="100"
-              stroke="#4a4a4a"
-              strokeWidth="1.5"
-            />
-            <line
-              x1="40"
-              y1="135"
-              x2="220"
-              y2="135"
-              stroke="#4a4a4a"
-              strokeWidth="1.5"
-            />
-            {/* Nameplate */}
-            <rect
-              x="52"
-              y="106"
-              width="80"
-              height="18"
-              rx="2"
-              fill="#2a2a2a"
-              stroke="#555"
-              strokeWidth="0.8"
-            />
-            <text
-              x="92"
-              y="119"
-              fontFamily="monospace"
-              fontSize="6.5"
-              fill="#777"
-              textAnchor="middle"
-            >
-              CINE-1600
-            </text>
+            <defs>
+              <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#3a3228" />
+                <stop offset="55%" stopColor="#241e16" />
+                <stop offset="100%" stopColor="#1a1510" />
+              </linearGradient>
+              <linearGradient id="reelGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#3c3428" />
+                <stop offset="100%" stopColor="#1e1a12" />
+              </linearGradient>
+              <linearGradient id="lensGlassGrad" cx="38%" cy="38%" r="50%" fx="38%" fy="38%" gradientUnits="objectBoundingBox" id="lensGlass">
+                <stop offset="0%" stopColor="rgba(248,236,188,0.92)" />
+                <stop offset="45%" stopColor="rgba(200,170,80,0.55)" />
+                <stop offset="100%" stopColor="rgba(80,60,20,0.8)" />
+              </linearGradient>
+              <radialGradient id="lensGlass" cx="38%" cy="38%" r="50%">
+                <stop offset="0%" stopColor="rgba(255,250,210,0.95)" />
+                <stop offset="40%" stopColor="rgba(198,153,58,0.6)" />
+                <stop offset="100%" stopColor="rgba(40,30,10,0.85)" />
+              </radialGradient>
+            </defs>
+
+            {/* ── Tripod legs ── */}
+            <line x1="125" y1="196" x2="55" y2="372" stroke="#3a3020" strokeWidth="4" strokeLinecap="round" />
+            <line x1="132" y1="198" x2="132" y2="372" stroke="#3a3020" strokeWidth="4" strokeLinecap="round" />
+            <line x1="139" y1="196" x2="205" y2="372" stroke="#3a3020" strokeWidth="4" strokeLinecap="round" />
+            {/* Spreader bar */}
+            <line x1="74" y1="306" x2="190" y2="306" stroke="#2e2618" strokeWidth="2" strokeLinecap="round" />
+            <ellipse cx="55" cy="374" rx="10" ry="4" fill="#1e1a10" />
+            <ellipse cx="132" cy="374" rx="10" ry="4" fill="#1e1a10" />
+            <ellipse cx="205" cy="374" rx="10" ry="4" fill="#1e1a10" />
+
+            {/* ── Tripod head / pan plate ── */}
+            <rect x="108" y="184" width="48" height="16" rx="4" fill="#2e2618" stroke="rgba(198,153,58,0.3)" strokeWidth="1" />
+            <rect x="116" y="188" width="32" height="4" rx="2" fill="rgba(198,153,58,0.12)" />
+
+            {/* ── Main camera body ── */}
+            <rect x="38" y="56" width="184" height="132" rx="7" fill="url(#bodyGrad)" />
+            {/* Top edge highlight */}
+            <rect x="38" y="56" width="184" height="3" rx="2" fill="rgba(198,153,58,0.18)" />
+            {/* Panel division lines */}
+            <line x1="38" y1="104" x2="222" y2="104" stroke="rgba(198,153,58,0.15)" strokeWidth="1" />
+            <line x1="38" y1="142" x2="222" y2="142" stroke="rgba(198,153,58,0.15)" strokeWidth="1" />
+            {/* Body outline */}
+            <rect x="38" y="56" width="184" height="132" rx="7" fill="none" stroke="rgba(198,153,58,0.28)" strokeWidth="1.5" />
+
+            {/* ── Film perforations along top edge ── */}
+            {[0,1,2,3,4,5,6].map((i) => (
+              <rect key={`tp${i}`} x={48 + i * 23} y="56" width="10" height="6" rx="1.2" fill="#0e0b07" stroke="rgba(198,153,58,0.2)" strokeWidth="0.5" />
+            ))}
+            {/* Bottom perforations */}
+            {[0,1,2,3,4,5,6].map((i) => (
+              <rect key={`bp${i}`} x={48 + i * 23} y="182" width="10" height="6" rx="1.2" fill="#0e0b07" stroke="rgba(198,153,58,0.2)" strokeWidth="0.5" />
+            ))}
+
+            {/* ── Film reels (top, recessed) ── */}
             {/* Left reel */}
-            <circle
-              cx="72"
-              cy="75"
-              r="22"
-              fill="#3a3a3a"
-              stroke="#777"
-              strokeWidth="2"
-            />
-            <circle
-              cx="72"
-              cy="75"
-              r="15"
-              fill="#2a2a2a"
-              stroke="#666"
-              strokeWidth="1.5"
-            />
-            {[0, 60, 120, 180, 240, 300].map((a) => (
-              <line
-                key={a}
-                x1="72"
-                y1="75"
-                x2={72 + 12 * Math.cos((a * Math.PI) / 180)}
-                y2={75 + 12 * Math.sin((a * Math.PI) / 180)}
-                stroke="#777"
-                strokeWidth="1.5"
-              />
+            <circle cx="74" cy="78" r="24" fill="url(#reelGrad)" stroke="rgba(198,153,58,0.35)" strokeWidth="1.5" />
+            <circle cx="74" cy="78" r="17" fill="#141008" stroke="rgba(198,153,58,0.22)" strokeWidth="1" />
+            {[0,45,90,135,180,225,270,315].map((a) => (
+              <line key={`ls${a}`}
+                x1={74 + 6 * Math.cos(a * Math.PI / 180)} y1={78 + 6 * Math.sin(a * Math.PI / 180)}
+                x2={74 + 15 * Math.cos(a * Math.PI / 180)} y2={78 + 15 * Math.sin(a * Math.PI / 180)}
+                stroke="rgba(198,153,58,0.28)" strokeWidth="1.2" />
             ))}
-            <circle cx="72" cy="75" r="4" fill="#aaa" />
+            <circle cx="74" cy="78" r="5" fill="#2e2618" stroke="rgba(198,153,58,0.45)" strokeWidth="1" />
+            <circle cx="74" cy="78" r="2" fill="rgba(198,153,58,0.6)" />
+            {/* Reel sprocket holes */}
+            {[0,60,120,180,240,300].map((a) => (
+              <circle key={`lh${a}`} cx={74 + 11 * Math.cos(a * Math.PI / 180)} cy={78 + 11 * Math.sin(a * Math.PI / 180)} r="1.8" fill="#0e0b07" stroke="rgba(198,153,58,0.15)" strokeWidth="0.5" />
+            ))}
+
             {/* Right reel */}
-            <circle
-              cx="188"
-              cy="75"
-              r="22"
-              fill="#3a3a3a"
-              stroke="#777"
-              strokeWidth="2"
-            />
-            <circle
-              cx="188"
-              cy="75"
-              r="15"
-              fill="#2a2a2a"
-              stroke="#666"
-              strokeWidth="1.5"
-            />
-            {[0, 60, 120, 180, 240, 300].map((a) => (
-              <line
-                key={a}
-                x1="188"
-                y1="75"
-                x2={188 + 12 * Math.cos((a * Math.PI) / 180)}
-                y2={75 + 12 * Math.sin((a * Math.PI) / 180)}
-                stroke="#777"
-                strokeWidth="1.5"
-              />
+            <circle cx="188" cy="78" r="24" fill="url(#reelGrad)" stroke="rgba(198,153,58,0.35)" strokeWidth="1.5" />
+            <circle cx="188" cy="78" r="17" fill="#141008" stroke="rgba(198,153,58,0.22)" strokeWidth="1" />
+            {[0,45,90,135,180,225,270,315].map((a) => (
+              <line key={`rs${a}`}
+                x1={188 + 6 * Math.cos(a * Math.PI / 180)} y1={78 + 6 * Math.sin(a * Math.PI / 180)}
+                x2={188 + 15 * Math.cos(a * Math.PI / 180)} y2={78 + 15 * Math.sin(a * Math.PI / 180)}
+                stroke="rgba(198,153,58,0.28)" strokeWidth="1.2" />
             ))}
-            <circle cx="188" cy="75" r="4" fill="#aaa" />
-            {/* Viewfinder */}
-            <rect
-              x="100"
-              y="36"
-              width="60"
-              height="25"
-              rx="4"
-              fill="#333"
-              stroke="#666"
-              strokeWidth="1.5"
-            />
-            <rect
-              x="108"
-              y="41"
-              width="44"
-              height="15"
-              rx="2"
-              fill="#222"
-              stroke="#555"
-              strokeWidth="1"
-            />
-            {/* Film perforations */}
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-              <React.Fragment key={i}>
-                <rect
-                  x={50 + i * 26}
-                  y="55"
-                  width="11"
-                  height="7"
-                  rx="1"
-                  fill="#2e2e2e"
-                  stroke="#555"
-                  strokeWidth="0.5"
-                />
-                <rect
-                  x={50 + i * 26}
-                  y="178"
-                  width="11"
-                  height="7"
-                  rx="1"
-                  fill="#2e2e2e"
-                  stroke="#555"
-                  strokeWidth="0.5"
-                />
+            <circle cx="188" cy="78" r="5" fill="#2e2618" stroke="rgba(198,153,58,0.45)" strokeWidth="1" />
+            <circle cx="188" cy="78" r="2" fill="rgba(198,153,58,0.6)" />
+            {[0,60,120,180,240,300].map((a) => (
+              <circle key={`rh${a}`} cx={188 + 11 * Math.cos(a * Math.PI / 180)} cy={78 + 11 * Math.sin(a * Math.PI / 180)} r="1.8" fill="#0e0b07" stroke="rgba(198,153,58,0.15)" strokeWidth="0.5" />
+            ))}
+
+            {/* ── Film path guide channel ── */}
+            <rect x="94" y="56" width="76" height="24" rx="0" fill="#0e0b07" stroke="rgba(198,153,58,0.12)" strokeWidth="0.5" />
+
+            {/* ── Aperture gate (center body) ── */}
+            <rect x="112" y="108" width="38" height="30" rx="2" fill="#0a0806" stroke="rgba(198,153,58,0.3)" strokeWidth="1" />
+            <rect x="116" y="112" width="30" height="22" rx="1" fill="#060503" stroke="rgba(198,153,58,0.2)" strokeWidth="0.5" />
+            {/* Crosshairs */}
+            <line x1="131" y1="112" x2="131" y2="134" stroke="rgba(198,153,58,0.25)" strokeWidth="0.5" />
+            <line x1="116" y1="123" x2="146" y2="123" stroke="rgba(198,153,58,0.25)" strokeWidth="0.5" />
+            {/* Corner marks */}
+            {[[116,112],[146,112],[116,134],[146,134]].map(([cx,cy],i) => (
+              <React.Fragment key={`cm${i}`}>
+                <line x1={cx} y1={cy} x2={cx + (i%2===0?3:-3)} y2={cy} stroke="rgba(198,153,58,0.4)" strokeWidth="0.8" />
+                <line x1={cx} y1={cy} x2={cx} y2={cy + (i<2?3:-3)} stroke="rgba(198,153,58,0.4)" strokeWidth="0.8" />
               </React.Fragment>
             ))}
-            {/* Lens cone */}
-            <polygon
-              points="220,88 268,74 268,168 220,152"
-              fill="#2e2e2e"
-              stroke="#666"
-              strokeWidth="1.5"
-            />
-            {/* Lens rings */}
-            <circle
-              cx="270"
-              cy="121"
-              r="24"
-              fill="#1a1a1a"
-              stroke="#777"
-              strokeWidth="2.5"
-            />
-            <circle
-              cx="270"
-              cy="121"
-              r="18"
-              fill="#222"
-              stroke="#666"
-              strokeWidth="1.5"
-            />
-            <circle
-              cx="270"
-              cy="121"
-              r="12"
-              fill="#1a1a1a"
-              stroke="#888"
-              strokeWidth="1"
-            />
-            <circle
-              cx="270"
-              cy="121"
-              r="7"
-              fill="#222"
-              stroke="#aaa"
-              strokeWidth="1"
-            />
-            <circle
-              cx="270"
-              cy="121"
-              r="3"
-              fill="#1a1a1a"
-              stroke="#bbb"
-              strokeWidth="0.5"
-            />
-            {/* Lens highlight */}
-            <circle cx="262" cy="112" r="4" fill="rgba(255,255,255,0.18)" />
-            <circle cx="259" cy="109" r="2" fill="rgba(255,255,255,0.24)" />
-            {/* Crank */}
-            <line
-              x1="220"
-              y1="138"
-              x2="246"
-              y2="155"
-              stroke="#666"
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-            <circle
-              cx="250"
-              cy="158"
-              r="7"
-              fill="#404040"
-              stroke="#777"
-              strokeWidth="1.5"
-            />
-            <circle cx="250" cy="158" r="3" fill="#666" />
-            {/* Corner rivets */}
-            <circle
-              cx="48"
-              cy="63"
-              r="3"
-              fill="#555"
-              stroke="#777"
-              strokeWidth="0.5"
-            />
-            <circle
-              cx="212"
-              cy="63"
-              r="3"
-              fill="#555"
-              stroke="#777"
-              strokeWidth="0.5"
-            />
-            <circle
-              cx="48"
-              cy="177"
-              r="3"
-              fill="#555"
-              stroke="#777"
-              strokeWidth="0.5"
-            />
-            <circle
-              cx="212"
-              cy="177"
-              r="3"
-              fill="#555"
-              stroke="#777"
-              strokeWidth="0.5"
-            />
-            {/* Tripod head */}
-            <rect
-              x="112"
-              y="185"
-              width="36"
-              height="14"
-              rx="3"
-              fill="#333"
-              stroke="#555"
-              strokeWidth="1.5"
-            />
-            {/* Legs */}
-            <line
-              x1="120"
-              y1="196"
-              x2="58"
-              y2="370"
-              stroke="#555"
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-            <line
-              x1="130"
-              y1="199"
-              x2="130"
-              y2="370"
-              stroke="#555"
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-            <line
-              x1="140"
-              y1="196"
-              x2="202"
-              y2="370"
-              stroke="#555"
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-            <line
-              x1="76"
-              y1="300"
-              x2="184"
-              y2="300"
-              stroke="#444"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-            />
-            <ellipse cx="58" cy="372" rx="9" ry="3.5" fill="#333" />
-            <ellipse cx="130" cy="372" rx="9" ry="3.5" fill="#333" />
-            <ellipse cx="202" cy="372" rx="9" ry="3.5" fill="#333" />
+
+            {/* ── Nameplate ── */}
+            <rect x="50" y="148" width="92" height="16" rx="2" fill="#0e0b07" stroke="rgba(198,153,58,0.32)" strokeWidth="0.8" />
+            <text x="96" y="159" fontFamily="'IBM Plex Mono', monospace" fontSize="6" fill="rgba(198,153,58,0.7)" textAnchor="middle" letterSpacing="1.2">CINE · 16mm</text>
+
+            {/* ── Control knobs ── */}
+            {[[160,148],[176,148],[192,148]].map(([cx,cy],i) => (
+              <React.Fragment key={`k${i}`}>
+                <circle cx={cx} cy={cy+8} r="6" fill="#1e1a10" stroke="rgba(198,153,58,0.35)" strokeWidth="0.8" />
+                <circle cx={cx} cy={cy+8} r="2.5" fill="rgba(198,153,58,0.4)" />
+                <line x1={cx} y1={cy+4} x2={cx} y2={cy+7} stroke="rgba(198,153,58,0.5)" strokeWidth="0.8" />
+              </React.Fragment>
+            ))}
+
+            {/* ── Ventilation louvres ── */}
+            {[166,172,178,184].map((y) => (
+              <line key={`v${y}`} x1="42" y1={y} x2="52" y2={y} stroke="rgba(198,153,58,0.2)" strokeWidth="0.8" strokeLinecap="round" />
+            ))}
+
+            {/* ── Corner rivets ── */}
+            {[[44,62],[216,62],[44,180],[216,180]].map(([cx,cy],i) => (
+              <React.Fragment key={`rv${i}`}>
+                <circle cx={cx} cy={cy} r="3.5" fill="#2e2618" stroke="rgba(198,153,58,0.4)" strokeWidth="0.8" />
+                <circle cx={cx} cy={cy} r="1.2" fill="rgba(198,153,58,0.35)" />
+              </React.Fragment>
+            ))}
+
+            {/* ── Lens barrel / cone ── */}
+            <path d="M220 90 L265 76 L265 168 L220 152 Z" fill="#1e1a10" stroke="rgba(198,153,58,0.3)" strokeWidth="1.2" />
+            {/* Barrel grip rings */}
+            {[238,248,258].map((x) => (
+              <line key={`gr${x}`} x1={x} y1={76 + (x-265)*(-0.22)*(-1)} x2={x} y2={168 - (265-x)*0.22} stroke="rgba(198,153,58,0.18)" strokeWidth="1.5" />
+            ))}
+
+            {/* ── Lens assembly ── */}
+            {/* Outer hood */}
+            <circle cx="268" cy="122" r="27" fill="#141008" stroke="rgba(198,153,58,0.38)" strokeWidth="2" />
+            {/* Barrel rim */}
+            <circle cx="268" cy="122" r="22" fill="#1a1508" stroke="rgba(198,153,58,0.28)" strokeWidth="1.5" />
+            {/* Element rings */}
+            <circle cx="268" cy="122" r="17" fill="#0e0b05" stroke="rgba(198,153,58,0.22)" strokeWidth="1" />
+            <circle cx="268" cy="122" r="12" fill="#0a0805" stroke="rgba(198,153,58,0.3)" strokeWidth="0.8" />
+            {/* Glass element */}
+            <circle cx="268" cy="122" r="8" fill="url(#lensGlass)" stroke="rgba(248,236,188,0.45)" strokeWidth="0.8" />
+            {/* Specular highlights */}
+            <circle cx="262" cy="116" r="3.5" fill="rgba(255,252,230,0.22)" />
+            <circle cx="260" cy="114" r="1.8" fill="rgba(255,252,230,0.32)" />
+            <circle cx="272" cy="128" r="1.2" fill="rgba(255,252,230,0.12)" />
           </svg>
         </div>
         <div
@@ -1367,109 +1186,121 @@ const CinematicTransition: React.FC = () => {
             position: "absolute",
             left: "50%",
             top: "92%",
-            width: "min(180px, 48vw)",
-            height: "74px",
+            width: "min(200px, 52vw)",
             transform: "translate3d(-50%, 20%, 0)",
-            transformStyle: "preserve-3d",
             opacity: 0,
             zIndex: 22,
             pointerEvents: "none",
+            filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.85))",
           }}
         >
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              borderRadius: 14,
-              background:
-                "linear-gradient(160deg, #3d434d 0%, #2a3039 44%, #161a21 100%)",
-              border: "1px solid rgba(190,200,215,0.22)",
-              boxShadow:
-                "0 14px 28px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              left: "14%",
-              right: "14%",
-              top: 15,
-              height: 11,
-              borderRadius: 999,
-              background:
-                "linear-gradient(90deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.04) 58%, transparent 100%)",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              left: "50%",
-              top: -10,
-              width: 84,
-              height: 42,
-              transform: "translateX(-50%)",
-              borderRadius: 24,
-              background:
-                "linear-gradient(135deg, #212832 0%, #12171f 100%)",
-              border: "1px solid rgba(170,182,200,0.24)",
-              boxShadow:
-                "inset 0 0 0 1px rgba(255,255,255,0.04), 0 8px 18px rgba(0,0,0,0.35)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <div
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: "50%",
-                background:
-                  "radial-gradient(circle, #29313d 0%, #11161e 64%, #090d13 100%)",
-                border: "1px solid rgba(175,190,215,0.28)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <div
-                ref={mobileProjectorLensRef}
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: "50%",
-                  background:
-                    "radial-gradient(circle, rgba(255,252,222,0.95) 0%, rgba(255,236,148,0.62) 45%, rgba(255,220,92,0.14) 82%, transparent 100%)",
-                  boxShadow: "0 0 14px rgba(255,236,150,0.46)",
-                  opacity: 0,
-                }}
-              />
-            </div>
-          </div>
-          <div
-            style={{
-              position: "absolute",
-              left: "10%",
-              right: "10%",
-              bottom: 6,
-              height: 14,
-              borderRadius: 7,
-              background: "linear-gradient(180deg, #11161d 0%, #0a0e14 100%)",
-              border: "1px solid rgba(120,130,145,0.24)",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              left: "14%",
-              right: "14%",
-              bottom: -12,
-              height: 12,
-              borderRadius: 999,
-              background: "rgba(0,0,0,0.55)",
-              filter: "blur(3px)",
-            }}
-          />
+          <svg viewBox="0 0 200 110" style={{ width: "100%", height: "auto", overflow: "visible" }} aria-hidden="true">
+            <defs>
+              <linearGradient id="mpBodyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#3a3228" />
+                <stop offset="100%" stopColor="#1a1510" />
+              </linearGradient>
+              <radialGradient id="mpLensGlass" cx="38%" cy="38%" r="50%">
+                <stop offset="0%" stopColor="rgba(255,250,210,0.95)" />
+                <stop offset="45%" stopColor="rgba(198,153,58,0.55)" />
+                <stop offset="100%" stopColor="rgba(30,20,5,0.9)" />
+              </radialGradient>
+            </defs>
+
+            {/* Shadow */}
+            <ellipse cx="100" cy="108" rx="72" ry="5" fill="rgba(0,0,0,0.55)" style={{ filter: "blur(4px)" }} />
+
+            {/* Main body */}
+            <rect x="28" y="32" width="132" height="62" rx="5" fill="url(#mpBodyGrad)" stroke="rgba(198,153,58,0.32)" strokeWidth="1.2" />
+            {/* Top highlight */}
+            <rect x="28" y="32" width="132" height="2.5" rx="2" fill="rgba(198,153,58,0.2)" />
+            {/* Panel line */}
+            <line x1="28" y1="58" x2="160" y2="58" stroke="rgba(198,153,58,0.14)" strokeWidth="0.8" />
+            <line x1="28" y1="72" x2="160" y2="72" stroke="rgba(198,153,58,0.14)" strokeWidth="0.8" />
+
+            {/* Film reels on top */}
+            {/* Left reel */}
+            <circle cx="60" cy="26" r="20" fill="#2e2618" stroke="rgba(198,153,58,0.38)" strokeWidth="1.2" />
+            <circle cx="60" cy="26" r="13" fill="#141008" stroke="rgba(198,153,58,0.2)" strokeWidth="0.8" />
+            {[0,45,90,135,180,225,270,315].map((a) => (
+              <line key={`mls${a}`}
+                x1={60 + 5 * Math.cos(a * Math.PI / 180)} y1={26 + 5 * Math.sin(a * Math.PI / 180)}
+                x2={60 + 11 * Math.cos(a * Math.PI / 180)} y2={26 + 11 * Math.sin(a * Math.PI / 180)}
+                stroke="rgba(198,153,58,0.28)" strokeWidth="1" />
+            ))}
+            <circle cx="60" cy="26" r="4" fill="#2e2618" stroke="rgba(198,153,58,0.5)" strokeWidth="0.8" />
+            <circle cx="60" cy="26" r="1.5" fill="rgba(198,153,58,0.65)" />
+            {/* Reel connector post */}
+            <rect x="56" y="32" width="8" height="6" rx="1" fill="#1e1a10" stroke="rgba(198,153,58,0.22)" strokeWidth="0.5" />
+
+            {/* Right reel */}
+            <circle cx="140" cy="26" r="20" fill="#2e2618" stroke="rgba(198,153,58,0.38)" strokeWidth="1.2" />
+            <circle cx="140" cy="26" r="13" fill="#141008" stroke="rgba(198,153,58,0.2)" strokeWidth="0.8" />
+            {[0,45,90,135,180,225,270,315].map((a) => (
+              <line key={`mrs${a}`}
+                x1={140 + 5 * Math.cos(a * Math.PI / 180)} y1={26 + 5 * Math.sin(a * Math.PI / 180)}
+                x2={140 + 11 * Math.cos(a * Math.PI / 180)} y2={26 + 11 * Math.sin(a * Math.PI / 180)}
+                stroke="rgba(198,153,58,0.28)" strokeWidth="1" />
+            ))}
+            <circle cx="140" cy="26" r="4" fill="#2e2618" stroke="rgba(198,153,58,0.5)" strokeWidth="0.8" />
+            <circle cx="140" cy="26" r="1.5" fill="rgba(198,153,58,0.65)" />
+            <rect x="136" y="32" width="8" height="6" rx="1" fill="#1e1a10" stroke="rgba(198,153,58,0.22)" strokeWidth="0.5" />
+
+            {/* Aperture gate (center top area) */}
+            <rect x="86" y="36" width="28" height="20" rx="1.5" fill="#0a0806" stroke="rgba(198,153,58,0.28)" strokeWidth="0.8" />
+            <line x1="100" y1="36" x2="100" y2="56" stroke="rgba(198,153,58,0.2)" strokeWidth="0.5" />
+            <line x1="86" y1="46" x2="114" y2="46" stroke="rgba(198,153,58,0.2)" strokeWidth="0.5" />
+
+            {/* Lens barrel (right side) */}
+            <path d="M160 50 L178 44 L178 76 L160 72 Z" fill="#1e1a10" stroke="rgba(198,153,58,0.28)" strokeWidth="1" />
+            {/* Grip rings on barrel */}
+            {[165,170,175].map((x) => (
+              <line key={`mgr${x}`} x1={x} y1={44 + (x-160)*0.2} x2={x} y2={76 - (x-160)*0.2} stroke="rgba(198,153,58,0.16)" strokeWidth="1" />
+            ))}
+
+            {/* Lens assembly */}
+            <circle cx="180" cy="60" r="19" fill="#141008" stroke="rgba(198,153,58,0.4)" strokeWidth="1.5" />
+            <circle cx="180" cy="60" r="14" fill="#0e0b05" stroke="rgba(198,153,58,0.28)" strokeWidth="1" />
+            <circle cx="180" cy="60" r="9" fill="#0a0805" stroke="rgba(198,153,58,0.22)" strokeWidth="0.8" />
+            {/* Glass element */}
+            <circle cx="180" cy="60" r="5.5" fill="url(#mpLensGlass)" stroke="rgba(248,236,188,0.5)" strokeWidth="0.7" />
+            {/* Specular */}
+            <circle cx="177" cy="57" r="2.2" fill="rgba(255,252,230,0.25)" />
+            <circle cx="176" cy="56" r="1.1" fill="rgba(255,252,230,0.38)" />
+
+            {/* Lens ref for glow */}
+            <circle ref={mobileProjectorLensRef as React.RefObject<SVGCircleElement>} cx="180" cy="60" r="5.5" fill="rgba(255,236,148,0)" style={{ opacity: 0 }} />
+
+            {/* Control knobs */}
+            {[[38,76],[52,76],[66,76]].map(([cx,cy],i) => (
+              <React.Fragment key={`mk${i}`}>
+                <circle cx={cx} cy={cy} r="5" fill="#1e1a10" stroke="rgba(198,153,58,0.35)" strokeWidth="0.8" />
+                <circle cx={cx} cy={cy} r="2" fill="rgba(198,153,58,0.4)" />
+              </React.Fragment>
+            ))}
+
+            {/* Nameplate */}
+            <rect x="82" y="72" width="60" height="12" rx="1.5" fill="#0e0b07" stroke="rgba(198,153,58,0.3)" strokeWidth="0.6" />
+            <text x="112" y="81" fontFamily="'IBM Plex Mono', monospace" fontSize="5" fill="rgba(198,153,58,0.65)" textAnchor="middle" letterSpacing="1">16mm · PRO</text>
+
+            {/* Ventilation louvres */}
+            {[62,67,72,77,82].map((y) => (
+              <line key={`mvl${y}`} x1="150" y1={y} x2="158" y2={y} stroke="rgba(198,153,58,0.18)" strokeWidth="0.7" strokeLinecap="round" />
+            ))}
+
+            {/* Corner rivets */}
+            {[[33,37],[155,37],[33,88],[155,88]].map(([cx,cy],i) => (
+              <React.Fragment key={`mrv${i}`}>
+                <circle cx={cx} cy={cy} r="2.5" fill="#2e2618" stroke="rgba(198,153,58,0.38)" strokeWidth="0.6" />
+                <circle cx={cx} cy={cy} r="1" fill="rgba(198,153,58,0.35)" />
+              </React.Fragment>
+            ))}
+
+            {/* Base/feet */}
+            <rect x="40" y="94" width="100" height="8" rx="3" fill="#1a1510" stroke="rgba(198,153,58,0.22)" strokeWidth="0.8" />
+            <rect x="48" y="92" width="14" height="4" rx="2" fill="#141008" />
+            <rect x="118" y="92" width="14" height="4" rx="2" fill="#141008" />
+          </svg>
         </div>
 
         {/* ════════════════════════════════════════════════════════════════
@@ -1554,7 +1385,7 @@ const CinematicTransition: React.FC = () => {
                   "0 0 35px rgba(255,215,60,0.58), 0 2px 8px rgba(0,0,0,0.95)",
               }}
             >
-              AI Film Making
+              AI Filmmaking
             </div>
             <div
               style={{
@@ -1578,7 +1409,7 @@ const CinematicTransition: React.FC = () => {
                 textTransform: "uppercase",
               }}
             >
-              2025 &nbsp;·&nbsp; Dublin, Ireland
+              18–19 Apr 2026 &nbsp;·&nbsp; Dublin, Ireland
             </div>
           </div>
           {/* Corner registration marks */}
@@ -1644,13 +1475,7 @@ const CinematicTransition: React.FC = () => {
           88%  { opacity: 0.6; }
           100% { transform: translateY(-12px) translateX(-1px) scale(0.6); opacity: 0; }
         }
-        @keyframes ctFilmGrainDrift {
-          0%   { transform: translate(0, 0); }
-          25%  { transform: translate(-2px, 1px); }
-          50%  { transform: translate(2px, -2px); }
-          75%  { transform: translate(1px, 2px); }
-          100% { transform: translate(0, 0); }
-        }
+
       `}</style>
       </div>
     </div>

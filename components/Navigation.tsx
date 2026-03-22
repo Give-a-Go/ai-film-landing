@@ -25,7 +25,7 @@ const Navigation: React.FC<NavigationProps> = ({ onOpenWaitlist }) => {
   const closeMenu = () => setMenuOpen(false);
 
   // All pages have a dark background — use light text throughout
-  const linkClass = `block w-full text-left py-3 px-4 text-base font-medium transition-colors duration-300 min-h-[44px] flex items-center text-gray-700 hover:text-black`;
+  const linkClass = `block w-full text-left py-3 px-4 text-base font-medium transition-colors duration-300 min-h-[44px] flex items-center text-[rgba(224,213,192,0.65)] hover:text-[#E0D5C0]`;
   const linkClassSmall = `text-sm font-medium transition-colors duration-300 text-[rgba(224,213,192,0.55)] hover:text-[#E0D5C0]`;
 
   return (
@@ -47,8 +47,8 @@ const Navigation: React.FC<NavigationProps> = ({ onOpenWaitlist }) => {
           <a href="https://luma.com/giveago?period=past" className={linkClassSmall}>
             Previous events
           </a>
-          <a href="https://giveago.co/after-movie/ai-film" className={linkClassSmall}>
-            V1 Recap Video
+          <a href="https://giveago.co/after-movie/ai-film" className={linkClassSmall} style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+            V1 Recap <span style={{ fontSize: "0.7em", opacity: 0.7 }}>↗</span>
           </a>
         </div>
       </div>
@@ -116,15 +116,17 @@ const Navigation: React.FC<NavigationProps> = ({ onOpenWaitlist }) => {
         />
         {/* Panel (slide from right) */}
         <div
-          className={`absolute top-0 right-0 h-full w-full max-w-sm flex flex-col transition-transform duration-200 ease-out bg-white border-l border-black/10 ${menuOpen ? "translate-x-0" : "translate-x-full"}`}
+          className={`absolute top-0 right-0 h-full w-full max-w-sm flex flex-col transition-transform duration-200 ease-out ${menuOpen ? "translate-x-0" : "translate-x-full"}`}
+          style={{ background: '#0a0905', borderLeft: '1px solid rgba(198,153,58,0.22)' }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between px-4 py-5 border-b min-h-[44px] shrink-0 border-inherit">
-            <span className="text-sm font-medium text-gray-500">Menu</span>
+          <div className="flex items-center justify-between px-4 py-5 min-h-[44px] shrink-0" style={{ borderBottom: '1px solid rgba(198,153,58,0.18)' }}>
+            <span className="text-sm font-medium" style={{ color: 'rgba(198,153,58,0.7)', fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.62rem', letterSpacing: '0.25em', textTransform: 'uppercase' }}>Menu</span>
             <button
               type="button"
               onClick={closeMenu}
-              className="w-11 h-11 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full -mr-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent text-gray-700 focus-visible:ring-black/50"
+              className="w-11 h-11 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full -mr-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent focus-visible:ring-[#C6993A]/50"
+              style={{ color: 'rgba(224,213,192,0.7)' }}
               aria-label="Close menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -135,19 +137,21 @@ const Navigation: React.FC<NavigationProps> = ({ onOpenWaitlist }) => {
           <nav className="flex-1 overflow-y-auto py-4 px-2" aria-label="Mobile navigation">
             <a href="https://giveago.co" className={linkClass} onClick={closeMenu}>About us</a>
             <a href="https://luma.com/giveago?period=past" className={linkClass} onClick={closeMenu}>Previous events</a>
-            <a href="https://giveago.co/after-movie/ai-film" className={linkClass} onClick={closeMenu}>V1 Recap Video</a>
-            <div className="border-t border-inherit my-2" />
+            <a href="https://giveago.co/after-movie/ai-film" className={linkClass} onClick={closeMenu} style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>V1 Recap <span style={{ fontSize: "0.75em", opacity: 0.6 }}>↗</span></a>
+            <div className="my-2" style={{ borderTop: '1px solid rgba(198,153,58,0.14)' }} />
             <div className="px-2 space-y-2">
               <button
                 type="button"
-                className="w-full rounded-full px-5 py-3 text-sm font-medium transition-all duration-300 flex items-center justify-center gap-1 min-h-[44px] bg-black text-white hover:bg-gray-900"
+                className="w-full rounded-full px-5 py-3 text-sm font-medium transition-all duration-300 flex items-center justify-center gap-1 min-h-[44px]"
+                style={{ background: '#E0D5C0', color: '#050505' }}
                 onClick={() => { onOpenWaitlist?.(); closeMenu(); }}
               >
                 I'm interested <span className="transition-transform">→</span>
               </button>
               <a
                 href="https://giveago.co/sponsor"
-                className="block w-full rounded-full px-5 py-3 text-sm font-medium text-center transition-all duration-300 min-h-[44px] flex items-center justify-center bg-black/10 text-black hover:bg-black/20"
+                className="block w-full rounded-full px-5 py-3 text-sm font-medium text-center transition-all duration-300 min-h-[44px] flex items-center justify-center"
+                style={{ border: '1px solid rgba(198,153,58,0.3)', color: 'rgba(198,153,58,0.8)', background: 'rgba(198,153,58,0.07)' }}
                 onClick={closeMenu}
               >
                 Sponsor

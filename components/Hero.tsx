@@ -233,6 +233,7 @@ const Hero: React.FC = () => {
         video.muted = true;
         video.playsInline = true;
         video.autoplay = false;
+        video.preload = "none";
         videoElementsRef.current.set(url, video);
       }
 
@@ -473,32 +474,48 @@ const Hero: React.FC = () => {
 
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
-      antialias: true,
+      antialias: window.devicePixelRatio < 1.5,
       alpha: false,
       powerPreference: "high-performance",
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     rendererRef.current = renderer;
 
     const segments: THREE.Group[] = [];
-    for (let i = 0; i < NUM_SEGMENTS; i++) {
-      const z = -i * SEGMENT_DEPTH;
-      const fadeDelay = i * 0.35;
-      const segment = createSegment(z, fadeDelay);
+
+    // Create first 2 segments immediately — these are visible on initial load
+    for (let i = 0; i < 2; i++) {
+      const segment = createSegment(-i * SEGMENT_DEPTH, i * 0.35);
       scene.add(segment);
       segments.push(segment);
     }
     segmentsRef.current = segments;
 
-    lineMaterialsRef.current = [];
-    segments.forEach((segment) => {
-      segment.traverse((child) => {
-        if (child instanceof THREE.LineSegments) {
-          lineMaterialsRef.current.push(
-            child.material as THREE.LineBasicMaterial,
-          );
+    const collectLineMaterials = () => {
+      lineMaterialsRef.current = [];
+      segmentsRef.current.forEach((seg) => {
+        seg.traverse((child) => {
+          if (child instanceof THREE.LineSegments) {
+            lineMaterialsRef.current.push(
+              child.material as THREE.LineBasicMaterial,
+            );
+          }
+        });
+      });
+    };
+    collectLineMaterials();
+
+    // Defer remaining segments until after first paint
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        for (let i = 2; i < NUM_SEGMENTS; i++) {
+          const segment = createSegment(-i * SEGMENT_DEPTH, i * 0.35);
+          scene.add(segment);
+          segments.push(segment);
         }
+        segmentsRef.current = [...segments];
+        collectLineMaterials();
       });
     });
 
@@ -639,7 +656,7 @@ const Hero: React.FC = () => {
         isUserScrollingRef.current = false;
       }, 150);
     };
-    window.addEventListener("scroll", onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
 
     const handleResize = () => {
       const w = window.innerWidth;
@@ -689,10 +706,10 @@ const Hero: React.FC = () => {
   }, []);
 
   const scrollToInfoSections = () => {
-    if (!containerRef.current) return;
+    const target = document.getElementById("cinematic-transition");
+    if (!target) return;
     const startY = window.scrollY;
-    // Jump to the section immediately after Hero, not deep into content.
-    const targetY = containerRef.current.offsetTop + containerRef.current.offsetHeight - 16;
+    const targetY = target.getBoundingClientRect().top + window.scrollY - 24;
     const distance = targetY - startY;
     const duration = 1400;
     const start = performance.now();
@@ -717,6 +734,23 @@ const Hero: React.FC = () => {
           0%, 100% { transform: translateY(0); opacity: 0.5; }
           50%       { transform: translateY(5px); opacity: 1; }
         }
+        @keyframes sponsorFadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .sponsor-strip {
+          animation: sponsorFadeIn 0.8s ease-out 0.4s both;
+        }
+        @keyframes sponsorMarquee {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .sponsor-marquee-track {
+          animation: sponsorMarquee 18s linear infinite;
+        }
+        .sponsor-marquee-track:hover {
+          animation-play-state: paused;
+        }
       `}</style>
 
       <div
@@ -734,10 +768,7 @@ const Hero: React.FC = () => {
               isTeleprompterOpen ? "blur-sm scale-[1.01]" : "blur-0 scale-100"
             }`}
           >
-            <canvas
-              ref={canvasRef}
-              className="w-full h-full block hero-canvas-jitter"
-            />
+            <canvas ref={canvasRef} className="w-full h-full block" />
           </div>
 
           {/* Cinema-style fade overlay — startup projector effect + scroll blackout.
@@ -757,16 +788,43 @@ const Hero: React.FC = () => {
               ref={contentRef}
               className="text-center flex flex-col items-center max-w-4xl px-6 pointer-events-auto"
             >
-              <h1
-                className="text-[2.5rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] leading-[0.95] font-serif tracking-tight mb-4"
-                style={{ color: "#E0D5C0" }}
+              {/* Presented by tag */}
+              <div
+                style={{
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "0.72rem",
+                  letterSpacing: "0.18em",
+                  color: "rgba(198,153,58,0.7)",
+                  textTransform: "uppercase",
+                  marginBottom: "1rem",
+                }}
               >
-                <span className="block font-bold">AI Film Making</span>
+                Give(a)Go{" "}
+                <span style={{ color: "rgba(198,153,58,0.35)" }}>×</span> Napkin
+              </div>
+
+              <h1
+                className="text-[2.5rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] xl:text-[7rem] leading-[0.95] font-serif tracking-tight mb-4"
+                style={{
+                  color: "#E0D5C0",
+                  textShadow:
+                    "0 0 40px rgba(255,215,60,0.22), 0 4px 120px rgba(255,200,40,0.12), 0 -2px 60px rgba(255,230,100,0.08)",
+                }}
+              >
+                <span className="block font-bold">AI Filmmaking</span>
                 <span className="block italic font-light">
                   Hackathon{" "}
                   <span
-                    className="font-light align-baseline ml-1"
-                    style={{ fontSize: "0.5em" }}
+                    style={{
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontStyle: "normal",
+                      fontWeight: 400,
+                      fontSize: "0.38em",
+                      verticalAlign: "super",
+                      marginLeft: "0.15em",
+                      color: "rgba(248,236,188,0.65)",
+                      letterSpacing: "0.05em",
+                    }}
                   >
                     v2
                   </span>
@@ -784,7 +842,7 @@ const Hero: React.FC = () => {
                     border: "1px solid rgba(198,153,58,0.38)",
                   }}
                 >
-                  Apply to Join <span>↓</span>
+                  Apply to Join
                 </button>
               </div>
 
@@ -804,215 +862,213 @@ const Hero: React.FC = () => {
             </div>
           </div>
 
-          {/* Partner logos / support line */}
+          {/* Sponsor strip — z:20 keeps it above the startup fade overlay (z:15) */}
           <div
-            className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
-            style={{
-              bottom: "5.25rem",
-              zIndex: 13,
-              width: "min(94vw, 980px)",
-            }}
+            className="sponsor-strip absolute left-0 right-0 bottom-0 pointer-events-none"
+            style={{ zIndex: 20 }}
           >
+            {/* Top fade */}
             <div
-              className="mx-auto sm:hidden px-3 py-2.5 rounded-2xl"
               style={{
-                background: "rgba(0,0,0,0.58)",
-                border: "1px solid rgba(248,236,188,0.24)",
-                boxShadow:
-                  "0 0 46px rgba(198,153,58,0.20), inset 0 0 24px rgba(0,0,0,0.45)",
-                backdropFilter: "blur(7px)",
-                WebkitBackdropFilter: "blur(7px)",
+                height: 56,
+                background:
+                  "linear-gradient(to bottom, transparent, rgba(0,0,0,0.88))",
+              }}
+            />
+            {/* Bar */}
+            <div
+              style={{
+                background: "rgba(0,0,0,0.88)",
+                borderTop: "1px solid rgba(198,153,58,0.22)",
+                padding: "12px 0 16px",
               }}
             >
-              <div className="text-center mb-2.5">
-                <span
-                  style={{
-                    color: "rgba(248,236,188,0.70)",
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.46rem",
-                    letterSpacing: "0.2em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Sponsored by
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div
-                  className="rounded-xl flex items-center justify-center"
-                  style={{
-                    background: "rgba(255,255,255,0.08)",
-                    border: "1px solid rgba(255,255,255,0.24)",
-                    height: 42,
-                  }}
-                >
-                  <img
-                    src="/partners/elevenlabs-logo-white.svg"
-                    alt="ElevenLabs"
-                    className="w-[84%] h-[72%] object-contain"
-                  />
-                </div>
-                <div
-                  className="rounded-xl flex items-center justify-center"
-                  style={{
-                    background: "rgba(40,35,90,0.24)",
-                    border: "1px solid rgba(120,115,255,0.36)",
-                    height: 42,
-                  }}
-                >
-                  <img
-                    src="/partners/wan.png"
-                    alt="Wan"
-                    className="w-[76%] h-[72%] object-contain"
-                  />
-                </div>
-                <div
-                  className="col-span-2 rounded-xl flex items-center justify-center"
-                  style={{
-                    background: "rgba(255,255,255,0.08)",
-                    border: "1px solid rgba(255,255,255,0.24)",
-                    height: 44,
-                  }}
-                >
-                  <img
-                    src="/partners/wolfpack-digital-light.png"
-                    alt="Wolfpack Digital"
-                    className="w-[108%] h-[100%] object-contain"
-                  />
-                </div>
-              </div>
+              {/* Label */}
               <div
                 style={{
-                  margin: "0.6rem auto 0.5rem",
-                  width: "86%",
-                  height: 1,
-                  background: "rgba(248,236,188,0.16)",
-                }}
-              />
-              <div className="text-center mb-2">
-                <span
-                  style={{
-                    color: "rgba(248,236,188,0.56)",
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.46rem",
-                    letterSpacing: "0.16em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Fueled by
-                </span>
-              </div>
-              <div
-                className="rounded-xl flex items-center justify-center mx-auto"
-                style={{
-                  background: "rgba(255,255,255,0.94)",
-                  border: "1px solid rgba(255,255,255,0.5)",
-                  width: "min(136px, 44vw)",
-                  height: 42,
-                }}
-              >
-                <img
-                  src="/partners/redbull.png"
-                  alt="Red Bull"
-                  className="w-[78%] h-[62%] object-contain"
-                />
-              </div>
-            </div>
-            <div
-              className="mx-auto hidden sm:flex flex-wrap items-center justify-center gap-2 sm:gap-3 px-3 py-2.5 rounded-2xl"
-              style={{
-                background: "rgba(0,0,0,0.58)",
-                border: "1px solid rgba(248,236,188,0.24)",
-                boxShadow:
-                  "0 0 46px rgba(198,153,58,0.20), inset 0 0 24px rgba(0,0,0,0.45)",
-                backdropFilter: "blur(7px)",
-                WebkitBackdropFilter: "blur(7px)",
-              }}
-            >
-              <span
-                style={{
-                  color: "rgba(248,236,188,0.70)",
+                  textAlign: "center",
                   fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.5rem",
-                  letterSpacing: "0.2em",
+                  fontSize: "0.65rem",
+                  letterSpacing: "0.3em",
+                  color: "rgba(198,153,58,0.6)",
                   textTransform: "uppercase",
-                  padding: "0 0.5rem",
+                  marginBottom: "12px",
                 }}
               >
-                Sponsored by
-              </span>
-              <div
-                className="rounded-xl flex items-center justify-center"
-                style={{
-                  background: "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.24)",
-                  width: "clamp(104px, 13.5vw, 156px)",
-                  height: "clamp(40px, 5.2vw, 52px)",
-                }}
-              >
-                <img
-                  src="/partners/elevenlabs-logo-white.svg"
-                  alt="ElevenLabs"
-                  className="w-[86%] h-[72%] object-contain"
-                />
+                Supported by
               </div>
-              <div
-                className="rounded-xl flex items-center justify-center"
-                style={{
-                  background: "rgba(40,35,90,0.24)",
-                  border: "1px solid rgba(120,115,255,0.36)",
-                  width: "clamp(106px, 14vw, 160px)",
-                  height: "clamp(40px, 5.2vw, 52px)",
-                }}
-              >
-                <img
-                  src="/partners/wan.png"
-                  alt="Wan"
-                  className="w-[78%] h-[76%] object-contain"
-                />
-              </div>
-              <div
-                className="rounded-xl flex items-center justify-center"
-                style={{
-                  background: "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.24)",
-                  width: "clamp(124px, 16.8vw, 198px)",
-                  height: "clamp(40px, 5.2vw, 54px)",
-                }}
-              >
-                <img
-                  src="/partners/wolfpack-digital-light.png"
-                  alt="Wolfpack Digital"
-                  className="w-[112%] h-[100%] object-contain"
-                />
-              </div>
-              <span
-                style={{
-                  color: "rgba(248,236,188,0.56)",
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.5rem",
-                  letterSpacing: "0.16em",
-                  textTransform: "uppercase",
-                  padding: "0 0.45rem",
-                }}
-              >
-                Fueled by
-              </span>
-              <div
-                className="rounded-xl flex items-center justify-center"
-                style={{
-                  background: "rgba(255,255,255,0.94)",
-                  border: "1px solid rgba(255,255,255,0.5)",
-                  width: "clamp(118px, 15.5vw, 180px)",
-                  height: "clamp(40px, 5.2vw, 52px)",
-                }}
-              >
-                <img
-                  src="/partners/redbull.png"
-                  alt="Red Bull"
-                  className="w-[76%] h-[62%] object-contain"
-                />
-              </div>
+
+              {(() => {
+                const logos: {
+                  src: string;
+                  alt: string;
+                  filter?: string;
+                  scale: number;
+                }[] = [
+                  {
+                    src: "/partners/elevenlabs-logo-white.svg",
+                    alt: "ElevenLabs",
+                    scale: 1,
+                  },
+                  { src: "/partners/wan.png", alt: "Wan", scale: 1 },
+                  {
+                    src: "/partners/fal-ai.svg",
+                    alt: "fal.ai",
+                    filter: "brightness(0) invert(1)",
+                    scale: 1,
+                  },
+                  {
+                    src: "/partners/wolfpack-digital-light.png",
+                    alt: "Wolfpack Digital",
+                    scale: 1.15,
+                  },
+                  { src: "/partners/redbull.png", alt: "Red Bull", scale: 1 },
+                  {
+                    src: "/partners/dogpatch-labs.png",
+                    alt: "Dogpatch Labs",
+                    filter: "brightness(0) invert(1)",
+                    scale: 1,
+                  },
+                ];
+                const LogoCell = ({
+                  s,
+                  borderRight,
+                }: {
+                  s: (typeof logos)[0];
+                  borderRight: boolean;
+                }) => (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      height: 56,
+                      padding: "8px 16px",
+                      borderRight: borderRight
+                        ? "1px solid rgba(198,153,58,0.14)"
+                        : "none",
+                    }}
+                  >
+                    <img
+                      src={s.src}
+                      alt={s.alt}
+                      style={{
+                        maxWidth: "100%",
+                        maxHeight: "100%",
+                        width: "auto",
+                        height: "auto",
+                        objectFit: "contain",
+                        opacity: 0.85,
+                        display: "block",
+                        transform:
+                          s.scale !== 1 ? `scale(${s.scale})` : undefined,
+                        filter: s.filter,
+                      }}
+                    />
+                  </div>
+                );
+                return (
+                  <>
+                    {/* Desktop: single row of logos */}
+                    <div
+                      className="hidden sm:grid"
+                      style={{
+                        gridTemplateColumns: `repeat(${logos.length}, minmax(0, 1fr))`,
+                        maxWidth: 1040,
+                        margin: "0 auto",
+                        padding: "0 1.5rem",
+                      }}
+                    >
+                      {logos.map((s, i) => (
+                        <LogoCell
+                          key={s.alt}
+                          s={s}
+                          borderRight={i < logos.length - 1}
+                        />
+                      ))}
+                    </div>
+                    {/* Mobile: auto-scrolling marquee */}
+                    <div
+                      className="sm:hidden"
+                      style={{
+                        position: "relative",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {/* Left fade mask */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: 0,
+                          top: 0,
+                          bottom: 0,
+                          width: 48,
+                          background:
+                            "linear-gradient(to right, rgba(0,0,0,0.88), transparent)",
+                          zIndex: 2,
+                          pointerEvents: "none",
+                        }}
+                      />
+                      {/* Right fade mask */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                          width: 48,
+                          background:
+                            "linear-gradient(to left, rgba(0,0,0,0.88), transparent)",
+                          zIndex: 2,
+                          pointerEvents: "none",
+                        }}
+                      />
+                      {/* Scrolling track — logos duplicated for seamless loop */}
+                      <div
+                        className="sponsor-marquee-track"
+                        style={{
+                          display: "flex",
+                          width: "max-content",
+                        }}
+                      >
+                        {[...logos, ...logos].map((s, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              height: 56,
+                              width: 120,
+                              padding: "8px 16px",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <img
+                              src={s.src}
+                              alt={s.alt}
+                              style={{
+                                maxWidth: "100%",
+                                maxHeight: "100%",
+                                width: "auto",
+                                height: "auto",
+                                objectFit: "contain",
+                                opacity: 0.85,
+                                display: "block",
+                                transform:
+                                  s.scale !== 1
+                                    ? `scale(${s.scale})`
+                                    : undefined,
+                                filter: s.filter,
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
 
@@ -1021,52 +1077,36 @@ const Hero: React.FC = () => {
             ref={scrollCueRef}
             className="absolute pointer-events-none"
             style={{
-              bottom: "2.5rem",
+              bottom: "6.5rem",
               left: "50%",
               transform: "translateX(-50%)",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: "0.4rem",
+              gap: "0.55rem",
               zIndex: 12,
             }}
           >
             <span
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.42rem",
-                letterSpacing: "0.45em",
-                color: "rgba(248,236,188,0.35)",
+                fontSize: "0.38rem",
+                letterSpacing: "0.42em",
+                color: "rgba(248,236,188,0.28)",
                 textTransform: "uppercase",
               }}
             >
               Scroll
             </span>
-            <svg
-              width="14"
-              height="20"
-              viewBox="0 0 14 20"
-              fill="none"
+            <div
               style={{
+                width: 1,
+                height: 40,
+                background:
+                  "linear-gradient(to bottom, rgba(248,236,188,0.35), transparent)",
                 animation: "heroScrollCuePulse 2s ease-in-out infinite",
               }}
-            >
-              <line
-                x1="7"
-                y1="0"
-                x2="7"
-                y2="13"
-                stroke="rgba(248,236,188,0.35)"
-                strokeWidth="1"
-              />
-              <polyline
-                points="3,9 7,15 11,9"
-                stroke="rgba(248,236,188,0.35)"
-                strokeWidth="1"
-                fill="none"
-                strokeLinejoin="round"
-              />
-            </svg>
+            />
           </div>
         </div>
       </div>
