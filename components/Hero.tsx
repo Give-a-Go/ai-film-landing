@@ -650,7 +650,7 @@ const Hero: React.FC = () => {
       if (videoThrottleCounter >= 30) {
         videoThrottleCounter = 0;
         const camZNow = cameraRef.current.position.z;
-        const videoVisibleRange = SEGMENT_DEPTH * 3;
+        const videoVisibleRange = SEGMENT_DEPTH * 6;
         for (let si = 0; si < segmentsRef.current.length; si++) {
           const segment = segmentsRef.current[si];
           const dist = Math.abs(segment.position.z - camZNow);
@@ -890,18 +890,18 @@ const Hero: React.FC = () => {
               </h1>
 
               <div className="flex items-center justify-center w-full sm:w-auto">
-                <button
-                  type="button"
-                  onClick={scrollToInfoSections}
-                  className="w-full sm:w-auto rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-1"
+                <a
+                  href="https://luma.com/0zqny709?utm_source=aif"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-1 no-underline"
                   style={{
-                    background: "rgba(198,153,58,0.18)",
-                    color: "rgba(248,236,188,0.95)",
-                    border: "1px solid rgba(198,153,58,0.38)",
+                    background: "#E0D5C0",
+                    color: "#050505",
                   }}
                 >
-                  Apply to Join
-                </button>
+                  Apply to Join →
+                </a>
               </div>
 
               <button

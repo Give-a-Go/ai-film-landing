@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const LUMA_EVENT_URL = "https://lu.ma/evt-tRkE3lQWZiSHobe";
+const LUMA_EVENT_URL = "https://luma.com/0zqny709?utm_source=aif";
 
 const Navigation: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -60,7 +60,7 @@ const Navigation: React.FC = () => {
             rel="noopener noreferrer"
             className="px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-1 group bg-[#E0D5C0] text-[#050505] hover:bg-white no-underline"
           >
-            I'm interested{" "}
+            Apply to Join{" "}
             <span className="group-hover:translate-x-0.5 transition-transform">→</span>
           </a>
           <a
@@ -147,7 +147,7 @@ const Navigation: React.FC = () => {
                 style={{ background: '#E0D5C0', color: '#050505' }}
                 onClick={closeMenu}
               >
-                I'm interested <span className="transition-transform">→</span>
+                Apply to Join <span className="transition-transform">→</span>
               </a>
               <a
                 href="https://giveago.co/sponsor"

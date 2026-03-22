@@ -596,7 +596,7 @@ function SponsorLogoCard({
 // ─────────────────────────────────────────────────────────────────────────────
 // FinScene — animated Fin label + gold-amber CTA with ticket-tear hover
 // ─────────────────────────────────────────────────────────────────────────────
-const LUMA_EVENT_URL = "https://lu.ma/evt-tRkE3lQWZiSHobe";
+const LUMA_EVENT_URL = "https://luma.com/0zqny709?utm_source=aif";
 
 function FinScene() {
   const ref = useRef<HTMLDivElement>(null);
@@ -1065,9 +1065,10 @@ const EventContent: React.FC = () => {
                   href={LUMA_EVENT_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap bg-dark text-white no-underline"
+                  className="rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap no-underline"
+                  style={{ background: "#E0D5C0", color: "#050505" }}
                 >
-                  I'm interested
+                  Apply to Join →
                 </a>
                 <a
                   href="https://giveago.co/sponsor"
