@@ -242,9 +242,8 @@ const CollisionSection: React.FC = () => {
               22 * (1 - progress * 0.7) * Math.sin(time * 0.8 + i * 0.6);
             const y =
               cy +
-              Math.sin(
-                (waveEnd - x) * 0.012 + time * 1.4 + i * 0.8 + Math.PI,
-              ) * amplitude;
+              Math.sin((waveEnd - x) * 0.012 + time * 1.4 + i * 0.8 + Math.PI) *
+                amplitude;
             if (x === waveEnd) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
           }
@@ -473,18 +472,14 @@ const CollisionSection: React.FC = () => {
     // Text entrance
     const tl = createTimeline({ defaults: { ease: "outExpo" } });
     tl.add(leftLabelRef.current!, {
-      ...(mob
-        ? { translateY: [-40, 0] }
-        : { translateX: [-80, 0] }),
+      ...(mob ? { translateY: [-40, 0] } : { translateX: [-80, 0] }),
       opacity: [0, 1],
       duration: 1200,
     })
       .add(
         rightLabelRef.current!,
         {
-          ...(mob
-            ? { translateY: [40, 0] }
-            : { translateX: [80, 0] }),
+          ...(mob ? { translateY: [40, 0] } : { translateX: [80, 0] }),
           opacity: [0, 1],
           duration: 1200,
         },
@@ -569,8 +564,12 @@ const CollisionSection: React.FC = () => {
           }}
           style={{
             position: "absolute",
-            left: isMobile ? `${p.x * 100}%` : `${(particles.current[i]?.baseX ?? 0.5) * 100}%`,
-            top: isMobile ? `${p.y * 100}%` : `${(particles.current[i]?.baseY ?? 0.5) * 100}%`,
+            left: isMobile
+              ? `${p.x * 100}%`
+              : `${(particles.current[i]?.baseX ?? 0.5) * 100}%`,
+            top: isMobile
+              ? `${p.y * 100}%`
+              : `${(particles.current[i]?.baseY ?? 0.5) * 100}%`,
             width: p.size,
             height: p.size,
             borderRadius: "50%",
@@ -694,14 +693,55 @@ const CollisionSection: React.FC = () => {
           willChange: "transform, opacity",
         }}
       >
-        <svg viewBox="0 0 48 48" fill="none" style={{ width: "100%", height: "100%" }}>
-          <rect x="6" y="16" width="36" height="26" rx="2" stroke="rgba(198,153,58,0.7)" strokeWidth="1.5" />
-          <line x1="6" y1="24" x2="42" y2="24" stroke="rgba(198,153,58,0.3)" strokeWidth="0.8" />
-          <path d="M6 16 L6 10 L42 10 L42 16" stroke="rgba(198,153,58,0.6)" strokeWidth="1.5" strokeLinejoin="round" />
-          {[12, 20, 28, 36].map(x => (
-            <line key={x} x1={x} y1={10} x2={x - 3} y2={16} stroke="rgba(198,153,58,0.45)" strokeWidth="1.2" />
+        <svg
+          viewBox="0 0 48 48"
+          fill="none"
+          style={{ width: "100%", height: "100%" }}
+        >
+          <rect
+            x="6"
+            y="16"
+            width="36"
+            height="26"
+            rx="2"
+            stroke="rgba(198,153,58,0.7)"
+            strokeWidth="1.5"
+          />
+          <line
+            x1="6"
+            y1="24"
+            x2="42"
+            y2="24"
+            stroke="rgba(198,153,58,0.3)"
+            strokeWidth="0.8"
+          />
+          <path
+            d="M6 16 L6 10 L42 10 L42 16"
+            stroke="rgba(198,153,58,0.6)"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          />
+          {[12, 20, 28, 36].map((x) => (
+            <line
+              key={x}
+              x1={x}
+              y1={10}
+              x2={x - 3}
+              y2={16}
+              stroke="rgba(198,153,58,0.45)"
+              strokeWidth="1.2"
+            />
           ))}
-          <text x="24" y="35" textAnchor="middle" fontFamily="'IBM Plex Mono', monospace" fontSize="5" fill="rgba(198,153,58,0.5)">SCENE 01</text>
+          <text
+            x="24"
+            y="35"
+            textAnchor="middle"
+            fontFamily="'IBM Plex Mono', monospace"
+            fontSize="5"
+            fill="rgba(198,153,58,0.5)"
+          >
+            SCENE 01
+          </text>
         </svg>
       </div>
 
@@ -744,9 +784,7 @@ const CollisionSection: React.FC = () => {
         <div
           style={{
             fontFamily: "'IBM Plex Serif', serif",
-            fontSize: isMobile
-              ? "1.6rem"
-              : "clamp(1.6rem, 3.5vw, 2.6rem)",
+            fontSize: isMobile ? "1.6rem" : "clamp(1.6rem, 3.5vw, 2.6rem)",
             fontWeight: 600,
             color: "rgba(198,153,58,0.9)",
             letterSpacing: "0.02em",
@@ -768,16 +806,16 @@ const CollisionSection: React.FC = () => {
         <div
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: isMobile
-              ? "0.6rem"
-              : "clamp(0.55rem, 0.85vw, 0.72rem)",
+            fontSize: isMobile ? "0.6rem" : "clamp(0.55rem, 0.85vw, 0.72rem)",
             color: "rgba(198,153,58,0.4)",
             letterSpacing: "0.12em",
             textTransform: "uppercase",
             lineHeight: 1.8,
           }}
         >
-          {isMobile ? "Vision · Story · Art · Emotion" : (
+          {isMobile ? (
+            "Vision · Story · Art · Emotion"
+          ) : (
             <>
               Vision · Story · Art
               <br />
@@ -826,9 +864,7 @@ const CollisionSection: React.FC = () => {
         <div
           style={{
             fontFamily: "'IBM Plex Serif', serif",
-            fontSize: isMobile
-              ? "1.6rem"
-              : "clamp(1.6rem, 3.5vw, 2.6rem)",
+            fontSize: isMobile ? "1.6rem" : "clamp(1.6rem, 3.5vw, 2.6rem)",
             fontWeight: 600,
             color: "rgba(224,213,192,0.9)",
             letterSpacing: "0.02em",
@@ -850,16 +886,16 @@ const CollisionSection: React.FC = () => {
         <div
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: isMobile
-              ? "0.6rem"
-              : "clamp(0.55rem, 0.85vw, 0.72rem)",
+            fontSize: isMobile ? "0.6rem" : "clamp(0.55rem, 0.85vw, 0.72rem)",
             color: "rgba(224,213,192,0.4)",
             letterSpacing: "0.12em",
             textTransform: "uppercase",
             lineHeight: 1.8,
           }}
         >
-          {isMobile ? "Code · AI · Systems · Pipelines" : (
+          {isMobile ? (
+            "Code · AI · Systems · Pipelines"
+          ) : (
             <>
               Code · AI · Systems
               <br />
@@ -887,9 +923,7 @@ const CollisionSection: React.FC = () => {
         <div
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: isMobile
-              ? "0.45rem"
-              : "clamp(0.42rem, 0.65vw, 0.55rem)",
+            fontSize: isMobile ? "0.45rem" : "clamp(0.42rem, 0.65vw, 0.55rem)",
             color: "rgba(198,153,58,0.35)",
             letterSpacing: "0.25em",
             textTransform: "uppercase",

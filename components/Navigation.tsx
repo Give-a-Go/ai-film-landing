@@ -42,10 +42,17 @@ const Navigation: React.FC = () => {
           <a href="https://giveago.co" className={linkClassSmall}>
             About us
           </a>
-          <a href="https://luma.com/giveago?period=past" className={linkClassSmall}>
+          <a
+            href="https://luma.com/giveago?period=past"
+            className={linkClassSmall}
+          >
             Previous events
           </a>
-          <a href="https://giveago.co/after-movie/ai-film" className={linkClassSmall} style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+          <a
+            href="https://giveago.co/after-movie/ai-film"
+            className={linkClassSmall}
+            style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}
+          >
             V1 Recap <span style={{ fontSize: "0.7em", opacity: 0.7 }}>↗</span>
           </a>
         </div>
@@ -61,15 +68,17 @@ const Navigation: React.FC = () => {
             className="px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-1 group bg-[#E0D5C0] text-[#050505] hover:bg-white no-underline"
           >
             Apply to Join{" "}
-            <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+            <span className="group-hover:translate-x-0.5 transition-transform">
+              →
+            </span>
           </a>
           <a
             href="https://giveago.co/sponsor"
             className="px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300"
             style={{
-              border: '1px solid rgba(198,153,58,0.3)',
-              color: 'rgba(198,153,58,0.8)',
-              background: 'rgba(198,153,58,0.07)',
+              border: "1px solid rgba(198,153,58,0.3)",
+              color: "rgba(198,153,58,0.8)",
+              background: "rgba(198,153,58,0.07)",
             }}
           >
             Sponsor
@@ -86,12 +95,34 @@ const Navigation: React.FC = () => {
           aria-label={menuOpen ? "Close menu" : "Open menu"}
         >
           {menuOpen ? (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              aria-hidden
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           ) : (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              aria-hidden
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 6h16M4 12h16M4 18h16"
+              />
             </svg>
           )}
         </button>
@@ -116,35 +147,88 @@ const Navigation: React.FC = () => {
         {/* Panel (slide from right) */}
         <div
           className={`absolute top-0 right-0 h-full w-full max-w-sm flex flex-col transition-transform duration-200 ease-out ${menuOpen ? "translate-x-0" : "translate-x-full"}`}
-          style={{ background: '#0a0905', borderLeft: '1px solid rgba(198,153,58,0.22)' }}
+          style={{
+            background: "#0a0905",
+            borderLeft: "1px solid rgba(198,153,58,0.22)",
+          }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between px-4 py-5 min-h-[44px] shrink-0" style={{ borderBottom: '1px solid rgba(198,153,58,0.18)' }}>
-            <span className="text-sm font-medium" style={{ color: 'rgba(198,153,58,0.7)', fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.62rem', letterSpacing: '0.25em', textTransform: 'uppercase' }}>Menu</span>
+          <div
+            className="flex items-center justify-between px-4 py-5 min-h-[44px] shrink-0"
+            style={{ borderBottom: "1px solid rgba(198,153,58,0.18)" }}
+          >
+            <span
+              className="text-sm font-medium"
+              style={{
+                color: "rgba(198,153,58,0.7)",
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: "0.62rem",
+                letterSpacing: "0.25em",
+                textTransform: "uppercase",
+              }}
+            >
+              Menu
+            </span>
             <button
               type="button"
               onClick={closeMenu}
               className="w-11 h-11 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full -mr-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent focus-visible:ring-[#C6993A]/50"
-              style={{ color: 'rgba(224,213,192,0.7)' }}
+              style={{ color: "rgba(224,213,192,0.7)" }}
               aria-label="Close menu"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
-          <nav className="flex-1 overflow-y-auto py-4 px-2" aria-label="Mobile navigation">
-            <a href="https://giveago.co" className={linkClass} onClick={closeMenu}>About us</a>
-            <a href="https://luma.com/giveago?period=past" className={linkClass} onClick={closeMenu}>Previous events</a>
-            <a href="https://giveago.co/after-movie/ai-film" className={linkClass} onClick={closeMenu} style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>V1 Recap <span style={{ fontSize: "0.75em", opacity: 0.6 }}>↗</span></a>
-            <div className="my-2" style={{ borderTop: '1px solid rgba(198,153,58,0.14)' }} />
+          <nav
+            className="flex-1 overflow-y-auto py-4 px-2"
+            aria-label="Mobile navigation"
+          >
+            <a
+              href="https://giveago.co"
+              className={linkClass}
+              onClick={closeMenu}
+            >
+              About us
+            </a>
+            <a
+              href="https://luma.com/giveago?period=past"
+              className={linkClass}
+              onClick={closeMenu}
+            >
+              Previous events
+            </a>
+            <a
+              href="https://giveago.co/after-movie/ai-film"
+              className={linkClass}
+              onClick={closeMenu}
+              style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}
+            >
+              V1 Recap{" "}
+              <span style={{ fontSize: "0.75em", opacity: 0.6 }}>↗</span>
+            </a>
+            <div
+              className="my-2"
+              style={{ borderTop: "1px solid rgba(198,153,58,0.14)" }}
+            />
             <div className="px-2 space-y-2">
               <a
                 href={LUMA_EVENT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full rounded-full px-5 py-3 text-sm font-medium transition-all duration-300 flex items-center justify-center gap-1 min-h-[44px] no-underline"
-                style={{ background: '#E0D5C0', color: '#050505' }}
+                style={{ background: "#E0D5C0", color: "#050505" }}
                 onClick={closeMenu}
               >
                 Apply to Join <span className="transition-transform">→</span>
@@ -152,7 +236,11 @@ const Navigation: React.FC = () => {
               <a
                 href="https://giveago.co/sponsor"
                 className="block w-full rounded-full px-5 py-3 text-sm font-medium text-center transition-all duration-300 min-h-[44px] flex items-center justify-center"
-                style={{ border: '1px solid rgba(198,153,58,0.3)', color: 'rgba(198,153,58,0.8)', background: 'rgba(198,153,58,0.07)' }}
+                style={{
+                  border: "1px solid rgba(198,153,58,0.3)",
+                  color: "rgba(198,153,58,0.8)",
+                  background: "rgba(198,153,58,0.07)",
+                }}
                 onClick={closeMenu}
               >
                 Sponsor

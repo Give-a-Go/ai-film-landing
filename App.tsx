@@ -178,10 +178,12 @@ const App: React.FC = () => {
               transition: "color 0.2s ease",
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.color = "rgba(198,153,58,1)";
+              (e.currentTarget as HTMLElement).style.color =
+                "rgba(198,153,58,1)";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.color = "rgba(224,213,192,0.85)";
+              (e.currentTarget as HTMLElement).style.color =
+                "rgba(224,213,192,0.85)";
             }}
           >
             Give(a)Go
@@ -199,10 +201,12 @@ const App: React.FC = () => {
               transition: "color 0.2s ease",
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.color = "rgba(198,153,58,1)";
+              (e.currentTarget as HTMLElement).style.color =
+                "rgba(198,153,58,1)";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.color = "rgba(224,213,192,0.85)";
+              (e.currentTarget as HTMLElement).style.color =
+                "rgba(224,213,192,0.85)";
             }}
           >
             Napkin
@@ -212,7 +216,8 @@ const App: React.FC = () => {
           style={{
             width: 40,
             height: 1,
-            background: "linear-gradient(90deg, transparent, rgba(198,153,58,0.2), transparent)",
+            background:
+              "linear-gradient(90deg, transparent, rgba(198,153,58,0.2), transparent)",
             margin: "0.5rem 0",
           }}
         />

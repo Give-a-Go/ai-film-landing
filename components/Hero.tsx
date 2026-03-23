@@ -500,7 +500,14 @@ const Hero: React.FC = () => {
       scene.add(seg);
       segments.push(seg);
       if (withMedia) {
-        populateImages(seg, TUNNEL_WIDTH / 2, TUNNEL_HEIGHT / 2, SEGMENT_DEPTH, 0, false);
+        populateImages(
+          seg,
+          TUNNEL_WIDTH / 2,
+          TUNNEL_HEIGHT / 2,
+          SEGMENT_DEPTH,
+          0,
+          false,
+        );
       }
     }
     segmentsRef.current = segments;
@@ -513,30 +520,38 @@ const Hero: React.FC = () => {
     const deferredTimers: ReturnType<typeof setTimeout>[] = [];
 
     for (let i = IMMEDIATE_SEGMENTS; i < segments.length; i++) {
-      const timer = setTimeout(() => {
-        const seg = segments[i];
-        const hasMedia = seg.children.some(
-          (c) => c.name === "slab_image" || c.name === "slab_video",
-        );
-        if (!hasMedia) {
-          populateImages(
-            seg,
-            TUNNEL_WIDTH / 2,
-            TUNNEL_HEIGHT / 2,
-            SEGMENT_DEPTH,
-            0.4,
-            false,
+      const timer = setTimeout(
+        () => {
+          const seg = segments[i];
+          const hasMedia = seg.children.some(
+            (c) => c.name === "slab_image" || c.name === "slab_video",
           );
-        }
-      }, MEDIA_START_DELAY + (i - IMMEDIATE_SEGMENTS) * MEDIA_STAGGER);
+          if (!hasMedia) {
+            populateImages(
+              seg,
+              TUNNEL_WIDTH / 2,
+              TUNNEL_HEIGHT / 2,
+              SEGMENT_DEPTH,
+              0.4,
+              false,
+            );
+          }
+        },
+        MEDIA_START_DELAY + (i - IMMEDIATE_SEGMENTS) * MEDIA_STAGGER,
+      );
       deferredTimers.push(timer);
     }
 
     // Phase 3: After all initial images are placed, enable videos.
     // Future recycled segments will use the normal image/video mix.
-    const videoEnableTimer = setTimeout(() => {
-      videosEnabledRef.current = true;
-    }, MEDIA_START_DELAY + (segments.length - IMMEDIATE_SEGMENTS) * MEDIA_STAGGER + 500);
+    const videoEnableTimer = setTimeout(
+      () => {
+        videosEnabledRef.current = true;
+      },
+      MEDIA_START_DELAY +
+        (segments.length - IMMEDIATE_SEGMENTS) * MEDIA_STAGGER +
+        500,
+    );
     deferredTimers.push(videoEnableTimer);
 
     // Animation Loop
@@ -548,8 +563,12 @@ const Hero: React.FC = () => {
     let lastTextOp = -1;
     let videoThrottleCounter = 0;
 
-    const onScrollCapture = () => { cachedScrollY = window.scrollY; };
-    const onResizeCapture = () => { cachedVh = window.innerHeight; };
+    const onScrollCapture = () => {
+      cachedScrollY = window.scrollY;
+    };
+    const onResizeCapture = () => {
+      cachedVh = window.innerHeight;
+    };
     window.addEventListener("scroll", onScrollCapture, { passive: true });
     window.addEventListener("resize", onResizeCapture);
 
@@ -603,7 +622,8 @@ const Hero: React.FC = () => {
       const heroFullyHidden = scrollBlackout >= 1;
 
       // ── Scroll cue ────────────────────────────────────────────────────
-      const scrollCueOp = Math.round(Math.max(0, 1 - scrollY / (vh * 0.12)) * 100) / 100;
+      const scrollCueOp =
+        Math.round(Math.max(0, 1 - scrollY / (vh * 0.12)) * 100) / 100;
       if (scrollCueOp !== lastScrollCueOp) {
         lastScrollCueOp = scrollCueOp;
         if (scrollCueRef.current) {
@@ -614,7 +634,11 @@ const Hero: React.FC = () => {
       // ── Auto-scroll ────────────────────────────────────────────────────
       const now = Date.now();
       const timeSinceLastScroll = now - lastUserScrollTimeRef.current;
-      if (timeSinceLastScroll > 100 && !isUserScrollingRef.current && !heroFullyHidden) {
+      if (
+        timeSinceLastScroll > 100 &&
+        !isUserScrollingRef.current &&
+        !heroFullyHidden
+      ) {
         scrollPosRef.current += autoScrollSpeedRef.current;
       }
 
@@ -626,10 +650,11 @@ const Hero: React.FC = () => {
       }
 
       // ── Scroll-driven text fade ────────────────────────────────────────
-      const textOp = Math.round(Math.max(
-        0,
-        Math.min(1, 1 - (scrollY - vh * 0.15) / (vh * 0.27)),
-      ) * 100) / 100;
+      const textOp =
+        Math.round(
+          Math.max(0, Math.min(1, 1 - (scrollY - vh * 0.15) / (vh * 0.27))) *
+            100,
+        ) / 100;
       if (textOp !== lastTextOp) {
         lastTextOp = textOp;
         if (textOverlayRef.current) {
@@ -682,7 +707,14 @@ const Hero: React.FC = () => {
           }
           segment.position.z = minZ - SEGMENT_DEPTH;
           disposeSegmentSlabs(segment);
-          populateImages(segment, TUNNEL_WIDTH / 2, TUNNEL_HEIGHT / 2, SEGMENT_DEPTH, 0, videosEnabledRef.current);
+          populateImages(
+            segment,
+            TUNNEL_WIDTH / 2,
+            TUNNEL_HEIGHT / 2,
+            SEGMENT_DEPTH,
+            0,
+            videosEnabledRef.current,
+          );
         } else if (segment.position.z < camZ - tunnelLength - SEGMENT_DEPTH) {
           let maxZ = -999999;
           for (let j = 0; j < segs.length; j++) {
@@ -690,7 +722,14 @@ const Hero: React.FC = () => {
           }
           segment.position.z = maxZ + SEGMENT_DEPTH;
           disposeSegmentSlabs(segment);
-          populateImages(segment, TUNNEL_WIDTH / 2, TUNNEL_HEIGHT / 2, SEGMENT_DEPTH, 0, videosEnabledRef.current);
+          populateImages(
+            segment,
+            TUNNEL_WIDTH / 2,
+            TUNNEL_HEIGHT / 2,
+            SEGMENT_DEPTH,
+            0,
+            videosEnabledRef.current,
+          );
         }
       }
 
