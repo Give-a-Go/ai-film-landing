@@ -688,8 +688,8 @@ const CollisionSection: React.FC = () => {
           left: "50%",
           top: "50%",
           transform: "translate(-50%, -50%)",
-          width: isMobile ? 52 : 64,
-          height: isMobile ? 52 : 64,
+          width: isMobile ? 72 : 88,
+          height: isMobile ? 72 : 88,
           opacity: 0,
           willChange: "transform, opacity",
         }}
@@ -893,25 +893,9 @@ const CollisionSection: React.FC = () => {
             color: "rgba(198,153,58,0.35)",
             letterSpacing: "0.25em",
             textTransform: "uppercase",
-            marginBottom: "0.5em",
           }}
         >
           Where it all converges
-        </div>
-        <div
-          style={{
-            fontFamily: "'IBM Plex Serif', serif",
-            fontSize: isMobile
-              ? "1.15rem"
-              : "clamp(1.2rem, 2.5vw, 2rem)",
-            fontWeight: 700,
-            color: "rgba(248,236,188,0.95)",
-            letterSpacing: "0.03em",
-            lineHeight: 1.1,
-            textShadow: "0 0 40px rgba(198,153,58,0.3)",
-          }}
-        >
-          Films Are Born
         </div>
       </div>
 

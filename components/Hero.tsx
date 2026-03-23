@@ -479,8 +479,7 @@ const Hero: React.FC = () => {
       powerPreference: "high-performance",
     });
     renderer.setSize(width, height);
-    const isMobileDevice = width < 768;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileDevice ? 1 : 1.5));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     rendererRef.current = renderer;
 
     const segments: THREE.Group[] = [];

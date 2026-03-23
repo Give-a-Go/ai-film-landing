@@ -134,6 +134,99 @@ const App: React.FC = () => {
         <EventContent />
         <CollisionSection />
       </main>
+      <footer
+        style={{
+          position: "relative",
+          padding: "3.5rem 2rem 2.5rem",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          textAlign: "center",
+          gap: "1rem",
+          background: "#050505",
+          borderTop: "1px solid rgba(198,153,58,0.12)",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontSize: "0.65rem",
+            color: "rgba(198,153,58,0.4)",
+            letterSpacing: "0.25em",
+            textTransform: "uppercase",
+            marginBottom: "-0.25rem",
+          }}
+        >
+          Presented by
+        </div>
+        <div
+          style={{
+            fontFamily: "'IBM Plex Serif', serif",
+            fontSize: "1.35rem",
+            fontWeight: 600,
+            color: "rgba(224,213,192,0.85)",
+            letterSpacing: "0.02em",
+          }}
+        >
+          <a
+            href="https://giveago.co"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: "inherit",
+              textDecoration: "none",
+              transition: "color 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.color = "rgba(198,153,58,1)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.color = "rgba(224,213,192,0.85)";
+            }}
+          >
+            Give(a)Go
+          </a>
+          <span style={{ color: "rgba(198,153,58,0.35)", margin: "0 0.4em" }}>
+            ×
+          </span>
+          <a
+            href="https://napkin.io"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: "inherit",
+              textDecoration: "none",
+              transition: "color 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.color = "rgba(198,153,58,1)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.color = "rgba(224,213,192,0.85)";
+            }}
+          >
+            Napkin
+          </a>
+        </div>
+        <div
+          style={{
+            width: 40,
+            height: 1,
+            background: "linear-gradient(90deg, transparent, rgba(198,153,58,0.2), transparent)",
+            margin: "0.5rem 0",
+          }}
+        />
+        <div
+          style={{
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontSize: "0.5rem",
+            color: "rgba(198,153,58,0.18)",
+            letterSpacing: "0.15em",
+          }}
+        >
+          &copy; {new Date().getFullYear()} Give(a)Go
+        </div>
+      </footer>
     </div>
   );
 };
