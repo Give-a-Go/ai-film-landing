@@ -1058,25 +1058,17 @@ const EventContent: React.FC = () => {
               letterSpacing: "0.01em",
             }}
           >
-            "You walk in on Saturday morning. By Sunday afternoon, your film is
-            on a cinema screen. You made it. It didn't exist 24 hours ago."
-          </p>
-          <p
-            style={{
-              fontFamily: T.sans,
-              fontSize: "clamp(0.9rem, 1.4vw, 1.05rem)",
-              fontWeight: 300,
-              color: "rgba(255,255,255,0.42)",
-              lineHeight: 1.8,
-              maxWidth: 620,
-              margin: "0 auto",
-            }}
-          >
-            Most people never get their work on a cinema screen. This weekend,
-            you do. We give you the tools, the equipment, the workshops, and the
-            time. AI handles what used to need a full crew and months of post.
-            You bring the story, the instincts, and the drive to see it through.
-            Dublin, April. One weekend. A film that's yours.
+            100 seats.
+            <br />
+            Directors, engineers,
+            editors, designers.
+            <br />
+            Carefully selected.
+            Paired for the weekend.
+            <br />
+            Two days to make
+            <br />
+            something worth watching.
           </p>
         </div>
       </SectionReveal>
@@ -1171,7 +1163,7 @@ const EventContent: React.FC = () => {
                     "0 0 40px rgba(255,215,60,0.28), 0 4px 120px rgba(255,200,40,0.18), 0 -2px 60px rgba(255,230,100,0.12)",
                 }}
               >
-                The Shot Didn't
+                Story to Big Screen
                 <br />
                 <span
                   style={{
@@ -1180,7 +1172,7 @@ const EventContent: React.FC = () => {
                     fontSize: "0.82em",
                   }}
                 >
-                  Exist Yesterday
+                  With best in class talent and tools
                 </span>
               </h1>
             </SectionReveal>
@@ -1489,9 +1481,8 @@ const EventContent: React.FC = () => {
               lineHeight: 1.1,
             }}
           >
-            Make It Saturday.
-            <br />
-            Screen It Sunday.
+            The weekend
+            <br />In Two Acts
           </h2>
         </SectionReveal>
 
