@@ -1081,48 +1081,54 @@ const EventContent: React.FC = () => {
         style={{
           borderTop: `1px solid ${T.border}`,
           borderBottom: `1px solid ${T.border}`,
-          padding: "0.9rem 3rem",
-          display: "flex",
-          alignItems: "center",
-          gap: "2rem",
-          overflowX: "auto",
+          padding: "0.9rem 0",
+          overflow: "hidden",
           whiteSpace: "nowrap",
         }}
       >
-        {[
-          "YOUR FILM · CINEMA SCREEN",
-          "24 HRS FILMMAKING",
-          "100 MAKERS",
-          "DOGPATCH LABS · DUBLIN",
-          "18–19 APR 2026",
-          "AI FILM · v2",
-        ].map((item, i) => (
-          <React.Fragment key={item}>
-            <span
-              style={{
-                fontFamily: T.mono,
-                fontSize: "0.65rem",
-                letterSpacing: "0.22em",
-                color: i === 0 ? "rgba(200,170,80,0.55)" : T.muted,
-                textTransform: "uppercase",
-                flexShrink: 0,
-              }}
+        <div className="ec-marquee-track">
+          {[0, 1].map((copy) => (
+            <div
+              key={copy}
+              className="ec-marquee-content"
+              aria-hidden={copy === 1 ? "true" : undefined}
+              style={{ display: "inline-flex", alignItems: "center", gap: "2rem" }}
             >
-              {item}
-            </span>
-            {i < 5 && (
-              <div
-                style={{
-                  width: 3,
-                  height: 3,
-                  borderRadius: "50%",
-                  background: T.border,
-                  flexShrink: 0,
-                }}
-              />
-            )}
-          </React.Fragment>
-        ))}
+              {[
+                "YOUR FILM · CINEMA SCREEN",
+                "24 HRS FILMMAKING",
+                "100 MAKERS",
+                "DOGPATCH LABS · DUBLIN",
+                "18–19 APR 2026",
+                "AI FILM · v2",
+              ].map((item, i) => (
+                <React.Fragment key={item}>
+                  <span
+                    style={{
+                      fontFamily: T.mono,
+                      fontSize: "0.65rem",
+                      letterSpacing: "0.22em",
+                      color: i === 0 ? "rgba(200,170,80,0.55)" : T.muted,
+                      textTransform: "uppercase",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {item}
+                  </span>
+                  <div
+                    style={{
+                      width: 3,
+                      height: 3,
+                      borderRadius: "50%",
+                      background: T.border,
+                      flexShrink: 0,
+                    }}
+                  />
+                </React.Fragment>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* ════════════════════════════════════════════════════════════════════
@@ -1217,27 +1223,27 @@ const EventContent: React.FC = () => {
                 <a
                   href="https://giveago.co/sponsor"
                   style={{
-                    display: "inline-block",
-                    padding: "0.95rem 2.25rem",
-                    border: `1px solid ${T.border}`,
-                    color: "rgba(248,236,188,0.65)",
-                    fontFamily: T.sans,
-                    fontSize: "0.85rem",
-                    letterSpacing: "0.06em",
+                    fontFamily: T.mono,
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.16em",
+                    textTransform: "uppercase",
+                    color: "rgba(198,153,58,0.4)",
                     textDecoration: "none",
-                    borderRadius: 2,
-                    transition: "border-color .2s, color .2s",
+                    borderBottom: "1px solid rgba(198,153,58,0.15)",
+                    paddingBottom: "0.15rem",
+                    transition: "color .25s, border-color .25s",
                   }}
                   onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.color =
+                      "rgba(198,153,58,0.75)";
                     (e.currentTarget as HTMLElement).style.borderColor =
-                      "rgba(200,170,80,0.5)";
-                    (e.currentTarget as HTMLElement).style.color = T.gold;
+                      "rgba(198,153,58,0.4)";
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor =
-                      T.border;
                     (e.currentTarget as HTMLElement).style.color =
-                      "rgba(248,236,188,0.65)";
+                      "rgba(198,153,58,0.4)";
+                    (e.currentTarget as HTMLElement).style.borderColor =
+                      "rgba(198,153,58,0.15)";
                   }}
                 >
                   Sponsor
@@ -1623,7 +1629,7 @@ const EventContent: React.FC = () => {
                   />
                 </a>
                 <a
-                  href="https://wolfpackdigital.com"
+                  href="https://www.wolfpack-digital.com/?utm_source=giveago&utm_medium=live_event"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -1631,6 +1637,17 @@ const EventContent: React.FC = () => {
                     className="ec-credit-logo"
                     src="/partners/wolfpack-digital-light.png"
                     alt="Wolfpack Digital"
+                  />
+                </a>
+                <a
+                  href="https://wonderstudios.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    className="ec-credit-logo"
+                    src="/partners/wonder-studios.png"
+                    alt="Wonder Studios"
                   />
                 </a>
               </div>
@@ -1766,29 +1783,30 @@ const EventContent: React.FC = () => {
             <a
               href="mailto:hello@giveago.io"
               style={{
-                display: "inline-block",
-                padding: "0.75rem 2rem",
-                border: `1px solid ${T.border}`,
-                color: "rgba(248,236,188,0.7)",
-                fontFamily: T.sans,
-                fontSize: "0.82rem",
-                letterSpacing: "0.05em",
+                fontFamily: T.mono,
+                fontSize: "0.7rem",
+                letterSpacing: "0.16em",
+                textTransform: "uppercase",
+                color: "rgba(198,153,58,0.45)",
                 textDecoration: "none",
-                borderRadius: 2,
-                transition: "border-color .2s, color .2s",
+                borderBottom: "1px solid rgba(198,153,58,0.18)",
+                paddingBottom: "0.15rem",
+                transition: "color .25s, border-color .25s",
               }}
               onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.color =
+                  "rgba(198,153,58,0.8)";
                 (e.currentTarget as HTMLElement).style.borderColor =
-                  "rgba(200,170,80,0.5)";
-                (e.currentTarget as HTMLElement).style.color = T.gold;
+                  "rgba(198,153,58,0.45)";
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = T.border;
                 (e.currentTarget as HTMLElement).style.color =
-                  "rgba(248,236,188,0.7)";
+                  "rgba(198,153,58,0.45)";
+                (e.currentTarget as HTMLElement).style.borderColor =
+                  "rgba(198,153,58,0.18)";
               }}
             >
-              Become a Sponsor →
+              Become a sponsor →
             </a>
           </div>
         </SectionReveal>
@@ -2451,6 +2469,18 @@ const EventContent: React.FC = () => {
 
       {/* ── Responsive overrides ─────────────────────────────────────────── */}
       <style>{`
+        @keyframes ecMarquee {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .ec-marquee-track {
+          display: inline-flex;
+          animation: ecMarquee 30s linear infinite;
+          will-change: transform;
+        }
+        .ec-marquee-content {
+          padding: 0 1rem;
+        }
         @keyframes ecDrift {
           0%,100% { transform: translateX(0); }
           50%      { transform: translateX(-7px); }
@@ -2545,9 +2575,8 @@ const EventContent: React.FC = () => {
             padding: 3.25rem 1rem !important;
           }
           .ec-stats-strip {
-            padding-left: 1rem !important;
-            padding-right: 1rem !important;
-            gap: 1rem !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
           }
           .ec-overview-grid {
             gap: 2rem !important;
@@ -2573,8 +2602,8 @@ const EventContent: React.FC = () => {
             padding: 2.8rem 0.85rem !important;
           }
           .ec-stats-strip {
-            padding-left: 0.85rem !important;
-            padding-right: 0.85rem !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
           }
         }
         .ec-credits-section {

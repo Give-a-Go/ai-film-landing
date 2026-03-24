@@ -905,33 +905,34 @@ const CollisionSection: React.FC = () => {
         </div>
       </div>
 
-      {/* Center text */}
-      <div
-        ref={centerTextRef}
-        style={{
-          position: "absolute",
-          left: "50%",
-          ...(isMobile
-            ? { top: "50%", transform: "translate(-50%, 48px)" }
-            : { bottom: "22%", transform: "translateX(-50%)" }),
-          textAlign: "center",
-          opacity: 0,
-          willChange: "transform, opacity",
-          whiteSpace: "nowrap",
-        }}
-      >
+      {/* Center text — hidden on mobile */}
+      {!isMobile && (
         <div
+          ref={centerTextRef}
           style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: isMobile ? "0.45rem" : "clamp(0.42rem, 0.65vw, 0.55rem)",
-            color: "rgba(198,153,58,0.35)",
-            letterSpacing: "0.25em",
-            textTransform: "uppercase",
+            position: "absolute",
+            left: "50%",
+            bottom: "22%",
+            transform: "translateX(-50%)",
+            textAlign: "center",
+            opacity: 0,
+            willChange: "transform, opacity",
+            whiteSpace: "nowrap",
           }}
         >
-          Where it all converges
+          <div
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "clamp(0.42rem, 0.65vw, 0.55rem)",
+              color: "rgba(198,153,58,0.35)",
+              letterSpacing: "0.25em",
+              textTransform: "uppercase",
+            }}
+          >
+            Where it all converges
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Section label */}
       <div

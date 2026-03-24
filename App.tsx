@@ -191,26 +191,7 @@ const App: React.FC = () => {
           <span style={{ color: "rgba(198,153,58,0.35)", margin: "0 0.4em" }}>
             ×
           </span>
-          <a
-            href="https://napkin.io"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              color: "inherit",
-              textDecoration: "none",
-              transition: "color 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.color =
-                "rgba(198,153,58,1)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.color =
-                "rgba(224,213,192,0.85)";
-            }}
-          >
-            Napkin
-          </a>
+          <span>Napkin</span>
         </div>
         <div
           style={{

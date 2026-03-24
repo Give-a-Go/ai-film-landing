@@ -928,18 +928,19 @@ const Hero: React.FC = () => {
               </h1>
 
               <div className="flex items-center justify-center w-full sm:w-auto">
-                <a
-                  href="https://luma.com/0zqny709?utm_source=aif"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full sm:w-auto rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-1 no-underline"
+                <button
+                  onClick={() => {
+                    const el = document.getElementById('cinematic-transition');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="w-full sm:w-auto rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-1 cursor-pointer border-none"
                   style={{
                     background: "#E0D5C0",
                     color: "#050505",
                   }}
                 >
                   Apply to join
-                </a>
+                </button>
               </div>
 
               <TeleprompterModal
@@ -1009,6 +1010,11 @@ const Hero: React.FC = () => {
                     src: "/partners/wolfpack-digital-light.png",
                     alt: "Wolfpack Digital",
                     scale: 1.15,
+                  },
+                  {
+                    src: "/partners/wonder-studios.png",
+                    alt: "Wonder Studios",
+                    scale: 1,
                   },
                   { src: "/partners/redbull.png", alt: "Red Bull", scale: 1 },
                   {

@@ -1318,7 +1318,7 @@ const EventPage: React.FC = () => {
         </SectionReveal>
         <SectionReveal delay={0.1}>
           <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", justifyContent: "center", marginBottom: "1rem" }}>
-            {["ElevenLabs", "Wan AI", "fal.ai"].map(n => <SponsorBox key={n} name={n} />)}
+            {["ElevenLabs", "Wan AI", "fal.ai", "Wonder Studios"].map(n => <SponsorBox key={n} name={n} />)}
           </div>
         </SectionReveal>
 
