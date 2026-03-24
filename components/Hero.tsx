@@ -938,17 +938,9 @@ const Hero: React.FC = () => {
                     color: "#050505",
                   }}
                 >
-                  Apply to Join →
+                  Apply to join
                 </a>
               </div>
-
-              <button
-                onClick={() => setIsTeleprompterOpen(true)}
-                className="mt-4 text-sm font-medium underline underline-offset-4 hover:opacity-70 transition-opacity duration-300"
-                style={{ color: "rgba(224,213,192,0.5)" }}
-              >
-                More about the event
-              </button>
 
               <TeleprompterModal
                 isOpen={isTeleprompterOpen}

@@ -1230,7 +1230,7 @@ const EventPage: React.FC = () => {
                 (e.target as HTMLElement).style.boxShadow = "0 0 36px rgba(232,93,53,0.28), 0 2px 12px rgba(0,0,0,0.6)";
               }}
             >
-              Apply to Join →
+              Apply to join →
             </button>
             <div style={{
               fontFamily: "monospace",
@@ -1280,7 +1280,7 @@ const EventPage: React.FC = () => {
             <TicketCard
               day="Day 01"
               title="Filmmaking Day"
-              description="Teams form at the start of the day and race to create compelling AI-powered short films — from concept and script to final cut — all within a single day."
+              description="Teams form at the start of the day and race to create compelling AI-powered short films, from concept and script to final cut, all within a single day."
             />
           </SectionReveal>
           <SectionReveal delay={0.2}>
@@ -1437,7 +1437,7 @@ const EventPage: React.FC = () => {
             textTransform: "uppercase",
             marginBottom: "0.75rem",
           }}>
-            — Fin —
+            · Fin ·
           </div>
           <button type="button" onClick={() => setLumaOpen(true)} style={{
             display: "inline-block",
@@ -1464,7 +1464,7 @@ const EventPage: React.FC = () => {
               (e.target as HTMLElement).style.boxShadow = "0 0 36px rgba(232,93,53,0.25)";
             }}
           >
-            Apply to Join →
+            Apply to join →
           </button>
         </SectionReveal>
 

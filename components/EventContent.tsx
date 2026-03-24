@@ -80,7 +80,7 @@ function SectionLabel({ no, title }: { no: string; title: string }) {
       <span
         style={{
           fontFamily: T.mono,
-          fontSize: "0.65rem",
+          fontSize: "0.75rem",
           letterSpacing: "0.2em",
           color: T.amber,
           border: `1px solid ${T.border}`,
@@ -92,9 +92,9 @@ function SectionLabel({ no, title }: { no: string; title: string }) {
       <span
         style={{
           fontFamily: T.mono,
-          fontSize: "0.7rem",
+          fontSize: "0.8rem",
           letterSpacing: "0.28em",
-          color: T.amberDim,
+          color: "rgba(220,185,90,0.78)",
           textTransform: "uppercase",
         }}
       >
@@ -751,7 +751,7 @@ function FinScene() {
             transition: "transform 150ms ease",
           }}
         >
-          Apply to Join →
+          Apply to join →
         </span>
       </a>
     </div>
@@ -1058,25 +1058,17 @@ const EventContent: React.FC = () => {
               letterSpacing: "0.01em",
             }}
           >
-            "You walk in on Saturday morning. By Sunday afternoon, your film is
-            on a cinema screen. You made it. It didn't exist 24 hours ago."
-          </p>
-          <p
-            style={{
-              fontFamily: T.sans,
-              fontSize: "clamp(0.9rem, 1.4vw, 1.05rem)",
-              fontWeight: 300,
-              color: "rgba(255,255,255,0.42)",
-              lineHeight: 1.8,
-              maxWidth: 620,
-              margin: "0 auto",
-            }}
-          >
-            Most people never get their work on a cinema screen. This weekend,
-            you do. We give you the tools, the equipment, the workshops, and the
-            time. AI handles what used to need a full crew and months of post.
-            You bring the story, the instincts, and the drive to see it through.
-            Dublin, April. One weekend. A film that's yours.
+            100 seats.
+            <br />
+            Directors, engineers,
+            editors, designers.
+            <br />
+            Carefully selected.
+            Paired for the weekend.
+            <br />
+            Two days to make
+            <br />
+            something worth watching.
           </p>
         </div>
       </SectionReveal>
@@ -1171,7 +1163,7 @@ const EventContent: React.FC = () => {
                     "0 0 40px rgba(255,215,60,0.28), 0 4px 120px rgba(255,200,40,0.18), 0 -2px 60px rgba(255,230,100,0.12)",
                 }}
               >
-                The Shot Didn't
+                Story to Big Screen
                 <br />
                 <span
                   style={{
@@ -1180,7 +1172,7 @@ const EventContent: React.FC = () => {
                     fontSize: "0.82em",
                   }}
                 >
-                  Exist Yesterday
+                  With best in class talent and tools
                 </span>
               </h1>
             </SectionReveal>
@@ -1198,12 +1190,7 @@ const EventContent: React.FC = () => {
                   margin: "0 0 2.75rem",
                 }}
               >
-                This is your shot to make a short film — a real one, with your
-                name on it, screened in front of an audience. AI has collapsed
-                the barrier between having a story in your head and putting it
-                on screen. A filmmaker and an engineer, working together for one
-                weekend, can now do what used to take a full crew and a budget.
-                Come make it happen.
+             Write, shoot, and finish a short film using the same tools studios use, then watch it back in a cinema with a curated audience of industry legends.
               </p>
             </SectionReveal>
 
@@ -1223,7 +1210,7 @@ const EventContent: React.FC = () => {
                   className="rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap no-underline"
                   style={{ background: "#E0D5C0", color: "#050505" }}
                 >
-                  Apply to Join →
+                  Apply to join
                 </a>
                 <a
                   href="https://giveago.co/sponsor"
@@ -1270,9 +1257,9 @@ const EventContent: React.FC = () => {
                 <div
                   style={{
                     fontFamily: T.mono,
-                    fontSize: "0.55rem",
+                    fontSize: "0.7rem",
                     letterSpacing: "0.18em",
-                    color: "rgba(200,170,80,0.5)",
+                    color: "rgba(220,185,90,0.65)",
                     textTransform: "uppercase",
                   }}
                 >
@@ -1281,20 +1268,20 @@ const EventContent: React.FC = () => {
                 <div
                   style={{
                     fontFamily: T.mono,
-                    fontSize: "0.52rem",
+                    fontSize: "0.65rem",
                     letterSpacing: "0.12em",
-                    color: T.muted,
+                    color: "rgba(255,255,255,0.52)",
                     textTransform: "uppercase",
                   }}
                 >
-                  Bring your laptop — cameras, AI tools &amp; gear are provided
+                  Bring your laptop · cameras, AI tools &amp; gear are provided
                 </div>
                 <div
                   style={{
                     fontFamily: T.mono,
-                    fontSize: "0.52rem",
+                    fontSize: "0.65rem",
                     letterSpacing: "0.18em",
-                    color: T.muted,
+                    color: "rgba(255,255,255,0.52)",
                     textTransform: "uppercase",
                     marginTop: "0.4rem",
                   }}
@@ -1304,9 +1291,9 @@ const EventContent: React.FC = () => {
                 <div
                   style={{
                     fontFamily: T.mono,
-                    fontSize: "0.52rem",
+                    fontSize: "0.65rem",
                     letterSpacing: "0.18em",
-                    color: T.muted,
+                    color: "rgba(255,255,255,0.52)",
                     textTransform: "uppercase",
                     marginTop: "0.4rem",
                   }}
@@ -1369,9 +1356,9 @@ const EventContent: React.FC = () => {
           <div
             style={{
               fontFamily: T.mono,
-              fontSize: "0.55rem",
+              fontSize: "0.75rem",
               letterSpacing: "0.4em",
-              color: "rgba(200,170,80,0.4)",
+              color: "rgba(220,185,90,0.72)",
               textTransform: "uppercase",
               marginBottom: "3rem",
               textAlign: "center",
@@ -1392,26 +1379,26 @@ const EventContent: React.FC = () => {
             {
               role: "The Filmmaker",
               description:
-                "You've shot things. You know pacing, you know story, you know when a frame is wrong. You've never had tools like these.",
-              cue: "Bring your eye.",
+                "You've made things people watched. Now you want to make something with AI workflows and a real deadline. Not a demo, a film.",
+              cue: "Bring your reel.",
             },
             {
               role: "The Engineer",
               description:
-                "You build things fast. You know what these models can do — and you've been waiting for a reason to push them somewhere creative.",
-              cue: "Bring your instincts.",
+                "You're fast with code and models. You want a weekend where the output isn't a dashboard. It's a three-minute piece on a cinema screen.",
+              cue: "Bring your stack.",
             },
             {
               role: "The Editor",
               description:
-                "You live in the cut. You know that a film is made three times — in writing, on set, and in the edit. You're about to do all three in one day.",
-              cue: "Bring your taste.",
+                "You think in timelines, not scripts. You've cut under deadline before. This time the rushes include things that didn't exist when you sat down.",
+              cue: "Bring your cut.",
             },
             {
               role: "The Designer",
               description:
-                "You think in frames, in mood, in visual language. You've always had something cinematic in you. This is the reason to go there.",
-              cue: "Bring your world.",
+                "Frames, titles, mood boards, motion. You've been designing around video. Now you're designing the video. With a team. For a screening.",
+              cue: "Bring your frame.",
             },
           ].map((p) => (
             <SectionReveal key={p.role} delay={0.1}>
@@ -1494,9 +1481,8 @@ const EventContent: React.FC = () => {
               lineHeight: 1.1,
             }}
           >
-            Make It Saturday.
-            <br />
-            Screen It Sunday.
+            The weekend
+            <br />In Two Acts
           </h2>
         </SectionReveal>
 
@@ -1523,7 +1509,7 @@ const EventContent: React.FC = () => {
               day="Day 02 · Sun 19 Apr"
               scene="Scene 02 / Take 01"
               title="Premiere Day"
-              description="Submit in the morning. Get dressed. Lights down — your film on a cinema screen, in front of the room that watched it get made. Judges score. Awards announced."
+              description="Submit in the morning. Get dressed. Lights down. Your film on a cinema screen, in front of the room that watched it get made. Judges score. Awards announced."
               meta1="Submissions: Morning"
               meta2="Black-tie screening: Afternoon"
               badge="Now Showing"
@@ -1837,10 +1823,10 @@ const EventContent: React.FC = () => {
                 margin: "0 0 1.25rem",
               }}
             >
-              Films will be
+              Screened. Scored.
               <br />
               <span style={{ fontWeight: 300, fontStyle: "italic" }}>
-                judged and awarded.
+                Awarded.
               </span>
             </h2>
             <p
@@ -1852,9 +1838,9 @@ const EventContent: React.FC = () => {
                 margin: "0 0 2.5rem",
               }}
             >
-              On Day 2, a panel of judges from the film and technology world
-              will select winners across categories. Awards to be announced in
-              the run-up to the event.
+              Films play in front of the full room and a jury. Five categories.
+              Results the same night. The panel is drawn from people who
+              commission, distribute, or build the tools films are made with.
             </p>
             <div
               style={{
@@ -1875,7 +1861,7 @@ const EventContent: React.FC = () => {
               {[
                 {
                   cat: "Best Film",
-                  desc: "The complete package — story, execution, and impact.",
+                  desc: "The complete package: story, execution, and impact.",
                 },
                 {
                   cat: "Best Direction",
@@ -1934,9 +1920,9 @@ const EventContent: React.FC = () => {
                   padding: "1rem 1.25rem",
                   border: `1px solid ${T.border}`,
                   fontFamily: T.mono,
-                  fontSize: "0.52rem",
+                  fontSize: "0.7rem",
                   letterSpacing: "0.2em",
-                  color: "rgba(200,170,80,0.3)",
+                  color: "rgba(220,185,90,0.55)",
                   textTransform: "uppercase",
                   textAlign: "center",
                 }}
@@ -1998,7 +1984,7 @@ const EventContent: React.FC = () => {
                 }}
               >
                 At the first edition, teams of filmmakers and engineers made
-                complete short films from scratch in under 24 hours — stories
+                complete short films from scratch in under 24 hours. Stories
                 with real cinematography, AI-generated sequences, original
                 scores, and actual emotional weight. Then they screened them in
                 a room full of people who'd watched them get made.
@@ -2422,134 +2408,7 @@ const EventContent: React.FC = () => {
           {/* end film strip wrapper */}
         </div>
 
-        {/* V1 Voices — quote cards */}
-        <div style={{ marginTop: "4.5rem" }}>
-          <SectionReveal delay={0.05}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "1rem",
-                marginBottom: "2.5rem",
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: T.mono,
-                  fontSize: "0.6rem",
-                  letterSpacing: "0.25em",
-                  textTransform: "uppercase",
-                  color: "rgba(200,170,80,0.5)",
-                }}
-              >
-                What people said
-              </span>
-              <div
-                style={{
-                  flex: 1,
-                  height: 1,
-                  background: "rgba(200,170,80,0.15)",
-                }}
-              />
-            </div>
-          </SectionReveal>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: "1.5rem",
-            }}
-            className="ec-quotes-grid"
-          >
-            {[
-              {
-                quote:
-                  "This is what community and innovation are all about. It was fantastic to see such a brilliant mix of creatives and engineers come together. We were thrilled to be involved. Congratulations!",
-                name: "V1 Partner",
-                role: "Supporting Organisation",
-              },
-              {
-                quote:
-                  "AI Film Hackathon was as brilliant as it was challenging! As someone heading into it with limited experience of AI tools — it was a case of try, fail, learn, repeat... on speed!",
-                name: "V1 Participant",
-                role: "First-Time AI Filmmaker",
-              },
-              {
-                quote:
-                  "As someone researching generative AI, it was interesting to see how it all works from the creative side, collaborating with filmmakers and artists on making a short Halloween-themed film.",
-                name: "V1 Participant",
-                role: "Generative AI Researcher",
-              },
-            ].map(({ quote, name, role }, i) => (
-              <SectionReveal key={i} delay={0.05 + i * 0.08}>
-                <div
-                  style={{
-                    border: `1px solid ${T.border}`,
-                    padding: "2rem 1.75rem",
-                    background: T.cardBg,
-                    height: "100%",
-                  }}
-                >
-                  {/* Opening quote mark */}
-                  <div
-                    style={{
-                      fontFamily: T.serif,
-                      fontSize: "3rem",
-                      lineHeight: 1,
-                      color: "rgba(200,170,80,0.2)",
-                      marginBottom: "0.75rem",
-                      marginTop: "-0.5rem",
-                    }}
-                  >
-                    "
-                  </div>
-                  <p
-                    style={{
-                      fontFamily: T.serif,
-                      fontSize: "clamp(0.9rem, 1.3vw, 1.05rem)",
-                      fontWeight: 400,
-                      fontStyle: "italic",
-                      color: "rgba(255,255,255,0.65)",
-                      lineHeight: 1.65,
-                      margin: "0 0 1.5rem",
-                    }}
-                  >
-                    {quote}
-                  </p>
-                  <div
-                    style={{
-                      borderTop: `1px solid ${T.border}`,
-                      paddingTop: "1rem",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontFamily: T.sans,
-                        fontSize: "0.8rem",
-                        color: "rgba(255,255,255,0.55)",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {name}
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: T.mono,
-                        fontSize: "0.55rem",
-                        letterSpacing: "0.15em",
-                        textTransform: "uppercase",
-                        color: "rgba(200,170,80,0.45)",
-                        marginTop: "0.3rem",
-                      }}
-                    >
-                      {role}
-                    </div>
-                  </div>
-                </div>
-              </SectionReveal>
-            ))}
-          </div>
-        </div>
+        {/* V1 Voices — quote cards (commented out until we have confirmed testimonials) */}
       </section>
 
       {/* ── Footer CTA ───────────────────────────────────────────────────── */}

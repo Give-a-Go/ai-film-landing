@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface WaitlistMorphProps {
-  /** When provided, form open state is controlled from parent (e.g. nav "I'm interested") */
+  /** When provided, form open state is controlled from parent (e.g. nav "Apply to join") */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
@@ -102,7 +102,7 @@ const WaitlistMorph: React.FC<WaitlistMorphProps> = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            I'm interested
+            Apply to join
           </motion.button>
         ) : (
           <motion.form
