@@ -809,7 +809,7 @@ const CinematicTransition: React.FC = () => {
             fontSize="7.5"
             fill="#3a3a3a"
           >
-            DIRECTOR: AI SYSTEMS
+            DIRECTOR: YOU!
           </text>
           <text
             x="10"
