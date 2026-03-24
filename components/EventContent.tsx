@@ -1016,12 +1016,13 @@ const EventContent: React.FC = () => {
         fontFamily: T.sans,
       }}
     >
-      {/* ── Feature Presentation bridge ──────────────────────────────────── */}
+      {/* ── Feature Presentation bridge (commented out — restore when needed) ─
       <FeaturePresentationBridge />
+      */}
 
       {/* ════════════════════════════════════════════════════════════════════
-          MANIFESTO — full-bleed cinematic opening statement
-          ════════════════════════════════════════════════════════════════════ */}
+          MANIFESTO — full-bleed cinematic opening statement (commented out)
+          ════════════════════════════════════════════════════════════════════
       <SectionReveal>
         <div
           className="ec-manifesto-card"
@@ -1072,6 +1073,7 @@ const EventContent: React.FC = () => {
           </p>
         </div>
       </SectionReveal>
+      */}
 
       {/* ── Stats strip ──────────────────────────────────────────────────── */}
       <div
@@ -1163,7 +1165,7 @@ const EventContent: React.FC = () => {
                     "0 0 40px rgba(255,215,60,0.28), 0 4px 120px rgba(255,200,40,0.18), 0 -2px 60px rgba(255,230,100,0.12)",
                 }}
               >
-                Story to Big Screen
+                From Story
                 <br />
                 <span
                   style={{
@@ -1172,7 +1174,7 @@ const EventContent: React.FC = () => {
                     fontSize: "0.82em",
                   }}
                 >
-                  With best in class talent and tools
+                  To the Big Screen
                 </span>
               </h1>
             </SectionReveal>
