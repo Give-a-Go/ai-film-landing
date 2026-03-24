@@ -67,21 +67,10 @@ const Navigation: React.FC = () => {
             rel="noopener noreferrer"
             className="px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-1 group bg-[#E0D5C0] text-[#050505] hover:bg-white no-underline"
           >
-            Apply to Join{" "}
+            Apply to join{" "}
             <span className="group-hover:translate-x-0.5 transition-transform">
               →
             </span>
-          </a>
-          <a
-            href="https://giveago.co/sponsor"
-            className="px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300"
-            style={{
-              border: "1px solid rgba(198,153,58,0.3)",
-              color: "rgba(198,153,58,0.8)",
-              background: "rgba(198,153,58,0.07)",
-            }}
-          >
-            Sponsor
           </a>
         </div>
 
@@ -231,19 +220,7 @@ const Navigation: React.FC = () => {
                 style={{ background: "#E0D5C0", color: "#050505" }}
                 onClick={closeMenu}
               >
-                Apply to Join <span className="transition-transform">→</span>
-              </a>
-              <a
-                href="https://giveago.co/sponsor"
-                className="block w-full rounded-full px-5 py-3 text-sm font-medium text-center transition-all duration-300 min-h-[44px] flex items-center justify-center"
-                style={{
-                  border: "1px solid rgba(198,153,58,0.3)",
-                  color: "rgba(198,153,58,0.8)",
-                  background: "rgba(198,153,58,0.07)",
-                }}
-                onClick={closeMenu}
-              >
-                Sponsor
+                Apply to join <span className="transition-transform">→</span>
               </a>
             </div>
           </nav>

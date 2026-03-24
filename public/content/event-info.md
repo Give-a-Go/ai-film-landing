@@ -1,56 +1,60 @@
-# AI Filmmaking Hackathon
+# AI Filmmaking Hackathon · v2
 
+**Ireland AI Film Making Hackathon.** A two-day programme in Dublin for people who want to finish a short film and see it in a cinema.
 
-A two-day cinematic experiment at the intersection of film, AI, and creative technology.
+Applications are limited. The weekend is built for directors, editors, engineers, and designers who are serious about craft and curious about new pipelines. **Not** for spectators.
 
-This isn’t a demo day. It’s not a conference. And it’s definitely not just another hackathon.
+---
 
-We’re bringing together exceptional filmmakers, creatives, and technologists to create short films designed for the big screen, built under real constraints and finished in an intense, high-production environment.
+## What this is
 
-The event culminates in a public cinema screening — a proper cultural moment celebrating what happens when storytelling, craft, and frontier AI tools collide.
+Saturday and Sunday at Dogpatch Labs (CHQ, Dublin). You work in teams, with workshops, gear, and post workflows available on the floor. Mentors rotate through the room: people who ship work in film-facing companies and strong product organisations.
 
-## The Vision
+Sunday ends with a **black-tie screening**: your film, a full room, a jury, awards.
 
-To prove that AI-powered filmmaking can be cinematic, intentional, and emotionally compelling.
+---
 
-We’re focused on finished films, not experiments. Work that holds up in a dark room, on a large screen, with an audience watching together.
+## The schedule (at a glance)
 
-By combining experienced creative talent with cutting-edge AI workflows, we’re creating space for new kinds of stories to emerge — stories that couldn’t exist any other way.
+**Saturday · 18 April**  
+Doors from 11:00. Production day: brief, shoot, build, iterate. The cut starts the same day.
 
-## What to Expect
+**Sunday · 19 April**  
+Deliver in the morning. Dress for the theatre in the afternoon. Premiere, jury notes, prizes.
 
-Two days. One intense creative sprint. A cinema audience.
+Exact session titles and room assignments ship closer to the date.
 
-**A curated group** of filmmakers, creatives, and builders working side-by-side.
+---
 
-**Hands-on access** to frontier AI video, image, and audio models throughout the build.
+## Who should apply
 
-**Hybrid production**: real-world capture combined with AI-driven visuals, sound, and post.
+- You have **something to show**: cuts, code, design work, or shot material. You want to stretch it under a real deadline.  
+- You're comfortable collaborating with someone whose craft is different from yours.  
+- You care how the piece **reads in the dark**, not only on a laptop.
 
-**Practical, modern workflows** focused on actually finishing work.
+We're not optimizing for "first time on a set." We're optimizing for **taste plus execution** in a short window.
 
-**Mentorship** from experienced film and post-production professionals.
+---
 
-**A public screening night** that feels like a real premiere, not a tech showcase.
+## Tools and craft
 
-## The Outcome
+You'll have access to professional **image, video, and audio** workflows used in contemporary production, alongside classic capture and editorial. The point is not novelty for its own sake; it's to **finish** something that holds up on a large screen.
 
-Short films that feel **thoughtful**, **cinematic**, and **finished**.
+Bring your laptop. Cameras and core kit are provided on site.
 
-Films that hold an audience and spark conversation.
+---
 
-## Why This Matters
+## Applications
 
-Ireland has world-class creative talent and a fast-growing AI community, but they rarely get to build together in the same room, under the same creative pressure.
+**Capacity:** roughly 100 participants, by application.  
+**Applications close:** 1 April 2026.
 
-This event is about closing that gap and creating a moment where art and technology meet at a serious creative level.
+Use **Apply to join** on the site to request a seat on Luma. We review for fit and balance of roles in the room.
 
-When experienced filmmakers, agency creatives, and technologists collaborate under an insane timeline, something special happens. Ideas sharpen. Stories move faster. Boundaries get pushed.
+---
 
-## Stay Close
+## Organisers
 
-More details will be shared soon. Participant applications and screening tickets will be limited.
+**Give(a)Go × Napkin.** Dublin, Ireland.
 
-If you care about the future of filmmaking — and want to see what’s possible when creative ambition meets modern AI — this is one to watch.
-
-🎬🤖
+Questions: **hello@giveago.io**
