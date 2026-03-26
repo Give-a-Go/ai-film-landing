@@ -1227,23 +1227,23 @@ const EventContent: React.FC = () => {
                     fontSize: "0.7rem",
                     letterSpacing: "0.16em",
                     textTransform: "uppercase",
-                    color: "rgba(198,153,58,0.4)",
+                    color: "rgba(220,185,90,1)",
                     textDecoration: "none",
-                    borderBottom: "1px solid rgba(198,153,58,0.15)",
+                    borderBottom: "1px solid rgba(220,185,90,0.5)",
                     paddingBottom: "0.15rem",
                     transition: "color .25s, border-color .25s",
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.color =
-                      "rgba(198,153,58,0.75)";
+                      "rgba(245,215,120,1)";
                     (e.currentTarget as HTMLElement).style.borderColor =
-                      "rgba(198,153,58,0.4)";
+                      "rgba(245,215,120,0.7)";
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLElement).style.color =
-                      "rgba(198,153,58,0.4)";
+                      "rgba(220,185,90,1)";
                     (e.currentTarget as HTMLElement).style.borderColor =
-                      "rgba(198,153,58,0.15)";
+                      "rgba(220,185,90,0.5)";
                   }}
                 >
                   Sponsor
@@ -1592,7 +1592,7 @@ const EventContent: React.FC = () => {
                   textAlign: "center",
                 }}
               >
-                Supported By
+                Headline Sponsors
               </div>
               <div className="ec-credits-logos">
                 <a
@@ -1617,6 +1617,49 @@ const EventContent: React.FC = () => {
                     alt="Wan"
                   />
                 </a>
+              </div>
+            </div>
+          </SectionReveal>
+
+          <div
+            className="ec-credits-divider"
+            style={{ display: "flex", alignItems: "center", gap: "1rem" }}
+          >
+            <div
+              style={{
+                flex: 1,
+                height: 1,
+                background:
+                  "linear-gradient(90deg, transparent, rgba(220,185,90,0.24))",
+              }}
+            />
+            <ReelIcon />
+            <div
+              style={{
+                flex: 1,
+                height: 1,
+                background:
+                  "linear-gradient(90deg, rgba(220,185,90,0.24), transparent)",
+              }}
+            />
+          </div>
+
+          <SectionReveal delay={0.15}>
+            <div className="ec-credits-row">
+              <div
+                style={{
+                  fontFamily: T.mono,
+                  fontSize: "0.56rem",
+                  letterSpacing: "0.35em",
+                  color: T.amberDim,
+                  textTransform: "uppercase",
+                  marginBottom: "1.6rem",
+                  textAlign: "center",
+                }}
+              >
+                Supported By
+              </div>
+              <div className="ec-credits-logos">
                 <a
                   href="https://fal.ai"
                   target="_blank"
@@ -1787,23 +1830,23 @@ const EventContent: React.FC = () => {
                 fontSize: "0.7rem",
                 letterSpacing: "0.16em",
                 textTransform: "uppercase",
-                color: "rgba(198,153,58,0.45)",
+                color: "rgba(220,185,90,1)",
                 textDecoration: "none",
-                borderBottom: "1px solid rgba(198,153,58,0.18)",
+                borderBottom: "1px solid rgba(220,185,90,0.5)",
                 paddingBottom: "0.15rem",
                 transition: "color .25s, border-color .25s",
               }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.color =
-                  "rgba(198,153,58,0.8)";
+                  "rgba(245,215,120,1)";
                 (e.currentTarget as HTMLElement).style.borderColor =
-                  "rgba(198,153,58,0.45)";
+                  "rgba(245,215,120,0.7)";
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLElement).style.color =
-                  "rgba(198,153,58,0.45)";
+                  "rgba(220,185,90,1)";
                 (e.currentTarget as HTMLElement).style.borderColor =
-                  "rgba(198,153,58,0.18)";
+                  "rgba(220,185,90,0.5)";
               }}
             >
               Become a sponsor →

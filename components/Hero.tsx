@@ -890,7 +890,7 @@ const Hero: React.FC = () => {
                   fontFamily: "'IBM Plex Mono', monospace",
                   fontSize: "0.72rem",
                   letterSpacing: "0.18em",
-                  color: "rgba(198,153,58,0.7)",
+                  color: "rgba(220,185,90,0.9)",
                   textTransform: "uppercase",
                   marginBottom: "1rem",
                 }}
@@ -972,26 +972,25 @@ const Hero: React.FC = () => {
                 padding: "12px 0 16px",
               }}
             >
-              {/* Label */}
+              {/* Headline Sponsors */}
               <div
                 style={{
                   textAlign: "center",
                   fontFamily: "'IBM Plex Mono', monospace",
                   fontSize: "0.65rem",
                   letterSpacing: "0.3em",
-                  color: "rgba(198,153,58,0.6)",
+                  color: "rgba(220,185,90,0.85)",
                   textTransform: "uppercase",
                   marginBottom: "12px",
                 }}
               >
-                Supported by
+                Headline Sponsors
               </div>
 
               {(() => {
-                const logos: {
+                const headlineLogos: {
                   src: string;
                   alt: string;
-                  filter?: string;
                   scale: number;
                 }[] = [
                   {
@@ -1000,6 +999,13 @@ const Hero: React.FC = () => {
                     scale: 1,
                   },
                   { src: "/partners/wan.png", alt: "Wan", scale: 1 },
+                ];
+                const logos: {
+                  src: string;
+                  alt: string;
+                  filter?: string;
+                  scale: number;
+                }[] = [
                   {
                     src: "/partners/fal-ai.svg",
                     alt: "fal.ai",
@@ -1024,13 +1030,10 @@ const Hero: React.FC = () => {
                     scale: 1,
                   },
                 ];
-                const LogoCell = ({
-                  s,
-                  borderRight,
-                }: {
-                  s: (typeof logos)[0];
+                const LogoCell: React.FC<{
+                  s: { src: string; alt: string; filter?: string; scale: number };
                   borderRight: boolean;
-                }) => (
+                }> = ({ s, borderRight }) => (
                   <div
                     style={{
                       display: "flex",
@@ -1063,6 +1066,42 @@ const Hero: React.FC = () => {
                 );
                 return (
                   <>
+                    {/* Headline sponsors row */}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        gap: "2rem",
+                        maxWidth: 400,
+                        margin: "0 auto",
+                        padding: "0 1.5rem",
+                        marginBottom: "20px",
+                      }}
+                    >
+                      {headlineLogos.map((s, i) => (
+                        <LogoCell
+                          key={s.alt}
+                          s={s}
+                          borderRight={i < headlineLogos.length - 1}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Supported by label */}
+                    <div
+                      style={{
+                        textAlign: "center",
+                        fontFamily: "'IBM Plex Mono', monospace",
+                        fontSize: "0.55rem",
+                        letterSpacing: "0.3em",
+                        color: "rgba(220,185,90,0.65)",
+                        textTransform: "uppercase",
+                        marginBottom: "10px",
+                      }}
+                    >
+                      Supported by
+                    </div>
+
                     {/* Desktop: single row of logos */}
                     <div
                       className="hidden sm:grid"
@@ -1089,7 +1128,6 @@ const Hero: React.FC = () => {
                         overflow: "hidden",
                       }}
                     >
-                      {/* Left fade mask */}
                       <div
                         style={{
                           position: "absolute",
@@ -1103,7 +1141,6 @@ const Hero: React.FC = () => {
                           pointerEvents: "none",
                         }}
                       />
-                      {/* Right fade mask */}
                       <div
                         style={{
                           position: "absolute",
@@ -1117,7 +1154,6 @@ const Hero: React.FC = () => {
                           pointerEvents: "none",
                         }}
                       />
-                      {/* Scrolling track — logos duplicated for seamless loop */}
                       <div
                         className="sponsor-marquee-track"
                         style={{

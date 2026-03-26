@@ -149,7 +149,7 @@ const Navigation: React.FC = () => {
             <span
               className="text-sm font-medium"
               style={{
-                color: "rgba(198,153,58,0.7)",
+                color: "rgba(220,185,90,0.9)",
                 fontFamily: "'IBM Plex Mono', monospace",
                 fontSize: "0.62rem",
                 letterSpacing: "0.25em",
