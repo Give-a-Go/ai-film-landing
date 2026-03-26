@@ -972,7 +972,7 @@ const Hero: React.FC = () => {
                 padding: "12px 0 16px",
               }}
             >
-              {/* Headline Sponsors */}
+              {/* Label */}
               <div
                 style={{
                   textAlign: "center",
@@ -984,13 +984,14 @@ const Hero: React.FC = () => {
                   marginBottom: "12px",
                 }}
               >
-                Headline Sponsors
+                Supported by
               </div>
 
               {(() => {
-                const headlineLogos: {
+                const logos: {
                   src: string;
                   alt: string;
+                  filter?: string;
                   scale: number;
                 }[] = [
                   {
@@ -999,13 +1000,6 @@ const Hero: React.FC = () => {
                     scale: 1,
                   },
                   { src: "/partners/wan.png", alt: "Wan", scale: 1 },
-                ];
-                const logos: {
-                  src: string;
-                  alt: string;
-                  filter?: string;
-                  scale: number;
-                }[] = [
                   {
                     src: "/partners/fal-ai.svg",
                     alt: "fal.ai",
@@ -1066,42 +1060,6 @@ const Hero: React.FC = () => {
                 );
                 return (
                   <>
-                    {/* Headline sponsors row */}
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "center",
-                        gap: "2rem",
-                        maxWidth: 400,
-                        margin: "0 auto",
-                        padding: "0 1.5rem",
-                        marginBottom: "20px",
-                      }}
-                    >
-                      {headlineLogos.map((s, i) => (
-                        <LogoCell
-                          key={s.alt}
-                          s={s}
-                          borderRight={i < headlineLogos.length - 1}
-                        />
-                      ))}
-                    </div>
-
-                    {/* Supported by label */}
-                    <div
-                      style={{
-                        textAlign: "center",
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.55rem",
-                        letterSpacing: "0.3em",
-                        color: "rgba(220,185,90,0.65)",
-                        textTransform: "uppercase",
-                        marginBottom: "10px",
-                      }}
-                    >
-                      Supported by
-                    </div>
-
                     {/* Desktop: single row of logos */}
                     <div
                       className="hidden sm:grid"

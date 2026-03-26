@@ -47,7 +47,7 @@ Bring your laptop. Cameras and core kit are provided on site.
 ## Applications
 
 **Capacity:** roughly 100 participants, by application.  
-**Applications close:** 1 April 2026.
+**Applications close:** 5 April 2026.
 
 Use **Apply to join** on the site to request a seat on Luma. We review for fit and balance of roles in the room.
 

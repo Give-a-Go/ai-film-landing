@@ -1271,7 +1271,7 @@ const EventContent: React.FC = () => {
                     textTransform: "uppercase",
                   }}
                 >
-                  Applications close 1 April 2026
+                  Applications close 5 April 2026
                 </div>
                 <div
                   style={{
@@ -1343,7 +1343,7 @@ const EventContent: React.FC = () => {
             <InfoCard
               label="Capacity"
               value="100 People"
-              sub="By application · closes 1 Apr 2026"
+              sub="By application · closes 5 Apr 2026"
             />
             <InfoCard
               label="The Screening"
