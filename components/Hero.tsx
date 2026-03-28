@@ -927,21 +927,29 @@ const Hero: React.FC = () => {
                 </span>
               </h1>
 
-              <div className="flex items-center justify-center w-full sm:w-auto">
-                <button
-                  onClick={() => {
-                    const el = document.getElementById('cinematic-transition');
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  className="w-full sm:w-auto rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-1 cursor-pointer border-none"
+              <button
+                onClick={() => {
+                  const el = document.getElementById('cinematic-transition');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="group flex flex-col items-center gap-2 cursor-pointer border-none bg-transparent hover:opacity-80 transition-opacity duration-300"
+                style={{ background: "none" }}
+              >
+                <span
                   style={{
-                    background: "#E0D5C0",
-                    color: "#050505",
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.2em",
+                    color: "rgba(224,213,192,0.7)",
+                    textTransform: "uppercase",
                   }}
                 >
-                  Scroll to learn more
-                </button>
-              </div>
+                  Learn more
+                </span>
+                <svg width="1" height="20" viewBox="0 0 1 20" style={{ opacity: 0.5 }}>
+                  <line x1="0.5" y1="0" x2="0.5" y2="20" stroke="rgba(224,213,192,0.7)" strokeWidth="1" />
+                </svg>
+              </button>
 
               <TeleprompterModal
                 isOpen={isTeleprompterOpen}
