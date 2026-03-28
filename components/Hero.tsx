@@ -939,7 +939,7 @@ const Hero: React.FC = () => {
                     color: "#050505",
                   }}
                 >
-                  Apply to join
+                  Scroll to learn more
                 </button>
               </div>
 
