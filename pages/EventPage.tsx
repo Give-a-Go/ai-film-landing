@@ -1287,7 +1287,7 @@ const EventPage: React.FC = () => {
             <TicketCard
               day="Day 02"
               title="Cinema Screening"
-              description="A semi black-tie premiere event. Films screen on the big stage, the audience votes, awards are given. A night of cinema, celebration and community."
+              description="A formal premiere event. Films screen on the big stage, the audience votes, awards are given. A night of cinema, celebration and community."
               badge="Now Showing"
             />
           </SectionReveal>

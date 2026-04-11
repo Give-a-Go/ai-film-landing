@@ -1294,7 +1294,7 @@ const EventContent: React.FC = () => {
                     marginTop: "0.4rem",
                   }}
                 >
-                  Black-tie premiere · Sunday afternoon
+                  Formal premiere · Sunday afternoon
                 </div>
                 <div
                   style={{
@@ -1348,7 +1348,7 @@ const EventContent: React.FC = () => {
             <InfoCard
               label="The Screening"
               value="Cinema Premiere"
-              sub="Black-tie · judging panel · awards ceremony"
+              sub="Formal · judging panel · awards ceremony"
             />
           </SectionReveal>
         </div>
@@ -1517,9 +1517,9 @@ const EventContent: React.FC = () => {
               day="Day 02 · Sun 19 Apr"
               scene="Scene 02 / Take 01"
               title="Premiere Day"
-              description="Submit in the morning. Get dressed. Lights down. Your film on a cinema screen, in front of the room that watched it get made. Judges score. Awards announced."
-              meta1="Submissions: Morning"
-              meta2="Black-tie screening: Afternoon"
+              description="Submit the night before. Dress formal. Lights down. Your film on a cinema screen, in front of the room that watched it get made. Judges score. Awards announced."
+              meta1="Submissions: The night before"
+              meta2="Formal screening: Afternoon"
               badge="Now Showing"
             />
           </SectionReveal>

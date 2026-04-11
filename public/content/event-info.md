@@ -10,7 +10,7 @@ Applications are limited. The weekend is built for directors, editors, engineers
 
 Saturday and Sunday at Dogpatch Labs (CHQ, Dublin). You work in teams, with workshops, gear, and post workflows available on the floor. Mentors rotate through the room: people who ship work in film-facing companies and strong product organisations.
 
-Sunday ends with a **black-tie screening**: your film, a full room, a jury, awards.
+Sunday ends with a **formal screening**: your film, a full room, a jury, awards.
 
 ---
 
@@ -20,7 +20,7 @@ Sunday ends with a **black-tie screening**: your film, a full room, a jury, awar
 Doors from 11:00. Production day: brief, shoot, build, iterate. The cut starts the same day.
 
 **Sunday · 19 April**  
-Deliver in the morning. Dress for the theatre in the afternoon. Premiere, jury notes, prizes.
+Submit the night before. Dress formal in the afternoon. Premiere, jury notes, prizes.
 
 Exact session titles and room assignments ship closer to the date.
 
