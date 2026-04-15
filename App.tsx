@@ -5,11 +5,13 @@ import CinematicTransition from "./components/CinematicTransition";
 import EventContent from "./components/EventContent";
 import CollisionSection from "./components/CollisionSection";
 import EventPage from "./pages/EventPage";
+import BriefPage from "./pages/BriefPage";
 import gsap from "gsap";
 
 const App: React.FC = () => {
   const markerRefs = useRef<Array<HTMLDivElement | null>>([]);
   const isEventPage = window.location.pathname === "/event";
+  const isBriefPage = window.location.pathname === "/brief";
 
   useEffect(() => {
     gsap.config({ autoSleep: 60, force3D: true });
@@ -51,6 +53,10 @@ const App: React.FC = () => {
 
   if (isEventPage) {
     return <EventPage />;
+  }
+
+  if (isBriefPage) {
+    return <BriefPage />;
   }
 
   return (
