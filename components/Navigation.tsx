@@ -42,11 +42,11 @@ const Navigation: React.FC = () => {
           <a href="https://giveago.co" className={linkClassSmall}>
             About us
           </a>
-          <a
-            href="https://luma.com/giveago?period=past"
-            className={linkClassSmall}
-          >
-            Previous events
+          <a href="/brief" className={linkClassSmall}>
+            Brief
+          </a>
+          <a href="/agenda" className={linkClassSmall}>
+            Agenda
           </a>
           <a
             href="https://giveago.co/after-movie/ai-film"
@@ -191,12 +191,11 @@ const Navigation: React.FC = () => {
             >
               About us
             </a>
-            <a
-              href="https://luma.com/giveago?period=past"
-              className={linkClass}
-              onClick={closeMenu}
-            >
-              Previous events
+            <a href="/brief" className={linkClass} onClick={closeMenu}>
+              Brief
+            </a>
+            <a href="/agenda" className={linkClass} onClick={closeMenu}>
+              Agenda
             </a>
             <a
               href="https://giveago.co/after-movie/ai-film"

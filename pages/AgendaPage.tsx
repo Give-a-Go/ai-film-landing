@@ -1,4 +1,5 @@
 import React from "react";
+import Navigation from "../components/Navigation";
 
 const DOT: Record<string, string> = {
   purple: "#7F77DD",
@@ -89,7 +90,8 @@ function Item({ dot, time, label, sub, tag }: {
 const AgendaPage: React.FC = () => {
   return (
     <div style={{ background: "#080808", color: "rgba(224,213,192,0.9)", minHeight: "100vh", padding: "3rem 2rem" }}>
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: "2.5rem 0 3rem" }}>
+      <Navigation />
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: "6rem 0 3rem" }}>
 
         {/* Header */}
         <h1 style={{

@@ -1,9 +1,11 @@
 import React from "react";
+import Navigation from "../components/Navigation";
 
 const BriefPage: React.FC = () => {
   return (
     <div style={{ background: "#080808", color: "rgba(224,213,192,0.9)", minHeight: "100vh", padding: "3rem 2rem" }}>
-      <div style={{ maxWidth: 680, margin: "0 auto", padding: "2.5rem 0 3rem" }}>
+      <Navigation />
+      <div style={{ maxWidth: 680, margin: "0 auto", padding: "6rem 0 3rem" }}>
 
         {/* Eyebrow */}
         <p style={{
