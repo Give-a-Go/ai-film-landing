@@ -11,11 +11,14 @@ const DOT: Record<string, string> = {
 };
 
 const TAG: Record<string, { bg: string; color: string }> = {
-  build: { bg: "rgba(29,158,117,0.14)", color: "#4fcca4" },
-  food:  { bg: "rgba(200,134,26,0.14)", color: "#d4a44c" },
-  key:   { bg: "rgba(127,119,221,0.14)", color: "#a9a4f0" },
-  wrap:  { bg: "rgba(150,148,140,0.14)", color: "#a09e99" },
-  demo:  { bg: "rgba(212,83,126,0.14)", color: "#e887aa" },
+  build:   { bg: "rgba(29,158,117,0.14)",  color: "#4fcca4" },
+  food:    { bg: "rgba(200,134,26,0.14)",  color: "#d4a44c" },
+  key:     { bg: "rgba(127,119,221,0.14)", color: "#a9a4f0" },
+  wrap:    { bg: "rgba(150,148,140,0.14)", color: "#a09e99" },
+  demo:    { bg: "rgba(212,83,126,0.14)",  color: "#e887aa" },
+  vault:   { bg: "rgba(200,170,80,0.08)",  color: "rgba(200,170,80,0.7)" },
+  garden:  { bg: "rgba(200,170,80,0.08)",  color: "rgba(200,170,80,0.7)" },
+  kitchen: { bg: "rgba(200,170,80,0.08)",  color: "rgba(200,170,80,0.7)" },
 };
 
 function Tag({ type, children }: { type: keyof typeof TAG; children: React.ReactNode }) {
@@ -29,6 +32,7 @@ function Tag({ type, children }: { type: keyof typeof TAG; children: React.React
       padding: "2px 8px",
       borderRadius: 4,
       marginTop: 4,
+      marginRight: 4,
       background: t.bg,
       color: t.color,
       letterSpacing: "0.04em",
@@ -38,12 +42,12 @@ function Tag({ type, children }: { type: keyof typeof TAG; children: React.React
   );
 }
 
-function Item({ dot, time, label, sub, tag }: {
+function Item({ dot, time, label, sub, tags }: {
   dot: keyof typeof DOT;
   time: string;
   label: string;
   sub?: string;
-  tag?: { type: keyof typeof TAG; text: string };
+  tags?: Array<{ type: keyof typeof TAG; text: string }>;
 }) {
   return (
     <div style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 14 }}>
@@ -81,7 +85,11 @@ function Item({ dot, time, label, sub, tag }: {
             {sub}
           </div>
         )}
-        {tag && <Tag type={tag.type}>{tag.text}</Tag>}
+        {tags && tags.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 0 }}>
+            {tags.map(t => <Tag key={t.type} type={t.type}>{t.text}</Tag>)}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -154,16 +162,16 @@ const AgendaPage: React.FC = () => {
             </p>
             <hr style={{ border: "none", borderTop: "0.5px solid rgba(200,170,80,0.15)", margin: "0 0 1.25rem" }} />
 
-            <Item dot="gray"   time="11:00" label="Doors open"              sub="Breakfast, coffee & networking" />
-            <Item dot="purple" time="11:30" label="Welcome & introductions"  sub="Give(a)Go overview · partner intros" tag={{ type: "key", text: "kick-off" }} />
-            <Item dot="teal"   time="12:00" label="Build begins"             tag={{ type: "build", text: "hacking" }} />
-            <Item dot="pink"   time="12:15" label="fal.ai demo session"      sub="30 min · runs alongside build time" tag={{ type: "demo", text: "tool demo" }} />
-            <Item dot="amber"  time="13:30" label="Lunch"                    sub="Sanos Pizza" tag={{ type: "food", text: "catering" }} />
-            <Item dot="teal"   time="14:00" label="Build continues"          tag={{ type: "build", text: "hacking" }} />
-            <Item dot="pink"   time="14:00" label="Wan AI demo session"     sub="30 min · runs alongside build time" tag={{ type: "demo", text: "tool demo" }} />
-            <Item dot="amber"  time="17:30" label="Dinner"                   tag={{ type: "food", text: "catering" }} />
-            <Item dot="coral"  time="18:00" label="Doors close"              sub="Teams continue remotely" />
-            <Item dot="gray"   time="23:59" label="Submission deadline"      tag={{ type: "wrap", text: "hard deadline" }} />
+            <Item dot="gray"   time="11:00" label="Doors open"             sub="Breakfast, coffee & networking"          tags={[{ type: "garden", text: "Urban Gardens" }]} />
+            <Item dot="purple" time="11:30" label="Welcome & introductions" sub="Give(a)Go overview · partner intros"     tags={[{ type: "key", text: "kick-off" }, { type: "garden", text: "Urban Gardens" }]} />
+            <Item dot="teal"   time="12:00" label="Build begins"                                                          tags={[{ type: "build", text: "hacking" }, { type: "garden", text: "Urban Gardens" }]} />
+            <Item dot="pink"   time="12:15" label="fal.ai demo session"    sub="30 min · runs alongside build time"       tags={[{ type: "demo", text: "tool demo" }, { type: "vault", text: "The Vault" }]} />
+            <Item dot="amber"  time="13:30" label="Lunch"                  sub="Sanos Pizza"                              tags={[{ type: "food", text: "catering" }, { type: "kitchen", text: "Kitchen" }]} />
+            <Item dot="teal"   time="14:00" label="Build continues"                                                       tags={[{ type: "build", text: "hacking" }, { type: "garden", text: "Urban Gardens" }]} />
+            <Item dot="pink"   time="14:00" label="Wan AI demo session"    sub="30 min · runs alongside build time"       tags={[{ type: "demo", text: "tool demo" }, { type: "vault", text: "The Vault" }]} />
+            <Item dot="amber"  time="17:30" label="Dinner"                                                                tags={[{ type: "food", text: "catering" }, { type: "kitchen", text: "Kitchen" }]} />
+            <Item dot="coral"  time="18:00" label="Doors close"            sub="Teams continue remotely"                  tags={[{ type: "garden", text: "Urban Gardens" }]} />
+            <Item dot="gray"   time="23:59" label="Submission deadline"                                                   tags={[{ type: "wrap", text: "hard deadline" }]} />
           </div>
 
           {/* Day 2 */}
@@ -206,16 +214,15 @@ const AgendaPage: React.FC = () => {
             <hr style={{ border: "none", borderTop: "0.5px solid rgba(200,170,80,0.15)", margin: "0 0 1.25rem" }} />
 
             <Item dot="gray"   time="12:00"  label="Doors open"                   sub="Guests and filmmakers arrive" />
-            <Item dot="purple" time="12:30"  label="Opening speeches"              sub="MC welcome · words from key sponsors" tag={{ type: "key", text: "ceremony" }} />
+            <Item dot="purple" time="12:30"  label="Opening speeches"              sub="MC welcome · words from key sponsors"             tags={[{ type: "key", text: "ceremony" }]} />
             <Item dot="teal"   time="12:45"  label="Film screenings"               sub="Selected submissions screened · ~1 hour" />
-            <Item dot="purple" time="13:45"  label="Prize ceremony"                sub="Filmmakers on stage · trophies from partners · ~30 mins" tag={{ type: "key", text: "awards" }} />
+            <Item dot="purple" time="13:45"  label="Prize ceremony"                sub="Filmmakers on stage · trophies from partners · ~30 mins" tags={[{ type: "key", text: "awards" }]} />
             <Item dot="coral"  time="14:15"  label="Closing remarks & networking"  sub="MC wrap-up · mingle before heading out" />
             <Item dot="gray"   time="~14:45" label="Head to the pub"               sub="Nearby venue · TBC" />
-            <Item dot="gray"   time="16:00"  label="Finish"                        tag={{ type: "wrap", text: "end" }} />
+            <Item dot="gray"   time="16:00"  label="Finish"                        tags={[{ type: "wrap", text: "end" }]} />
           </div>
 
         </div>
-
 
       </div>
     </div>
