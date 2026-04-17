@@ -5,7 +5,18 @@ import TeleprompterModal from "./TeleprompterModal";
 
 const LUMA_EVENT_URL = "https://luma.com/0zqny709?utm_source=aif";
 
-const Hero: React.FC = () => {
+export type HeroMode = "default" | "banner";
+
+export interface HeroProps {
+  /** `banner`: full-viewport signage — no scroll-driven fades, no CTAs or scroll cue. */
+  mode?: HeroMode;
+}
+
+const Hero: React.FC<HeroProps> = ({ mode = "default" }) => {
+  const isBanner = mode === "banner";
+  const isBannerRef = useRef(isBanner);
+  isBannerRef.current = isBanner;
+
   const [isTeleprompterOpen, setIsTeleprompterOpen] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -604,10 +615,9 @@ const Hero: React.FC = () => {
       const startupOp = Math.max(0, 1 - elapsed / 900);
 
       // ── Scroll-driven blackout ─────────────────────────────────────────
-      const scrollBlackout = Math.max(
-        0,
-        Math.min(1, (scrollY - vh * 0.52) / (vh * 0.3)),
-      );
+      const scrollBlackout = isBannerRef.current
+        ? 0
+        : Math.max(0, Math.min(1, (scrollY - vh * 0.52) / (vh * 0.3)));
 
       const totalBlackout = Math.max(startupOp, scrollBlackout);
 
@@ -624,8 +634,9 @@ const Hero: React.FC = () => {
       const heroFullyHidden = scrollBlackout >= 1;
 
       // ── Scroll cue ────────────────────────────────────────────────────
-      const scrollCueOp =
-        Math.round(Math.max(0, 1 - scrollY / (vh * 0.12)) * 100) / 100;
+      const scrollCueOp = isBannerRef.current
+        ? 0
+        : Math.round(Math.max(0, 1 - scrollY / (vh * 0.12)) * 100) / 100;
       if (scrollCueOp !== lastScrollCueOp) {
         lastScrollCueOp = scrollCueOp;
         if (scrollCueRef.current) {
@@ -644,7 +655,8 @@ const Hero: React.FC = () => {
         scrollPosRef.current += autoScrollSpeedRef.current;
       }
 
-      const targetZ = -(scrollPosRef.current + scrollY) * 0.05;
+      const scrollForTunnel = isBannerRef.current ? 0 : scrollY;
+      const targetZ = -(scrollPosRef.current + scrollForTunnel) * 0.05;
       const currentZ = cameraRef.current.position.z;
       const delta = targetZ - currentZ;
       if (Math.abs(delta) > 0.001) {
@@ -652,11 +664,14 @@ const Hero: React.FC = () => {
       }
 
       // ── Scroll-driven text fade ────────────────────────────────────────
-      const textOp =
-        Math.round(
-          Math.max(0, Math.min(1, 1 - (scrollY - vh * 0.15) / (vh * 0.27))) *
-            100,
-        ) / 100;
+      const textOp = isBannerRef.current
+        ? 1
+        : Math.round(
+            Math.max(
+              0,
+              Math.min(1, 1 - (scrollY - vh * 0.15) / (vh * 0.27)),
+            ) * 100,
+          ) / 100;
       if (textOp !== lastTextOp) {
         lastTextOp = textOp;
         if (textOverlayRef.current) {
@@ -851,7 +866,10 @@ const Hero: React.FC = () => {
       <div
         ref={containerRef}
         className="relative w-full"
-        style={{ height: "200vh", background: "#000" }}
+        style={{
+          height: isBanner ? "100vh" : "200vh",
+          background: "#000",
+        }}
       >
         <div
           className="sticky top-0 h-screen w-full overflow-hidden"
@@ -929,65 +947,71 @@ const Hero: React.FC = () => {
                 </span>
               </h1>
 
-              <div className="flex flex-col items-center gap-5 sm:gap-6 mt-2 w-full max-w-md sm:max-w-none">
-                <a
-                  href={LUMA_EVENT_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full px-10 py-4 sm:px-12 sm:py-[1.125rem] text-base sm:text-lg font-semibold tracking-wide uppercase no-underline transition-all duration-300 group bg-[#C6993A] text-[#050505] shadow-[0_0_0_1px_rgba(248,236,188,0.25),0_12px_40px_rgba(0,0,0,0.55),0_0_48px_rgba(198,153,58,0.35)] hover:bg-[#d4a84a] hover:shadow-[0_0_0_1px_rgba(248,236,188,0.35),0_16px_48px_rgba(0,0,0,0.5),0_0_64px_rgba(198,153,58,0.45)] hover:scale-[1.02] active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f8ecbc] focus-visible:ring-offset-2 focus-visible:ring-offset-black/80"
-                >
-                  Apply now
-                  <span
-                    className="group-hover:translate-x-0.5 transition-transform"
-                    aria-hidden
+              {!isBanner && (
+                <div className="flex flex-col items-center gap-5 sm:gap-6 mt-2 w-full max-w-md sm:max-w-none">
+                  <a
+                    href={LUMA_EVENT_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full px-10 py-4 sm:px-12 sm:py-[1.125rem] text-base sm:text-lg font-semibold tracking-wide uppercase no-underline transition-all duration-300 group bg-[#C6993A] text-[#050505] shadow-[0_0_0_1px_rgba(248,236,188,0.25),0_12px_40px_rgba(0,0,0,0.55),0_0_48px_rgba(198,153,58,0.35)] hover:bg-[#d4a84a] hover:shadow-[0_0_0_1px_rgba(248,236,188,0.35),0_16px_48px_rgba(0,0,0,0.5),0_0_64px_rgba(198,153,58,0.45)] hover:scale-[1.02] active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f8ecbc] focus-visible:ring-offset-2 focus-visible:ring-offset-black/80"
                   >
-                    →
-                  </span>
-                </a>
+                    Apply now
+                    <span
+                      className="group-hover:translate-x-0.5 transition-transform"
+                      aria-hidden
+                    >
+                      →
+                    </span>
+                  </a>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    const el = document.getElementById("cinematic-transition");
-                    if (el) el.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="group flex flex-col items-center gap-2 cursor-pointer border-none bg-transparent hover:opacity-80 transition-opacity duration-300"
-                  style={{ background: "none" }}
-                >
-                  <span
-                    style={{
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.85rem",
-                      letterSpacing: "0.22em",
-                      color: "rgba(224,213,192,0.9)",
-                      textTransform: "uppercase",
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById(
+                        "cinematic-transition",
+                      );
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
                     }}
+                    className="group flex flex-col items-center gap-2 cursor-pointer border-none bg-transparent hover:opacity-80 transition-opacity duration-300"
+                    style={{ background: "none" }}
                   >
-                    Learn more
-                  </span>
-                  <svg
-                    width="2"
-                    height="32"
-                    viewBox="0 0 2 32"
-                    style={{ opacity: 0.75 }}
-                  >
-                    <line
-                      x1="1"
-                      y1="0"
-                      x2="1"
-                      y2="32"
-                      stroke="rgba(224,213,192,0.9)"
-                      strokeWidth="1.5"
-                    />
-                  </svg>
-                </button>
-              </div>
+                    <span
+                      style={{
+                        fontFamily: "'IBM Plex Mono', monospace",
+                        fontSize: "0.85rem",
+                        letterSpacing: "0.22em",
+                        color: "rgba(224,213,192,0.9)",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Learn more
+                    </span>
+                    <svg
+                      width="2"
+                      height="32"
+                      viewBox="0 0 2 32"
+                      style={{ opacity: 0.75 }}
+                    >
+                      <line
+                        x1="1"
+                        y1="0"
+                        x2="1"
+                        y2="32"
+                        stroke="rgba(224,213,192,0.9)"
+                        strokeWidth="1.5"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              )}
 
-              <TeleprompterModal
-                isOpen={isTeleprompterOpen}
-                onClose={() => setIsTeleprompterOpen(false)}
-                isDarkMode={false}
-              />
+              {!isBanner && (
+                <TeleprompterModal
+                  isOpen={isTeleprompterOpen}
+                  onClose={() => setIsTeleprompterOpen(false)}
+                  isDarkMode={false}
+                />
+              )}
             </div>
           </div>
 
@@ -1201,41 +1225,43 @@ const Hero: React.FC = () => {
           </div>
 
           {/* Scroll cue — fades once user starts scrolling */}
-          <div
-            ref={scrollCueRef}
-            className="absolute pointer-events-none"
-            style={{
-              bottom: "6.5rem",
-              left: "50%",
-              transform: "translateX(-50%)",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "0.55rem",
-              zIndex: 12,
-            }}
-          >
-            <span
+          {!isBanner && (
+            <div
+              ref={scrollCueRef}
+              className="absolute pointer-events-none"
               style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.38rem",
-                letterSpacing: "0.42em",
-                color: "rgba(248,236,188,0.28)",
-                textTransform: "uppercase",
+                bottom: "6.5rem",
+                left: "50%",
+                transform: "translateX(-50%)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "0.55rem",
+                zIndex: 12,
               }}
             >
-              Scroll
-            </span>
-            <div
-              style={{
-                width: 1,
-                height: 40,
-                background:
-                  "linear-gradient(to bottom, rgba(248,236,188,0.35), transparent)",
-                animation: "heroScrollCuePulse 2s ease-in-out infinite",
-              }}
-            />
-          </div>
+              <span
+                style={{
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "0.38rem",
+                  letterSpacing: "0.42em",
+                  color: "rgba(248,236,188,0.28)",
+                  textTransform: "uppercase",
+                }}
+              >
+                Scroll
+              </span>
+              <div
+                style={{
+                  width: 1,
+                  height: 40,
+                  background:
+                    "linear-gradient(to bottom, rgba(248,236,188,0.35), transparent)",
+                  animation: "heroScrollCuePulse 2s ease-in-out infinite",
+                }}
+              />
+            </div>
+          )}
         </div>
       </div>
     </>

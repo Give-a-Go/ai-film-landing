@@ -1,4 +1,16 @@
 {
+  "redirects": [
+    {
+      "source": "/guide",
+      "destination": "https://mirror-ladybug-8f7.notion.site/AI-Filmmaking-Guide-3458ef702b5e807a8cffc194bb733c3f?pvs=73",
+      "permanent": false
+    },
+    {
+      "source": "/guide/",
+      "destination": "https://mirror-ladybug-8f7.notion.site/AI-Filmmaking-Guide-3458ef702b5e807a8cffc194bb733c3f?pvs=73",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useLayoutEffect, useRef } from "react";
 import Navigation from "./components/Navigation";
 import Hero from "./components/Hero";
 import CinematicTransition from "./components/CinematicTransition";
@@ -9,11 +9,27 @@ import BriefPage from "./pages/BriefPage";
 import AgendaPage from "./pages/AgendaPage";
 import gsap from "gsap";
 
+const normalizePath = (pathname: string) =>
+  (pathname.replace(/\/+$/, "") || "/").toLowerCase();
+
+const GUIDE_NOTION_URL =
+  "https://mirror-ladybug-8f7.notion.site/AI-Filmmaking-Guide-3458ef702b5e807a8cffc194bb733c3f?pvs=73";
+
+const GuideRedirect: React.FC = () => {
+  useLayoutEffect(() => {
+    window.location.replace(GUIDE_NOTION_URL);
+  }, []);
+  return null;
+};
+
 const App: React.FC = () => {
   const markerRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const isEventPage = window.location.pathname === "/event";
-  const isBriefPage = window.location.pathname === "/brief";
-  const isAgendaPage = window.location.pathname === "/agenda";
+  const path = normalizePath(window.location.pathname);
+  const isEventPage = path === "/event";
+  const isBriefPage = path === "/brief";
+  const isAgendaPage = path === "/agenda";
+  const isBannerPage = path === "/banner";
+  const isGuidePage = path === "/guide";
 
   useEffect(() => {
     gsap.config({ autoSleep: 60, force3D: true });
@@ -53,6 +69,10 @@ const App: React.FC = () => {
     requestAnimationFrame(runMarkerIntro);
   }, []);
 
+  if (isGuidePage) {
+    return <GuideRedirect />;
+  }
+
   if (isEventPage) {
     return <EventPage />;
   }
@@ -63,6 +83,39 @@ const App: React.FC = () => {
 
   if (isAgendaPage) {
     return <AgendaPage />;
+  }
+
+  if (isBannerPage) {
+    return (
+      <div className="min-h-screen h-screen overflow-hidden bg-[#050505] text-[#E0D5C0] selection:bg-[#C6993A] selection:text-[#050505]">
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            opacity: 0.035,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+            backgroundSize: "200px",
+            pointerEvents: "none",
+            zIndex: 9999,
+            willChange: "transform",
+            contain: "strict",
+          }}
+        />
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background:
+              "radial-gradient(ellipse 85% 85% at center, transparent 45%, rgba(5,5,5,0.55) 100%)",
+            pointerEvents: "none",
+            zIndex: 100,
+            willChange: "transform",
+            contain: "strict",
+          }}
+        />
+        <Hero mode="banner" />
+      </div>
+    );
   }
 
   return (
