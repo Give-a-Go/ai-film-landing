@@ -160,7 +160,7 @@ const AgendaPage: React.FC = () => {
             <Item dot="pink"   time="12:15" label="fal.ai demo session"      sub="30 min · runs alongside build time" tag={{ type: "demo", text: "sponsor demo" }} />
             <Item dot="amber"  time="13:30" label="Lunch"                    sub="Sanos Pizza" tag={{ type: "food", text: "catering" }} />
             <Item dot="teal"   time="14:00" label="Build continues"          tag={{ type: "build", text: "hacking" }} />
-            <Item dot="pink"   time="14:00" label="Vani AI demo session"     sub="30 min · runs alongside build time" tag={{ type: "demo", text: "sponsor demo" }} />
+            <Item dot="pink"   time="14:00" label="Wan AI demo session"     sub="30 min · runs alongside build time" tag={{ type: "demo", text: "sponsor demo" }} />
             <Item dot="amber"  time="17:30" label="Dinner"                   tag={{ type: "food", text: "catering" }} />
             <Item dot="coral"  time="18:00" label="Doors close"              sub="Teams continue remotely" />
             <Item dot="gray"   time="23:59" label="Submission deadline"      tag={{ type: "wrap", text: "hard deadline" }} />
