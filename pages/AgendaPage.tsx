@@ -213,7 +213,7 @@ const AgendaPage: React.FC = () => {
             </p>
             <hr style={{ border: "none", borderTop: "0.5px solid rgba(200,170,80,0.15)", margin: "0 0 1.25rem" }} />
 
-            <Item dot="gray"   time="12:00"  label="Doors open"                   sub="Guests and filmmakers arrive" />
+            <Item dot="gray"   time="12:00"  label="Doors open"                   sub="Guests and filmmakers arrive · grab popcorn and drinks" />
             <Item dot="purple" time="12:30"  label="Opening speeches"              sub="MC welcome · words from key sponsors"             tags={[{ type: "key", text: "ceremony" }]} />
             <Item dot="teal"   time="12:45"  label="Film screenings"               sub="Selected submissions screened · ~1 hour" />
             <Item dot="purple" time="13:45"  label="Prize ceremony"                sub="Filmmakers on stage · trophies from partners · ~30 mins" tags={[{ type: "key", text: "awards" }]} />
