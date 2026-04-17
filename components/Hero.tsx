@@ -12,8 +12,13 @@ export interface HeroProps {
   mode?: HeroMode;
 }
 
+const pathLooksLikeBanner = () =>
+  typeof window !== "undefined" &&
+  (window.location.pathname.replace(/\/+$/, "") || "/").toLowerCase() ===
+    "/banner";
+
 const Hero: React.FC<HeroProps> = ({ mode = "default" }) => {
-  const isBanner = mode === "banner";
+  const isBanner = mode === "banner" || pathLooksLikeBanner();
   const isBannerRef = useRef(isBanner);
   isBannerRef.current = isBanner;
 
