@@ -16,7 +16,7 @@ const BriefPage: React.FC = () => {
           color: "rgba(200,170,80,0.7)",
           marginBottom: "1.2rem",
         }}>
-          Give(a)Go &nbsp;·&nbsp; AI Filmmaking Challenge v2 &nbsp;·&nbsp; 18–19 April 2025
+          Give(a)Go &nbsp;·&nbsp; AI Filmmaking Challenge v2 &nbsp;·&nbsp; 18–19 April 2026
         </p>
 
         {/* Title block */}
