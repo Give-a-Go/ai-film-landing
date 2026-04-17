@@ -157,10 +157,10 @@ const AgendaPage: React.FC = () => {
             <Item dot="gray"   time="11:00" label="Doors open"              sub="Breakfast, coffee & networking" />
             <Item dot="purple" time="11:30" label="Welcome & introductions"  sub="Give(a)Go overview · partner intros" tag={{ type: "key", text: "kick-off" }} />
             <Item dot="teal"   time="12:00" label="Build begins"             tag={{ type: "build", text: "hacking" }} />
-            <Item dot="pink"   time="12:15" label="fal.ai demo session"      sub="30 min · runs alongside build time" tag={{ type: "demo", text: "sponsor demo" }} />
+            <Item dot="pink"   time="12:15" label="fal.ai demo session"      sub="30 min · runs alongside build time" tag={{ type: "demo", text: "tool demo" }} />
             <Item dot="amber"  time="13:30" label="Lunch"                    sub="Sanos Pizza" tag={{ type: "food", text: "catering" }} />
             <Item dot="teal"   time="14:00" label="Build continues"          tag={{ type: "build", text: "hacking" }} />
-            <Item dot="pink"   time="14:00" label="Wan AI demo session"     sub="30 min · runs alongside build time" tag={{ type: "demo", text: "sponsor demo" }} />
+            <Item dot="pink"   time="14:00" label="Wan AI demo session"     sub="30 min · runs alongside build time" tag={{ type: "demo", text: "tool demo" }} />
             <Item dot="amber"  time="17:30" label="Dinner"                   tag={{ type: "food", text: "catering" }} />
             <Item dot="coral"  time="18:00" label="Doors close"              sub="Teams continue remotely" />
             <Item dot="gray"   time="23:59" label="Submission deadline"      tag={{ type: "wrap", text: "hard deadline" }} />
