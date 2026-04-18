@@ -78,6 +78,29 @@ const Navigation: React.FC = () => {
             />
             Claim credits
           </a>
+          <a
+            href="/submit"
+            className={linkClassSmall}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.35rem",
+              color: "rgba(255,180,150,0.92)",
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                display: "inline-block",
+                width: 5,
+                height: 5,
+                borderRadius: "50%",
+                background: "rgba(255,140,100,0.95)",
+                boxShadow: "0 0 10px rgba(232,93,53,0.7)",
+              }}
+            />
+            Submit film
+          </a>
         </div>
       </div>
 
@@ -252,6 +275,30 @@ const Navigation: React.FC = () => {
                 }}
               />
               Claim credits
+            </a>
+            <a
+              href="/submit"
+              className={linkClass}
+              onClick={closeMenu}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                color: "rgba(255,180,150,0.95)",
+              }}
+            >
+              <span
+                aria-hidden
+                style={{
+                  display: "inline-block",
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: "rgba(255,140,100,0.95)",
+                  boxShadow: "0 0 10px rgba(232,93,53,0.7)",
+                }}
+              />
+              Submit film
             </a>
             <div
               className="my-2"

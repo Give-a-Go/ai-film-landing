@@ -866,6 +866,15 @@ const Hero: React.FC<HeroProps> = ({ mode = "default" }) => {
         .sponsor-marquee-track:hover {
           animation-play-state: paused;
         }
+        @keyframes submissionCalloutPulse {
+          0%, 100% { transform: scale(1); opacity: 0.9; }
+          50%       { transform: scale(1.25); opacity: 1; }
+        }
+        .submission-callout:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 0 32px rgba(232,93,53,0.4);
+          background: linear-gradient(180deg, rgba(232,93,53,0.26) 0%, rgba(232,93,53,0.12) 100%);
+        }
       `}</style>
 
       <div
@@ -923,6 +932,54 @@ const Hero: React.FC<HeroProps> = ({ mode = "default" }) => {
                 Give(a)Go{" "}
                 <span style={{ color: "rgba(198,153,58,0.35)" }}>×</span> Napkin
               </div>
+
+              {/* Submission call-out — live / in-event */}
+              {!isBanner && (
+                <a
+                  href="/submit"
+                  className="submission-callout group"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.6rem",
+                    padding: "0.45rem 0.9rem 0.45rem 0.6rem",
+                    marginBottom: "1.25rem",
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.22em",
+                    textTransform: "uppercase",
+                    color: "rgba(255,220,200,0.95)",
+                    textDecoration: "none",
+                    background:
+                      "linear-gradient(180deg, rgba(232,93,53,0.18) 0%, rgba(232,93,53,0.08) 100%)",
+                    border: "1px solid rgba(232,93,53,0.65)",
+                    borderRadius: 999,
+                    boxShadow: "0 0 24px rgba(232,93,53,0.25)",
+                    transition: "transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease",
+                  }}
+                >
+                  <span
+                    aria-hidden
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: "rgba(255,140,100,0.95)",
+                      boxShadow: "0 0 10px rgba(232,93,53,0.9)",
+                      animation: "submissionCalloutPulse 1.8s ease-in-out infinite",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span>Submissions open — submit your film</span>
+                  <span
+                    aria-hidden
+                    className="group-hover:translate-x-0.5 transition-transform"
+                    style={{ color: "rgba(255,220,200,0.85)" }}
+                  >
+                    →
+                  </span>
+                </a>
+              )}
 
               <h1
                 className="text-[2.5rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] xl:text-[7rem] leading-[0.95] font-serif tracking-tight mb-4"
