@@ -55,6 +55,29 @@ const Navigation: React.FC = () => {
           >
             V1 Recap <span style={{ fontSize: "0.7em", opacity: 0.7 }}>↗</span>
           </a>
+          <a
+            href="/credits"
+            className={linkClassSmall}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.35rem",
+              color: "rgba(220,185,90,0.78)",
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                display: "inline-block",
+                width: 5,
+                height: 5,
+                borderRadius: "50%",
+                background: "rgba(220,185,90,0.7)",
+                boxShadow: "0 0 8px rgba(220,185,90,0.55)",
+              }}
+            />
+            Claim credits
+          </a>
         </div>
       </div>
 
@@ -205,6 +228,30 @@ const Navigation: React.FC = () => {
             >
               V1 Recap{" "}
               <span style={{ fontSize: "0.75em", opacity: 0.6 }}>↗</span>
+            </a>
+            <a
+              href="/credits"
+              className={linkClass}
+              onClick={closeMenu}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                color: "rgba(220,185,90,0.92)",
+              }}
+            >
+              <span
+                aria-hidden
+                style={{
+                  display: "inline-block",
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: "rgba(220,185,90,0.8)",
+                  boxShadow: "0 0 10px rgba(220,185,90,0.55)",
+                }}
+              />
+              Claim credits
             </a>
             <div
               className="my-2"

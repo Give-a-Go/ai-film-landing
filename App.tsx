@@ -7,6 +7,7 @@ import CollisionSection from "./components/CollisionSection";
 import EventPage from "./pages/EventPage";
 import BriefPage from "./pages/BriefPage";
 import AgendaPage from "./pages/AgendaPage";
+import CreditsPage from "./pages/CreditsPage";
 import gsap from "gsap";
 
 const normalizePath = (pathname: string) =>
@@ -30,6 +31,7 @@ const App: React.FC = () => {
   const isAgendaPage = path === "/agenda";
   const isBannerPage = path === "/banner";
   const isGuidePage = path === "/guide";
+  const isCreditsPage = path === "/credits";
 
   useEffect(() => {
     gsap.config({ autoSleep: 60, force3D: true });
@@ -75,6 +77,10 @@ const App: React.FC = () => {
 
   if (isEventPage) {
     return <EventPage />;
+  }
+
+  if (isCreditsPage) {
+    return <CreditsPage />;
   }
 
   if (isBriefPage) {
