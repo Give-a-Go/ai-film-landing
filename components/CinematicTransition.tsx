@@ -1048,7 +1048,7 @@ const CinematicTransition: React.FC = () => {
                 <stop offset="0%" stopColor="#3c3428" />
                 <stop offset="100%" stopColor="#1e1a12" />
               </linearGradient>
-              <linearGradient id="lensGlassGrad" cx="38%" cy="38%" r="50%" fx="38%" fy="38%" gradientUnits="objectBoundingBox" id="lensGlass">
+              <linearGradient id="lensGlassGrad" cx="38%" cy="38%" r="50%" fx="38%" fy="38%" gradientUnits="objectBoundingBox">
                 <stop offset="0%" stopColor="rgba(248,236,188,0.92)" />
                 <stop offset="45%" stopColor="rgba(200,170,80,0.55)" />
                 <stop offset="100%" stopColor="rgba(80,60,20,0.8)" />
