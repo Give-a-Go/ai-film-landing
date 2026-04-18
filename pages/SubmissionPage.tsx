@@ -23,6 +23,11 @@ const T = {
 
 const SUBMISSION_FORM_URL = "https://forms.gle/zR2vtqS2qeNt15QX6";
 const PREMIERE_REGISTRATION_URL = "/event";
+const FAL_TOPAZ_UPSCALE_URL = "https://fal.ai/models/fal-ai/topaz/upscale/video";
+const ELEVENLABS_TOPAZ_UPSCALE_URL = "https://elevenlabs.io/edit-video/upscaler";
+const DAVINCI_RESOLVE_URL = "https://www.blackmagicdesign.com/products/davinciresolve/";
+const REMOTION_URL = "https://www.remotion.dev/";
+const CAPCUT_4K_EXPORT_URL = "https://www.capcut.com/help/export-videos-in-capcut";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SectionReveal — scroll-triggered fade+slide
@@ -738,7 +743,7 @@ const CHECKLIST_ITEMS: {
     index: 1,
     title: "Upscale your film and polish sound",
     summary:
-      "When your short film is ready, do one proper upscale pass and one final audio polish. Biggest quality jump before submit.",
+      "When your cut is locked, do one clean upscale pass and one short sound pass. Do this at the end, not during edits.",
   },
   {
     id: "upload",
@@ -1065,7 +1070,7 @@ const SubmissionPage: React.FC = () => {
                 margin: "1.6rem auto 0",
               }}
             >
-              One checklist. <strong style={{ color: T.goldSoft, fontWeight: 600 }}>Three steps</strong> — each one
+              One checklist. <strong style={{ color: T.goldSoft, fontWeight: 600 }}>Two steps</strong> — each one
               expands for the details. Tick them off as you go and the{" "}
               <strong style={{ color: T.goldSoft, fontWeight: 600 }}>submission form unlocks</strong> at the bottom.
             </p>
@@ -1177,9 +1182,8 @@ const SubmissionPage: React.FC = () => {
                 }}
               >
                 Your film screens at a <strong style={{ color: T.goldSoft, fontWeight: 600 }}>real cinema on a real screen</strong>. Raw generations
-                from video models look fine on a laptop and fall apart at 4K. A clean upscale pass is the single largest
-                quality jump you can make in the last hour — grain, edges, motion, everything tightens up. The difference
-                between "AI demo" and "short film" is usually one upscale pass and one audio pass.
+                from video models can look fine on a laptop and fall apart at cinema size. A clean upscale pass tightens
+                grain, edges, faces, and motion. One focused audio pass makes the film feel finished.
               </p>
               <p
                 style={{
@@ -1190,7 +1194,7 @@ const SubmissionPage: React.FC = () => {
                   color: "rgba(255,220,200,0.82)",
                 }}
               >
-                Do one high-quality upscale pass and one audio polish pass before upload. Steps below.
+                Lock the edit first, then upscale and polish audio once. Steps below.
               </p>
             </div>
           </SectionReveal>
@@ -1350,14 +1354,93 @@ const SubmissionPage: React.FC = () => {
                     color: "rgba(232,222,192,0.8)",
                   }}
                 >
-                  Biggest quality jump you can make in the last hour. Do this{" "}
+                  Use this as the final finish pass. Do it{" "}
                   <strong style={{ color: T.goldSoft, fontWeight: 600 }}>
-                    when your short film is fully ready
+                    after your short film is fully locked
                   </strong>{" "}
-                  — not while you are still changing edits.
+                  so you are not burning credits on versions you will cut later.
                 </p>
 
-                <CollapsibleSection title="Expand video upscale checklist" defaultOpen={false}>
+                <CollapsibleSection title="Expand editing tool options" defaultOpen={false}>
+                <Card style={{ marginTop: "1rem" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.8rem",
+                      marginBottom: "0.4rem",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: T.mono,
+                        fontSize: "0.62rem",
+                        letterSpacing: "0.28em",
+                        textTransform: "uppercase",
+                        color: T.amber,
+                      }}
+                    >
+                      Editing tools
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: T.mono,
+                        fontSize: "0.55rem",
+                        letterSpacing: "0.22em",
+                        textTransform: "uppercase",
+                        color: "rgba(255,160,130,0.9)",
+                        border: "1px solid rgba(232,93,53,0.5)",
+                        padding: "0.22rem 0.5rem",
+                        background: "rgba(232,93,53,0.08)",
+                      }}
+                    >
+                      4K safe
+                    </span>
+                  </div>
+
+                  <p
+                    style={{
+                      margin: "0.5rem 0 0.9rem",
+                      fontFamily: T.sans,
+                      fontSize: "1rem",
+                      lineHeight: 1.7,
+                      color: "rgba(232,222,192,0.78)",
+                    }}
+                  >
+                    Use the editor you can move fastest in. For the final export, the tool needs to preserve frame rate,
+                    resolution, audio sync, and clean joins if you upscaled in 30-second segments.
+                  </p>
+
+                  <Bullets
+                    items={[
+                      <>
+                        <strong style={{ color: T.goldSoft, fontWeight: 600 }}>Best default:</strong>{" "}
+                        <A href={DAVINCI_RESOLVE_URL}>DaVinci Resolve</A>. Use this if you are unsure. The free version
+                        is enough for UHD 4K exports up to 3840×2160; Studio is only needed for beyond-4K or heavier
+                        professional finishing.
+                      </>,
+                      <>
+                        <strong style={{ color: T.goldSoft, fontWeight: 600 }}>Programmatic edit:</strong>{" "}
+                        <A href={REMOTION_URL}>Remotion</A>. Use this when your film is assembled from code, templates,
+                        generated captions, data, or repeatable React scenes.
+                      </>,
+                      <>
+                        <strong style={{ color: T.goldSoft, fontWeight: 600 }}>Fast/simple edit:</strong>{" "}
+                        <A href={CAPCUT_4K_EXPORT_URL}>CapCut</A> is alright for quick cuts, captions, and social-style
+                        polish. Prefer desktop for 4K. Before submitting, export a test and check it full-screen because
+                        4K availability and quality depend on device, platform, source media, and account limits.
+                      </>,
+                    ]}
+                  />
+
+                  <Callout title="Quick rule">
+                    CapCut is fine if the export looks good. For cinema projection, DaVinci Resolve is the safer final
+                    assembly tool, especially when combining upscaled segments or exporting a clean 2K/4K master.
+                  </Callout>
+                </Card>
+                </CollapsibleSection>
+
+                <CollapsibleSection title="Expand video upscale guide" defaultOpen={false}>
                 <Card style={{ marginTop: "1rem" }}>
             <div
               style={{
@@ -1394,70 +1477,74 @@ const SubmissionPage: React.FC = () => {
               </span>
             </div>
 
+            <p
+              style={{
+                margin: "0.5rem 0 0.9rem",
+                fontFamily: T.sans,
+                fontSize: "1rem",
+                lineHeight: 1.7,
+                color: "rgba(232,222,192,0.78)",
+              }}
+            >
+              Recommended upscalers:{" "}
+              <A href={FAL_TOPAZ_UPSCALE_URL}>Topaz Video Upscale on fal.ai</A>{" "}
+              or{" "}
+              <A href={ELEVENLABS_TOPAZ_UPSCALE_URL}>Topaz video upscaler on ElevenLabs</A>.
+              If the tool only accepts 30 seconds at a time, split your locked export into 30-second segments, upscale
+              each segment, then join the segments back together in order before your final export.
+            </p>
+
             <ol style={{ listStyle: "none", padding: 0, margin: "0.5rem 0 1.4rem" }}>
               <Step n={1}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                  Make sure your short film is final first.
+                  Export a locked native-resolution master.
                 </strong>{" "}
-                Final edit, final color, final sequence. Upscaling before your film is final wastes time.
+                Export the final edit at whatever resolution your generations came out at, usually 720p or 1080p.
+                Use H.264 or ProRes, constant frame rate, 23.976 or 24 fps.
               </Step>
               <Step n={2}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                  Export your short film at native resolution
+                  Upscale the locked master.
                 </strong>{" "}
-                (whatever your generations came out at — usually 720p or 1080p). Do not pre-upscale before this step.
-                H.264 or ProRes, constant frame rate, 23.976 or 24 fps.
-              </Step>
-              <Step n={3}>
-                <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                Pick your preferred video upscaler.
-                </strong>{" "}
-                Any reliable model/tool is fine. Focus on clean motion, edges, and face consistency:
+                Aim for at least 1080p, ideally 2K. Use 4K only if you have time and credits. Do not upscale drafts.
                 <div style={{ marginTop: "0.55rem" }}>
                   <Bullets
                     items={[
                       <>
-                        Upscale the <strong style={{ color: T.goldSoft, fontWeight: 600 }}>final short film file</strong>,
-                        not early versions.
+                        For 30-second tool limits, split the film into 30-second chunks, upscale each chunk, then combine.
                       </>,
                       <>
-                        Check 2-3 moments in the short film for artefacts before exporting the full version.
+                        Keep the same frame rate throughout so the joins stay clean.
                       </>,
                       <>
-                        Keep frame rate constant (23.976/24) and avoid extra recompression passes.
+                        Avoid extra recompression passes after the upscale.
                       </>,
                     ]}
                   />
                 </div>
               </Step>
+              <Step n={3}>
+                <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
+                  Check the result before upload.
+                </strong>{" "}
+                Watch faces, text, fast motion, cuts between segments, and dark scenes on the biggest screen you can access.
+              </Step>
               <Step n={4}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                  Upscale to at least 1080p, ideally 2K.
+                  Keep an original backup.
                 </strong>{" "}
-                Cinema projection is 2K (2048×1080) or 4K — aim for 2K minimum. Going higher than 4K is a waste of credits.
-              </Step>
-              <Step n={5}>
-                <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                  Upscale only the parts of the short film that need it.
-                </strong>{" "}
-                If only some parts are soft/noisy, upscale those parts. Live-recorded footage usually does not
-                need it.
-              </Step>
-              <Step n={6}>
-                <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                  Place the upscaled parts back into your short film and export again.
-                </strong>{" "}
-                Do a final A/B look on a big screen if there is one free — the difference should be obvious.
+                Upload both the upscaled version and the original native-resolution version in Step 2.
               </Step>
             </ol>
 
             <Callout tone="warn" title="Quality check before moving on">
-              Watch the upscaled export on the biggest screen you can access before upload.
+              Upscalers can create artefacts. If a shot gets worse, use the original for that shot or keep the
+              native-resolution version as the backup.
             </Callout>
           </Card>
           </CollapsibleSection>
 
-          <CollapsibleSection title="Expand audio polish checklist" defaultOpen={false}>
+          <CollapsibleSection title="Expand sound polish guide" defaultOpen={false}>
           <Card style={{ marginTop: "1rem" }}>
             <div
               style={{
@@ -1476,7 +1563,7 @@ const SubmissionPage: React.FC = () => {
                   color: T.amber,
                 }}
               >
-                Audio polish
+                Sound polish
               </span>
               <span
                 style={{
@@ -1503,50 +1590,36 @@ const SubmissionPage: React.FC = () => {
                 color: "rgba(232,222,192,0.78)",
               }}
             >
-              Audience ears are unforgiving. Cinema sound systems expose hiss, clipping, and level mismatches that
-              headphones hide. Treat this as the final audio polish pass for your short film.
+              Keep this simple: make voices easy to hear, then add the sounds that stop scenes feeling empty.
             </p>
 
             <ol style={{ listStyle: "none", padding: 0, margin: "0.5rem 0 1.4rem" }}>
               <Step n={1}>
-                <strong style={{ color: T.goldSoft, fontWeight: 500 }}>Re-render final dialogue and VO at the highest quality setting.</strong>{" "}
-                Use your best available model/settings. Do this when your short film is final so you only render once.
+                <strong style={{ color: T.goldSoft, fontWeight: 500 }}>Clean dialogue and VO.</strong>{" "}
+                Re-render final AI voices at your best quality setting. If you recorded audio on a phone or laptop, run it
+                through a voice isolator or noise-reduction pass. The goal is simple: no hiss, no hum, no muffled lines.
               </Step>
               <Step n={2}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                  Run any recorded-on-phone audio through Voice Isolator.
+                  Add the missing scene sound.
                 </strong>{" "}
-                Use a voice isolator/noise reduction pass. Strip room noise, hum, and hiss.
-              </Step>
-              <Step n={3}>
-                <strong style={{ color: T.goldSoft, fontWeight: 500 }}>Generate missing foley and SFX.</strong>{" "}
-                Think cloth movement, footsteps on different surfaces, distant traffic, door slams, cups on a table.
-                Thirty seconds of the right foley lifts the whole film.
-              </Step>
-              <Step n={4}>
-                <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                  Lay 30 seconds of room tone under every scene.
-                </strong>{" "}
-                <em>"Quiet office ambience"</em>, <em>"empty forest at night"</em>, <em>"rainy city window"</em>. Silence
-                between lines feels dead in a cinema; room tone makes a scene breathe.
-              </Step>
-              <Step n={5}>
-                <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                  Score with a licensed/original track.
-                </strong>{" "}
-                Original score beats a rough needle-drop every time for judging — it reads as intent.
-              </Step>
-              <Step n={6}>
-                <strong style={{ color: T.goldSoft, fontWeight: 500 }}>Bounce a final mix.</strong>{" "}
-                Target <strong>-14 LUFS</strong> integrated, peaks at <strong>-1 dBTP</strong>. Export stereo WAV
-                alongside AAC for your final short film file.
+                Do one pass through the film and fill obvious gaps:
+                <div style={{ marginTop: "0.55rem" }}>
+                  <Bullets
+                    items={[
+                      <>Put quiet ambience under each scene: office tone, street noise, rain, forest, room air.</>,
+                      <>Add foley for visible actions: footsteps, doors, cloth movement, cups, bags, typing.</>,
+                      <>Add obvious SFX only where needed: phone buzzes, thunder, cars, impacts, machines.</>,
+                      <>Keep everything subtle. If a sound distracts from the story, lower it or remove it.</>,
+                    ]}
+                  />
+                </div>
               </Step>
             </ol>
 
             <Callout title="Why this matters">
-              A sharp short film with thin audio reads as an AI demo. A lightly compressed short film with full-bodied audio
-              reads as a film. When you have 60 minutes left before the deadline, spend 40 on audio, 20 on video —
-              not the other way around.
+              Before upload, play the film once without stopping. You are checking three things: voices are clear, volume
+              does not jump between scenes, and there is no dead silence where the room should have sound.
             </Callout>
           </Card>
           </CollapsibleSection>

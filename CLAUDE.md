@@ -10,10 +10,10 @@ Landing page for the AI Film Making Hackathon v2 featuring an immersive 3D photo
 
 ```bash
 # Install dependencies
-npm install
+./setup.sh
 
 # Run development server (port 3000)
-npm run dev
+./run.sh
 
 # Build for production
 npm run build
@@ -70,6 +70,8 @@ Create `.env.local` for local development (see `.env.example`):
 EMAIL_OCTOPUS_API_KEY=your_api_key_here
 EMAIL_OCTOPUS_LIST_ID=your_list_id_here
 ```
+
+`./setup.sh` runs `scripts/sync-env.sh`, which copies ignored `.env*` files from another registered git worktree into the current worktree when the target file does not already exist. Use `bash scripts/sync-env.sh --force` only when you intentionally want to overwrite local env files from another worktree.
 
 For Vercel deployment, add these variables in project settings for all environments.
 

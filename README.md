@@ -12,20 +12,23 @@ This landing page for the AI Film Making Hackathon features an immersive 3D phot
 
 1. Install dependencies:
    ```bash
-   npm install
+   ./setup.sh
    ```
 
 2. Set up environment variables for EmailOctopus (optional, for waitlist functionality):
-   - Copy `.env.example` to `.env.local`
+   - `./setup.sh` automatically copies existing `.env*` files from another git worktree when available
+   - If no worktree has env values yet, copy `.env.example` to `.env.local`
    - Add your `EMAIL_OCTOPUS_API_KEY` and `EMAIL_OCTOPUS_LIST_ID`
    - See [.env.example](.env.example) for detailed setup instructions
 
 3. Run the development server:
    ```bash
-   npm run dev
+   ./run.sh
    ```
 
-4. Open [http://localhost:5173](http://localhost:5173) in your browser
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+You can also use `npm run setup` and `npm start`. Set `PORT=3001 ./run.sh` to run on a different port.
 
 ## Features
 
