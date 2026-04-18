@@ -21,10 +21,10 @@ const T = {
   mono: "'IBM Plex Mono', monospace",
 };
 
-// Placeholder submission form + drive folder. Swap for real URLs when ready.
-const SUBMISSION_FORM_URL = "https://forms.gle/TODO-submission-form";
-const SUBMISSION_DRIVE_URL =
-  "https://drive.google.com/drive/folders/TODO-submission-drive";
+const SUBMISSION_FORM_URL = "https://forms.gle/zR2vtqS2qeNt15QX6";
+const PREMIERE_REGISTRATION_URL = "/event";
+// Example used only as a placeholder — teams submit a link to their *own* Drive folder.
+const DRIVE_FOLDER_EXAMPLE = "https://drive.google.com/drive/folders/...";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SectionReveal — scroll-triggered fade+slide
@@ -260,6 +260,44 @@ function Bullets({ items }: { items: React.ReactNode[] }) {
   );
 }
 
+function CollapsibleSection({
+  title,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  return (
+    <details
+      open={defaultOpen}
+      style={{
+        marginTop: "0.9rem",
+        border: `1px solid ${T.border}`,
+        background: "rgba(0,0,0,0.2)",
+      }}
+    >
+      <summary
+        style={{
+          cursor: "pointer",
+          padding: "0.85rem 1rem",
+          fontFamily: T.mono,
+          fontSize: "0.68rem",
+          letterSpacing: "0.2em",
+          textTransform: "uppercase",
+          color: T.amber,
+        }}
+      >
+        {title}
+      </summary>
+      <div style={{ padding: "0 1rem 1rem", borderTop: `1px dashed ${T.border}` }}>
+        {children}
+      </div>
+    </details>
+  );
+}
+
 function Callout({
   tone = "info",
   title,
@@ -313,103 +351,6 @@ function Callout({
       )}
       {children}
     </div>
-  );
-}
-
-function PrimaryButton({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "0.6rem",
-        padding: "1rem 1.9rem",
-        background: T.accent,
-        color: "#fff",
-        fontFamily: T.sans,
-        fontWeight: 600,
-        fontSize: "0.88rem",
-        letterSpacing: "0.08em",
-        textTransform: "uppercase",
-        textDecoration: "none",
-        border: "none",
-        borderRadius: 3,
-        boxShadow:
-          "0 0 28px rgba(232,93,53,0.28), 0 2px 10px rgba(0,0,0,0.55)",
-        transition: "transform 0.18s, box-shadow 0.18s",
-        alignSelf: "flex-start",
-      }}
-      onMouseEnter={(e) => {
-        const el = e.currentTarget as HTMLElement;
-        el.style.transform = "scale(1.03)";
-        el.style.boxShadow =
-          "0 0 40px rgba(232,93,53,0.42), 0 4px 16px rgba(0,0,0,0.55)";
-      }}
-      onMouseLeave={(e) => {
-        const el = e.currentTarget as HTMLElement;
-        el.style.transform = "scale(1)";
-        el.style.boxShadow =
-          "0 0 28px rgba(232,93,53,0.28), 0 2px 10px rgba(0,0,0,0.55)";
-      }}
-    >
-      {children}
-      <span aria-hidden>→</span>
-    </a>
-  );
-}
-
-function GhostButton({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "0.5rem",
-        padding: "0.95rem 1.4rem",
-        background: "transparent",
-        color: T.goldSoft,
-        fontFamily: T.mono,
-        fontSize: "0.72rem",
-        letterSpacing: "0.22em",
-        textTransform: "uppercase",
-        textDecoration: "none",
-        border: `1px solid ${T.borderStrong}`,
-        borderRadius: 3,
-        transition: "color 0.18s, border-color 0.18s, background 0.18s",
-      }}
-      onMouseEnter={(e) => {
-        const el = e.currentTarget as HTMLElement;
-        el.style.color = T.gold;
-        el.style.borderColor = "rgba(248,236,188,0.6)";
-        el.style.background = "rgba(200,170,80,0.05)";
-      }}
-      onMouseLeave={(e) => {
-        const el = e.currentTarget as HTMLElement;
-        el.style.color = T.goldSoft;
-        el.style.borderColor = T.borderStrong;
-        el.style.background = "transparent";
-      }}
-    >
-      {children}
-    </a>
   );
 }
 
@@ -784,9 +725,237 @@ function PrizeCard({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Pre-submission checklist — collapsible, gated flow
+// ─────────────────────────────────────────────────────────────────────────────
+type ChecklistId = "upscale" | "upload" | "form";
+
+const CHECKLIST_ITEMS: {
+  id: ChecklistId;
+  index: number;
+  title: string;
+  summary: string;
+}[] = [
+  {
+    id: "upscale",
+    index: 1,
+    title: "Upscale your film and polish sound",
+    summary:
+      "When your short film is ready, do one proper upscale pass and one final audio polish. Biggest quality jump before submit.",
+  },
+  {
+    id: "upload",
+    index: 2,
+    title: "Upload to your own Google Drive and share it publicly",
+    summary:
+      "Two versions (upscaled + original) in a Team-XX folder on your own Drive, shared as \"Anyone with the link — Viewer\".",
+  },
+  {
+    id: "form",
+    index: 3,
+    title: "Prepare your form answers",
+    summary:
+      "Draft every field in a doc first — team, tools, process, per-prize notes. Paste into the real form last.",
+  },
+];
+
+const CHECKLIST_STORAGE_KEY = "aif-submission-checklist-v1";
+
+function ChecklistItem({
+  index,
+  title,
+  summary,
+  open,
+  onMarkDone,
+  ctaLabel,
+  children,
+}: {
+  index: number;
+  title: string;
+  summary: string;
+  open: boolean;
+  onMarkDone: () => void;
+  ctaLabel: string;
+  children: React.ReactNode;
+}) {
+  if (!open) return null;
+
+  return (
+    <div
+      style={{
+        border: `1px solid ${T.borderStrong}`,
+        background: "rgba(0,0,0,0.3)",
+        marginBottom: "0.9rem",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          gap: "1rem",
+          padding: "1.1rem 1.25rem",
+          background: "transparent",
+          border: "none",
+          color: "inherit",
+          textAlign: "left",
+          fontFamily: "inherit",
+        }}
+      >
+        <div
+          style={{
+            flexShrink: 0,
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            border: `1px solid ${T.borderStrong}`,
+            background: "rgba(200,170,80,0.05)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontFamily: T.mono,
+            fontSize: "0.88rem",
+            color: T.amber,
+          }}
+          aria-hidden
+        >
+          {String(index).padStart(2, "0")}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontFamily: T.serif,
+              fontSize: "clamp(1.05rem, 1.7vw, 1.22rem)",
+              fontWeight: 600,
+              color: T.gold,
+              lineHeight: 1.25,
+            }}
+          >
+            {title}
+          </div>
+          <div
+            style={{
+              marginTop: "0.3rem",
+              fontFamily: T.sans,
+              fontSize: "0.9rem",
+              lineHeight: 1.55,
+              color: "rgba(232,222,192,0.6)",
+            }}
+          >
+            {summary}
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          padding: "0.2rem 1.25rem 1.5rem",
+          borderTop: `1px dashed ${T.border}`,
+        }}
+      >
+        {children}
+
+        <div
+          style={{
+            marginTop: "1.5rem",
+            display: "flex",
+            gap: "0.8rem",
+            alignItems: "center",
+          }}
+        >
+          <button
+            type="button"
+            onClick={onMarkDone}
+            style={{
+              fontFamily: T.mono,
+              fontSize: "0.72rem",
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: "rgba(230,255,230,0.96)",
+              border: "1px solid rgba(140,210,150,0.6)",
+              background: "rgba(140,210,150,0.10)",
+              padding: "0.75rem 1.25rem",
+              cursor: "pointer",
+              borderRadius: 3,
+              fontWeight: 600,
+              transition: "background 0.18s, border-color 0.18s",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.background =
+                "rgba(140,210,150,0.18)";
+              (e.currentTarget as HTMLElement).style.borderColor =
+                "rgba(170,225,180,0.9)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background =
+                "rgba(140,210,150,0.10)";
+              (e.currentTarget as HTMLElement).style.borderColor =
+                "rgba(140,210,150,0.6)";
+            }}
+          >
+            {ctaLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SubmissionPage
 // ─────────────────────────────────────────────────────────────────────────────
 const SubmissionPage: React.FC = () => {
+  const [hasOpenedForm, setHasOpenedForm] = useState(false);
+  const [done, setDone] = useState<Record<ChecklistId, boolean>>(() => {
+    const defaults: Record<ChecklistId, boolean> = {
+      upscale: false,
+      upload: false,
+      form: false,
+    };
+    if (typeof window === "undefined") return defaults;
+    try {
+      const raw = window.localStorage.getItem(CHECKLIST_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<Record<ChecklistId, boolean>>;
+        return {
+          upscale: !!parsed.upscale,
+          upload: !!parsed.upload,
+          form: !!parsed.form,
+        };
+      }
+    } catch {
+      /* ignore */
+    }
+    return defaults;
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(CHECKLIST_STORAGE_KEY, JSON.stringify(done));
+    } catch {
+      /* ignore */
+    }
+  }, [done]);
+
+  const [openId, setOpenId] = useState<ChecklistId | null>(() => {
+    const first = CHECKLIST_ITEMS.find((x) => !done[x.id]);
+    return first ? first.id : null;
+  });
+
+  const markDone = (id: ChecklistId) => {
+    setDone((prev) => {
+      const next = { ...prev, [id]: true };
+      const nextUndone = CHECKLIST_ITEMS.find((x) => !next[x.id]);
+      setOpenId(nextUndone ? nextUndone.id : null);
+      return next;
+    });
+  };
+
+  const completed = Object.values(done).filter(Boolean).length;
+  const total = CHECKLIST_ITEMS.length;
+  const allDone = completed === total;
+  const progressPct = Math.round((completed / total) * 100);
+
   return (
     <div
       style={{
@@ -901,9 +1070,9 @@ const SubmissionPage: React.FC = () => {
                 margin: "1.6rem auto 0",
               }}
             >
-              Three steps. <strong style={{ color: T.goldSoft, fontWeight: 600 }}>Upscale</strong>,{" "}
-              <strong style={{ color: T.goldSoft, fontWeight: 600 }}>upload</strong>, then{" "}
-              <strong style={{ color: T.goldSoft, fontWeight: 600 }}>fill the form</strong>. In that order.
+              One checklist. <strong style={{ color: T.goldSoft, fontWeight: 600 }}>Three steps</strong> — each one
+              expands for the details. Tick them off as you go and the{" "}
+              <strong style={{ color: T.goldSoft, fontWeight: 600 }}>submission form unlocks</strong> at the bottom.
             </p>
           </SectionReveal>
 
@@ -918,10 +1087,7 @@ const SubmissionPage: React.FC = () => {
               }}
             >
               {[
-                { label: "01 · Upscale", href: "#upscale" },
-                { label: "02 · Upload", href: "#upload" },
-                { label: "03 · Form", href: "#form" },
-                { label: "04 · Prizes", href: "#prizes" },
+                { label: "Checklist", href: "#checklist" },
               ].map((c) => (
                 <a
                   key={c.label}
@@ -1029,33 +1195,175 @@ const SubmissionPage: React.FC = () => {
                   color: "rgba(255,220,200,0.82)",
                 }}
               >
-                Use your remaining <strong>Fal credits</strong> for video and your remaining{" "}
-                <strong>ElevenLabs credits</strong> for audio polish. Steps below.
+                Do one high-quality upscale pass and one audio polish pass before upload. Steps below.
               </p>
             </div>
           </SectionReveal>
         </section>
 
         <FilmStripBorder />
-        <ActLabel number="I" title="Upscale — video + audio" />
 
         {/* ═══════════════════════════════════════════════════════════════════
-            UPSCALE — Fal (video) + ElevenLabs (audio)
+            PRE-SUBMISSION CHECKLIST — collapsible, gated
             ═══════════════════════════════════════════════════════════════ */}
-        <Section
-          id="upscale"
-          slate="01A"
-          title="Make it look and sound like a film"
-          tag="Video upscaling on Fal · audio polish on ElevenLabs"
-          summary={
-            <>
-              This is the biggest single quality jump between a rough cut and a festival-ready short. Do it last, after
-              picture is locked. <strong style={{ color: T.goldSoft, fontWeight: 600 }}>Never upscale drafts</strong> — it is
-              slow and expensive. When you upscale, do the final master and nothing else.
-            </>
-          }
+        <section
+          id="checklist"
+          style={{
+            position: "relative",
+            padding: "3rem 1.5rem 2rem",
+            maxWidth: 860,
+            width: "100%",
+            margin: "0 auto",
+            scrollMarginTop: "90px",
+          }}
         >
-          <Card>
+          <SectionReveal>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "1rem",
+                marginBottom: "1.4rem",
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: T.mono,
+                  fontSize: "0.62rem",
+                  letterSpacing: "0.28em",
+                  color: T.amberDim,
+                  textTransform: "uppercase",
+                  border: `1px solid ${T.border}`,
+                  padding: "0.35rem 0.7rem",
+                  background: "rgba(0,0,0,0.3)",
+                }}
+              >
+                Scene 01 · Checklist
+              </div>
+              <div style={{ flex: 1, height: 1, background: "rgba(200,170,80,0.14)" }} />
+            </div>
+          </SectionReveal>
+
+          <SectionReveal delay={0.08}>
+            <h2
+              style={{
+                fontFamily: T.serif,
+                fontSize: "clamp(1.9rem, 4vw, 2.9rem)",
+                fontWeight: 700,
+                color: T.gold,
+                margin: 0,
+                lineHeight: 1.1,
+                letterSpacing: "0.005em",
+              }}
+            >
+              Pre-submission checklist
+            </h2>
+            <div
+              style={{
+                marginTop: "0.5rem",
+                fontFamily: T.sans,
+                fontSize: "0.95rem",
+                color: T.amberDim,
+                fontStyle: "italic",
+                letterSpacing: "0.01em",
+              }}
+            >
+              Step 1, Step 2, Step 3. Complete one, click next, and the form unlocks at the end.
+            </div>
+          </SectionReveal>
+
+          <SectionReveal delay={0.16}>
+            <div
+              style={{
+                marginTop: "1.8rem",
+                padding: "1rem 1.1rem",
+                border: `1px solid ${T.border}`,
+                background: "rgba(200,170,80,0.04)",
+                display: "flex",
+                alignItems: "center",
+                gap: "1rem",
+                flexWrap: "wrap",
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: T.mono,
+                  fontSize: "0.62rem",
+                  letterSpacing: "0.28em",
+                  textTransform: "uppercase",
+                  color: allDone ? "rgba(200,255,200,0.95)" : T.amber,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Progress · {completed}/{total}
+              </div>
+              <div
+                style={{
+                  flex: 1,
+                  minWidth: 140,
+                  height: 6,
+                  background: "rgba(200,170,80,0.1)",
+                  borderRadius: 3,
+                  overflow: "hidden",
+                  position: "relative",
+                }}
+                aria-hidden
+              >
+                <div
+                  style={{
+                    width: `${progressPct}%`,
+                    height: "100%",
+                    background: allDone
+                      ? "linear-gradient(90deg, rgba(140,210,150,0.7), rgba(180,230,180,0.95))"
+                      : "linear-gradient(90deg, rgba(200,170,80,0.5), rgba(248,236,188,0.85))",
+                    transition: "width 0.45s ease, background 0.45s ease",
+                  }}
+                />
+              </div>
+              <div
+                style={{
+                  fontFamily: T.mono,
+                  fontSize: "0.62rem",
+                  letterSpacing: "0.22em",
+                  textTransform: "uppercase",
+                  color: T.amberDim,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {allDone ? "Ready to submit" : `${total - completed} left`}
+              </div>
+            </div>
+          </SectionReveal>
+
+          <SectionReveal delay={0.22}>
+            <div style={{ marginTop: "1.8rem" }}>
+              {/* ───────────────────── Step 01 — Upscale & polish ───────────────────── */}
+              <ChecklistItem
+                index={CHECKLIST_ITEMS[0].index}
+                title={CHECKLIST_ITEMS[0].title}
+                summary={CHECKLIST_ITEMS[0].summary}
+                open={openId === "upscale"}
+                onMarkDone={() => markDone("upscale")}
+                ctaLabel="Next · Step 2"
+              >
+                <p
+                  style={{
+                    marginTop: "1.25rem",
+                    fontFamily: T.sans,
+                    fontSize: "1rem",
+                    lineHeight: 1.75,
+                    color: "rgba(232,222,192,0.8)",
+                  }}
+                >
+                  Biggest quality jump you can make in the last hour. Do this{" "}
+                  <strong style={{ color: T.goldSoft, fontWeight: 600 }}>
+                    when your short film is fully ready
+                  </strong>{" "}
+                  — not while you are still changing edits.
+                </p>
+
+                <CollapsibleSection title="Expand video upscale checklist" defaultOpen={false}>
+                <Card style={{ marginTop: "1rem" }}>
             <div
               style={{
                 display: "flex",
@@ -1073,7 +1381,7 @@ const SubmissionPage: React.FC = () => {
                   color: T.amber,
                 }}
               >
-                Video · Fal
+                Video upscale
               </span>
               <span
                 style={{
@@ -1087,44 +1395,41 @@ const SubmissionPage: React.FC = () => {
                   background: "rgba(232,93,53,0.08)",
                 }}
               >
-                Use remaining credits
+                Final pass
               </span>
             </div>
 
             <ol style={{ listStyle: "none", padding: 0, margin: "0.5rem 0 1.4rem" }}>
               <Step n={1}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                  Lock picture first.
+                  Make sure your short film is final first.
                 </strong>{" "}
-                Final edit, final colour, final cut points. Upscaling an unlocked edit wastes credits and time.
+                Final edit, final color, final sequence. Upscaling before your film is final wastes time.
               </Step>
               <Step n={2}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                  Export your master at native resolution
+                  Export your short film at native resolution
                 </strong>{" "}
-                (whatever your generations came out at — usually 720p or 1080p). Don't pre-upscale in your NLE first.
+                (whatever your generations came out at — usually 720p or 1080p). Do not pre-upscale before this step.
                 H.264 or ProRes, constant frame rate, 23.976 or 24 fps.
               </Step>
               <Step n={3}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                  Open the Fal playground and pick an upscaler.
+                Pick your preferred video upscaler.
                 </strong>{" "}
-                Recommended, in order of cinematic quality:
+                Any reliable model/tool is fine. Focus on clean motion, edges, and face consistency:
                 <div style={{ marginTop: "0.55rem" }}>
                   <Bullets
                     items={[
                       <>
-                        <A href="https://fal.ai/models/fal-ai/topaz/upscale/video">Topaz Video Upscale</A> — the gold
-                        standard. Best for live-action and AI-generated footage alike. Handles faces, hair, and motion
-                        without smearing. Use the <em>Proteus</em> or <em>Artemis</em> model for AI video.
+                        Upscale the <strong style={{ color: T.goldSoft, fontWeight: 600 }}>final short film file</strong>,
+                        not early versions.
                       </>,
                       <>
-                        <A href="https://fal.ai/models/fal-ai/seedvr2/upscale/video">SeedVR2 Video Upscaler</A> — newer,
-                        fast, strong on stylised footage. Great fallback when Topaz credits run thin.
+                        Check 2-3 moments in the short film for artefacts before exporting the full version.
                       </>,
                       <>
-                        <A href="https://fal.ai/models/fal-ai/esrgan">ESRGAN / Real-ESRGAN</A> — frame-by-frame fallback
-                        if you only need stills. Not recommended for the full film.
+                        Keep frame rate constant (23.976/24) and avoid extra recompression passes.
                       </>,
                     ]}
                   />
@@ -1138,36 +1443,27 @@ const SubmissionPage: React.FC = () => {
               </Step>
               <Step n={5}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                  Upscale clip-by-clip, not the whole timeline.
+                  Upscale only the parts of the short film that need it.
                 </strong>{" "}
-                If you only have AI shots in some sequences, upscale only those. Live-recorded footage usually does not
+                If only some parts are soft/noisy, upscale those parts. Live-recorded footage usually does not
                 need it.
               </Step>
               <Step n={6}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                  Re-cut the upscaled clips into your timeline and re-export the master.
+                  Place the upscaled parts back into your short film and export again.
                 </strong>{" "}
                 Do a final A/B look on a big screen if there is one free — the difference should be obvious.
               </Step>
             </ol>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
-              <PrimaryButton href="https://fal.ai/models?categories=video-to-video">
-                Open Fal upscale models
-              </PrimaryButton>
-              <GhostButton href="/credits#fal-ai">Claim credits on Fal</GhostButton>
-            </div>
-
-            <Callout tone="warn" title="Out of Fal credits?">
-              Claim fresh credits first (each participant has $75).{" "}
-              <A href="/credits#fal-ai">See the credits page</A>. If you have truly burned through them, grab a
-              Give(a)Go mentor — we can usually top you up for the final render.
+            <Callout tone="warn" title="Quality check before moving on">
+              Watch the upscaled export on the biggest screen you can access before upload.
             </Callout>
           </Card>
+          </CollapsibleSection>
 
-          <div style={{ height: "1.25rem" }} />
-
-          <Card>
+          <CollapsibleSection title="Expand audio polish checklist" defaultOpen={false}>
+          <Card style={{ marginTop: "1rem" }}>
             <div
               style={{
                 display: "flex",
@@ -1185,7 +1481,7 @@ const SubmissionPage: React.FC = () => {
                   color: T.amber,
                 }}
               >
-                Audio · ElevenLabs
+                Audio polish
               </span>
               <span
                 style={{
@@ -1199,7 +1495,7 @@ const SubmissionPage: React.FC = () => {
                   background: "rgba(232,93,53,0.08)",
                 }}
               >
-                Use remaining credits
+                Final pass
               </span>
             </div>
 
@@ -1213,28 +1509,24 @@ const SubmissionPage: React.FC = () => {
               }}
             >
               Audience ears are unforgiving. Cinema sound systems expose hiss, clipping, and level mismatches that
-              headphones hide. Treat the audio pass the same way you treat the video upscale — as a single, focused,
-              end-of-pipeline polish.
+              headphones hide. Treat this as the final audio polish pass for your short film.
             </p>
 
             <ol style={{ listStyle: "none", padding: 0, margin: "0.5rem 0 1.4rem" }}>
               <Step n={1}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>Re-render final dialogue and VO at the highest quality setting.</strong>{" "}
-                In the ElevenLabs app, set output to the highest available (<em>eleven_multilingual_v2</em> or the
-                latest v3 at MP3 44.1kHz 192kbps or WAV). Do this after picture is locked so you only pay once per line.
+                Use your best available model/settings. Do this when your short film is final so you only render once.
               </Step>
               <Step n={2}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
                   Run any recorded-on-phone audio through Voice Isolator.
                 </strong>{" "}
-                <A href="https://elevenlabs.io/app/voice-isolator">elevenlabs.io/app/voice-isolator</A>. Strips room
-                noise, wind, HVAC. One click. Essentially free.
+                Use a voice isolator/noise reduction pass. Strip room noise, hum, and hiss.
               </Step>
               <Step n={3}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>Generate missing foley and SFX.</strong>{" "}
-                <A href="https://elevenlabs.io/app/sound-effects">elevenlabs.io/app/sound-effects</A>. Think cloth
-                movement, footsteps on different surfaces, distant traffic, door slams, cups on a table. Thirty seconds
-                of the right foley lifts the whole film.
+                Think cloth movement, footsteps on different surfaces, distant traffic, door slams, cups on a table.
+                Thirty seconds of the right foley lifts the whole film.
               </Step>
               <Step n={4}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
@@ -1245,75 +1537,92 @@ const SubmissionPage: React.FC = () => {
               </Step>
               <Step n={5}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                  Score with ElevenLabs Music or a licensed track.
+                  Score with a licensed/original track.
                 </strong>{" "}
-                <A href="https://elevenlabs.io/app/music">elevenlabs.io/app/music</A>. Original score beats a rough
-                needle-drop every time for judging — it reads as intent.
+                Original score beats a rough needle-drop every time for judging — it reads as intent.
               </Step>
               <Step n={6}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>Bounce a final mix.</strong>{" "}
                 Target <strong>-14 LUFS</strong> integrated, peaks at <strong>-1 dBTP</strong>. Export stereo WAV
-                alongside the AAC for the final master.
+                alongside AAC for your final short film file.
               </Step>
             </ol>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
-              <PrimaryButton href="https://elevenlabs.io/app/voice-isolator">
-                Open ElevenLabs Voice Isolator
-              </PrimaryButton>
-              <GhostButton href="/credits#elevenlabs">Claim ElevenLabs Pro</GhostButton>
-            </div>
-
             <Callout title="Why this matters">
-              A sharp picture with thin audio reads as an AI demo. A lightly compressed picture with full-bodied audio
+              A sharp short film with thin audio reads as an AI demo. A lightly compressed short film with full-bodied audio
               reads as a film. When you have 60 minutes left before the deadline, spend 40 on audio, 20 on video —
               not the other way around.
             </Callout>
           </Card>
-        </Section>
+          </CollapsibleSection>
+              </ChecklistItem>
 
-        <FilmStripBorder compact />
-        <ActLabel number="II" title="Upload to Google Drive" />
+              {/* ───────────────────── Step 02 — Upload + share ───────────────────── */}
+              <ChecklistItem
+                index={CHECKLIST_ITEMS[1].index}
+                title={CHECKLIST_ITEMS[1].title}
+                summary={CHECKLIST_ITEMS[1].summary}
+                open={openId === "upload"}
+                onMarkDone={() => markDone("upload")}
+                ctaLabel="Next · Step 3"
+              >
+                <p
+                  style={{
+                    marginTop: "1.25rem",
+                    fontFamily: T.sans,
+                    fontSize: "1rem",
+                    lineHeight: 1.75,
+                    color: "rgba(232,222,192,0.8)",
+                  }}
+                >
+                  You host the files. The premiere rolls straight from a link you paste into the submission form, so we
+                  need <strong style={{ color: T.goldSoft, fontWeight: 600 }}>two versions</strong> in the same folder:
+                  the upscaled cinema cut, and your original film file at whatever native resolution your generations came
+                  out at. The original is the backup we fall back to if anything is off with the upscale on the night.
+                </p>
 
-        {/* ═══════════════════════════════════════════════════════════════════
-            UPLOAD
-            ═══════════════════════════════════════════════════════════════ */}
-        <Section
-          id="upload"
-          slate="02A"
-          title="Upload your master to the hackathon Drive"
-          tag="One folder per team · naming conventions matter"
-          summary={
-            <>
-              The premiere rolls straight from the Drive folder. Bad file names and missing metadata are the #1 reason
-              films get shown out of order or with the wrong title card. Follow the naming convention exactly.
-            </>
-          }
-        >
-          <Card>
+                <CollapsibleSection title="Expand upload + sharing details" defaultOpen={false}>
+                <Card style={{ marginTop: "1rem" }}>
             <ol style={{ listStyle: "none", padding: 0, margin: "0.5rem 0 1.4rem" }}>
               <Step n={1}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                  Open the hackathon Drive folder.
+                  Create a new folder in your own Google Drive.
                 </strong>{" "}
-                <A href={SUBMISSION_DRIVE_URL}>Submission Drive (all teams)</A>
+                Name it <code style={{ fontFamily: T.mono, color: T.amber }}>Team-XX_Film-Title</code> — replace XX
+                with your team number (e.g. <code style={{ fontFamily: T.mono, color: T.amber }}>Team-07_The-Crossing</code>).
+                Use hyphens. No spaces, no emojis.
               </Step>
               <Step n={2}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                  Create a folder named <code style={{ fontFamily: T.mono, color: T.amber }}>Team-XX_Film-Title</code>.
-                </strong>{" "}
-                Replace XX with your team number (e.g. <code style={{ fontFamily: T.mono, color: T.amber }}>Team-07_The-Crossing</code>).
-                No spaces, no emojis — use hyphens.
+                  Upload two versions of your film into that folder:
+                </strong>
+                <div style={{ marginTop: "0.55rem" }}>
+                  <Bullets
+                    items={[
+                      <>
+                        <code style={{ fontFamily: T.mono, color: T.amber }}>
+                          FINAL_Team-XX_Film-Title_UPSCALED.mp4
+                        </code>{" "}
+                        — the <strong style={{ color: T.goldSoft, fontWeight: 600 }}>upscaled short film file</strong>{" "}
+                        for cinema projection. Aim for 2K (2048×1080) or 4K. This is what we project at the premiere.
+                      </>,
+                      <>
+                        <code style={{ fontFamily: T.mono, color: T.amber }}>
+                          FINAL_Team-XX_Film-Title_ORIGINAL.mp4
+                        </code>{" "}
+                        — your <strong style={{ color: T.goldSoft, fontWeight: 600 }}>original short film file</strong> at
+                        whatever native resolution your generations came out at. Ideally 1080p; 720p is fine if
+                        that's what you have. <em>Do not re-upscale or re-compress this one.</em>
+                      </>,
+                    ]}
+                  />
+                </div>
+                <div style={{ marginTop: "0.55rem", fontSize: "0.95rem", lineHeight: 1.65, color: "rgba(232,222,192,0.7)" }}>
+                  Both files: H.264, 23.976 or 24 fps, audio at 44.1 kHz. Target under 2 GB each.
+                </div>
               </Step>
               <Step n={3}>
-                <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                  Upload the final master as{" "}
-                  <code style={{ fontFamily: T.mono, color: T.amber }}>FINAL_Team-XX_Film-Title.mp4</code>.
-                </strong>{" "}
-                H.264, 1080p or 2K, 23.976 or 24 fps, audio at 44.1kHz. Target under 2 GB.
-              </Step>
-              <Step n={4}>
-                <strong style={{ color: T.goldSoft, fontWeight: 500 }}>Inside that folder, add three sub-items:</strong>
+                <strong style={{ color: T.goldSoft, fontWeight: 500 }}>Inside the same folder, add:</strong>
                 <div style={{ marginTop: "0.55rem" }}>
                   <Bullets
                     items={[
@@ -1323,7 +1632,7 @@ const SubmissionPage: React.FC = () => {
                       </>,
                       <>
                         <code style={{ fontFamily: T.mono, color: T.amber }}>bts/</code> — a sub-folder with any
-                        behind-the-scenes stills, screen recordings, or pipeline diagrams
+                        behind-the-scenes stills, screen recordings, or short film workflow notes
                       </>,
                       <>
                         <code style={{ fontFamily: T.mono, color: T.amber }}>references/</code> — any reference
@@ -1333,11 +1642,44 @@ const SubmissionPage: React.FC = () => {
                   />
                 </div>
               </Step>
+              <Step n={4}>
+                <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
+                  Set the folder to{" "}
+                  <em>"Anyone with the link — Viewer"</em>.
+                </strong>
+                <div
+                  style={{
+                    marginTop: "0.55rem",
+                    fontSize: "0.95rem",
+                    lineHeight: 1.65,
+                    color: "rgba(232,222,192,0.78)",
+                  }}
+                >
+                  Right-click the folder →{" "}
+                  <strong style={{ color: T.goldSoft, fontWeight: 600 }}>Share</strong> →{" "}
+                  <strong style={{ color: T.goldSoft, fontWeight: 600 }}>Share</strong>. Under{" "}
+                  <em>General access</em>, change <em>Restricted</em> to{" "}
+                  <strong style={{ color: T.goldSoft, fontWeight: 600 }}>Anyone with the link</strong>, and confirm the
+                  role is <strong style={{ color: T.goldSoft, fontWeight: 600 }}>Viewer</strong>. Then hit{" "}
+                  <strong style={{ color: T.goldSoft, fontWeight: 600 }}>Copy link</strong>.
+                </div>
+                <div
+                  style={{
+                    marginTop: "0.4rem",
+                    fontSize: "0.9rem",
+                    lineHeight: 1.6,
+                    color: "rgba(232,222,192,0.6)",
+                  }}
+                >
+                  Do this on the <em>folder</em>, not each file individually — files inside inherit folder access.
+                </div>
+              </Step>
               <Step n={5}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
-                  Set sharing to <em>"Anyone with the link"</em>.
+                  Test the link in a private / incognito window.
                 </strong>{" "}
-                Judges and the projection desk need to reach it without requesting access.
+                If the folder opens without asking you to sign in or request access, you're done. If it asks for
+                access, it isn't shared correctly — go back to Step 4.
               </Step>
               <Step n={6}>
                 <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
@@ -1347,48 +1689,70 @@ const SubmissionPage: React.FC = () => {
               </Step>
             </ol>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
-              <PrimaryButton href={SUBMISSION_DRIVE_URL}>Open submission Drive</PrimaryButton>
-              <span
-                style={{
-                  fontFamily: T.mono,
-                  fontSize: "0.6rem",
-                  letterSpacing: "0.2em",
-                  textTransform: "uppercase",
-                  color: T.dim,
-                }}
-              >
-                Opens in a new tab
-              </span>
-            </div>
+            <Callout tone="warn" title="Most common submission failure: private folders.">
+              Every year at least one team submits a link that still says <em>Restricted</em>. Judges can't view it,
+              the projection desk can't download it, and we have to chase you at 4am. Before you hit submit,{" "}
+              <strong style={{ color: T.goldSoft, fontWeight: 600 }}>
+                open your Drive link in a private / incognito browser window
+              </strong>{" "}
+              — if it doesn't play without a login, it isn't shared correctly.
+            </Callout>
+
+            <Callout title="Why both versions?">
+              Upscalers can introduce artefacts or colour shifts in parts of a short film. If anything looks off on the
+              cinema screen, we switch to your original short film file for that title and move on — no panic, no last-minute
+              re-exports. Upload both and you're covered either way.
+            </Callout>
+
+            <Callout title="Small but important 4K note">
+              If you upscale your short film to 4K and then export your short film from a non-4K timeline, you can throw away most of that quality
+              gain. If your edit setup struggles with one full 4K short film file, upload in parts instead using clear names like{" "}
+              <code style={{ fontFamily: T.mono, color: T.amber }}>
+                FINAL_Team-XX_Film-Title_UPSCALED_PART-01.mp4
+              </code>
+              ,{" "}
+              <code style={{ fontFamily: T.mono, color: T.amber }}>
+                ..._PART-02.mp4
+              </code>
+              , etc.
+            </Callout>
 
             <Callout tone="warn" title="File size getting big?">
-              Export at H.264 High Profile, CRF 18–20, 10–16 Mbps. That is visually indistinguishable from a master at
-              1080p and cuts file size by 3–4×. Keep the uncompressed master on your own drive in case the organisers
-              ask for it.
+              Export at H.264 High Profile, CRF 18–20, 10–16 Mbps. That is visually indistinguishable from an
+              uncompressed film file at 1080p and cuts file size by 3–4×. Keep the uncompressed film file on your own
+              machine in case we ask for it later.
             </Callout>
           </Card>
-        </Section>
+          </CollapsibleSection>
+              </ChecklistItem>
 
-        <FilmStripBorder compact />
-        <ActLabel number="III" title="Fill the submission form" />
+              {/* ───────────────────── Step 03 — Prepare form answers ───────────────────── */}
+              <ChecklistItem
+                index={CHECKLIST_ITEMS[2].index}
+                title={CHECKLIST_ITEMS[2].title}
+                summary={CHECKLIST_ITEMS[2].summary}
+                open={openId === "form"}
+                onMarkDone={() => markDone("form")}
+                ctaLabel="Finish checklist"
+              >
+                <p
+                  style={{
+                    marginTop: "1.25rem",
+                    fontFamily: T.sans,
+                    fontSize: "1rem",
+                    lineHeight: 1.75,
+                    color: "rgba(232,222,192,0.8)",
+                  }}
+                >
+                  The form is short — under ten minutes if you have your Drive link, team roster, and a two-sentence
+                  pitch ready. These are the exact fields on the real form.{" "}
+                  <strong style={{ color: T.goldSoft, fontWeight: 600 }}>
+                    Draft every answer in a doc first, then paste them in.
+                  </strong>
+                </p>
 
-        {/* ═══════════════════════════════════════════════════════════════════
-            FORM — field-by-field preview
-            ═══════════════════════════════════════════════════════════════ */}
-        <Section
-          id="form"
-          slate="03A"
-          title="The submission form"
-          tag="Every field below is on the real form — prepare answers first"
-          summary={
-            <>
-              The form is short. It should take under ten minutes if you have your Drive link, team roster, and a
-              two-sentence pitch ready. Open the fields below, draft your answers in a doc, then paste them in.
-            </>
-          }
-        >
-          <Card>
+                <CollapsibleSection title="Expand form field details" defaultOpen={false}>
+                <Card style={{ marginTop: "1rem" }}>
             <div
               style={{
                 fontFamily: T.mono,
@@ -1418,16 +1782,22 @@ const SubmissionPage: React.FC = () => {
             />
 
             <FormField
-              label="Film file / Drive folder link"
+              label="Your Google Drive folder link"
               required
               type="url"
               hint={
                 <>
-                  The link to your <code style={{ fontFamily: T.mono, color: T.amber }}>Team-XX_Film-Title</code> folder
-                  from Step II. Must be set to <em>"Anyone with the link"</em>.
+                  The link to <strong>your</strong>{" "}
+                  <code style={{ fontFamily: T.mono, color: T.amber }}>Team-XX_Film-Title</code> folder from Step II —
+                  containing both the <em>_UPSCALED</em> and <em>_ORIGINAL</em> files. The folder{" "}
+                  <strong style={{ color: T.goldSoft, fontWeight: 600 }}>
+                    must be shared as "Anyone with the link — Viewer"
+                  </strong>
+                  . Test it in an incognito window before pasting it here — if it asks for access, it isn't shared
+                  correctly.
                 </>
               }
-              placeholder={SUBMISSION_DRIVE_URL}
+              placeholder={DRIVE_FOLDER_EXAMPLE}
             />
 
             <FormField
@@ -1435,7 +1805,7 @@ const SubmissionPage: React.FC = () => {
               required
               type="select"
               hint="Yes / No / Partially. Films that haven't been upscaled still play but will read rougher than they should. Be honest."
-              placeholder="Yes — upscaled on Fal to 2K"
+              placeholder="Yes — upscaled to 2K"
             />
 
             <div
@@ -1464,7 +1834,7 @@ const SubmissionPage: React.FC = () => {
               required
               type="textarea"
               hint="Full names + a one-word role each (director, VFX, sound, writer, etc.). Everyone who worked on the film — for the credits slide at the premiere."
-              placeholder={"Aoife Byrne — director\nSam Okafor — pipeline\nMira Petrov — sound\nLina Cruz — editor"}
+              placeholder={"Aoife Byrne — director\nSam Okafor — production\nMira Petrov — sound\nLina Cruz — editor"}
             />
 
             <FormField
@@ -1493,23 +1863,23 @@ const SubmissionPage: React.FC = () => {
               label="Tools used"
               required
               type="textarea"
-              hint="Every AI tool and every traditional tool. Models, editors, audio software, plugins, on-set gear. Judges use this to understand your pipeline."
-              placeholder={"Wan 2.2 i2v, FLUX, Kling 2.0, ElevenLabs v3, Topaz (via Fal), DaVinci Resolve, Logic Pro"}
+              hint="Every AI tool and every traditional tool used on your short film. Models, editors, audio software, plugins, on-set gear."
+              placeholder={"Video model(s), image model(s), editor, audio tools, upscaler, finishing tools"}
             />
 
             <FormField
               label="Behind-the-scenes process"
               required
               type="textarea"
-              hint="2–4 paragraphs. Walk us through your pipeline: how you got from idea to final film. What AI did, what humans did, what broke, what worked. This is the one question every judge reads — write it like you're explaining it to a friend."
-              placeholder="We started from a single reference photo and storyboarded in Napkin. Then we generated 40 shots in Wan from still frames, picked 18, ran them through a Topaz upscale on Fal, and cut on Resolve. Voice was a Voice Design clone of our writer. Sound was Eleven's SFX plus a Logic score..."
+              hint="2–4 paragraphs. Walk us through how you made your short film from idea to final export. What AI did, what humans did, what broke, what worked. This is the one question every judge reads."
+              placeholder="We started from references and a storyboard, generated options, selected final scenes, upscaled the final short film version, then finished edit and sound. We iterated on consistency, pacing, and mix until export..."
             />
 
             <FormField
               label="Reference examples (if you used reference-to-video)"
               hint={
                 <>
-                  Required only if you're entering the Reference-to-Video prize. Link to the reference images or clips
+                  Required only if you're entering the Reference-to-Video prize. Link to the reference images or short film clips
                   (Drive, Dropbox, or anything public). Put everything in your{" "}
                   <code style={{ fontFamily: T.mono, color: T.amber }}>references/</code> folder from Step II and
                   paste the link here.
@@ -1551,7 +1921,7 @@ const SubmissionPage: React.FC = () => {
               label="Why is yours the Best Reference-to-Video Film?"
               hint="Only if you used Wan AI's reference-to-video feature. One sentence on how you used reference material."
               type="textarea"
-              placeholder="We shot 12 reference stills of a coastline, then used Wan i2v to generate 40 matching clips..."
+              placeholder="We used reference stills from our short film concept, then generated matching motion clips..."
             />
             <FormField
               label="Why is your sound design the best?"
@@ -1560,226 +1930,62 @@ const SubmissionPage: React.FC = () => {
               placeholder="All dialogue is a voice-cloned actor with emotion tags, foley generated scene-by-scene, original score in Music..."
             />
             <FormField
-              label="Why is your Fal pipeline the most deliberate?"
-              hint="Fal prize. One sentence on how your pipeline fits together, with consistency across shots."
+              label="Why is your Fal workflow the most deliberate for your short film?"
+              hint="Fal prize. One sentence on how your short film workflow fits together, with consistency across scenes."
               type="textarea"
-              placeholder="Single FLUX character portrait → fed into Kling for motion → Topaz upscale → consistent face across 14 shots..."
+              placeholder="Reference character image → motion generation → upscale → consistent face and look across the short film..."
             />
             <FormField
               label="Where was AI the creative partner, and where was the human?"
               hint="Wolfpack AI-Human Collaboration prize. Two or three sentences. Be specific."
               type="textarea"
-              placeholder="Directing and shot selection were 100% human. Generation, lip-sync, and upscaling were AI. We re-rolled shots until the AI matched our storyboard..."
+              placeholder="Directing and scene selection were 100% human. Generation, lip-sync, and upscaling were AI. We re-ran scenes until the short film matched our storyboard..."
             />
 
             <Callout title="When you're ready">
-              Once every field above is drafted, open the real form below. One submission per team. You can edit until
-              the deadline.
+              Once every field above is drafted, tick this step complete — the submission form button unlocks at the
+              bottom of the checklist. One submission per team. You can edit until the deadline.
             </Callout>
-
-            <div
-              style={{
-                marginTop: "1.25rem",
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "1rem",
-                alignItems: "center",
-              }}
-            >
-              <PrimaryButton href={SUBMISSION_FORM_URL}>Open submission form</PrimaryButton>
-              <GhostButton href={SUBMISSION_DRIVE_URL}>Open submission Drive</GhostButton>
-            </div>
           </Card>
-        </Section>
+          </CollapsibleSection>
+              </ChecklistItem>
+            </div>
+          </SectionReveal>
 
-        <FilmStripBorder compact />
-        <ActLabel number="IV" title="How we'll judge your film" />
-
-        {/* ═══════════════════════════════════════════════════════════════════
-            PRIZES
-            ═══════════════════════════════════════════════════════════════ */}
-        <Section
-          id="prizes"
-          slate="04A"
-          title="Five awards, five lenses"
-          tag="Every submitted film is eligible for every prize"
-          summary={
-            <>
-              You don't enter a specific category — the judges watch every film against every rubric. The rubrics below
-              are exactly what each sponsor looks for. Use them as a checklist while you finish the film, and as talking
-              points in the self-nomination fields on the form.
-            </>
-          }
-        >
-          <PrizeCard
-            icon="🏆"
-            title="Best Reference-to-Video Film"
-            presenter="Wan AI"
-            summary="The strongest film built using Wan AI's reference-to-video feature. A prize for teams that transform reference material into a distinctive, well-crafted final piece."
-            criteria={[
-              {
-                label: "Creative use of reference",
-                body: "Does the team use reference footage in a clear, inventive, and effective way?",
-              },
-              {
-                label: "Quality of transformation",
-                body: "Does the output successfully turn the source material into something cinematic and compelling?",
-              },
-              {
-                label: "Execution and craft",
-                body: "Does the final film feel polished, intentional, and creatively ambitious?",
-              },
-            ]}
-            prompt={
-              <>
-                In the "Reference examples" field, link everything you used as source. In the self-nomination field,
-                one sentence on the creative leap from reference to final.
-              </>
-            }
-          />
-
-          <PrizeCard
-            icon="🎧"
-            title="Best Sound Design"
-            presenter="ElevenLabs"
-            summary="Sound that makes the film. Voice, effects, ambience, and music choices that lift the visuals into something cinematic."
-            criteria={[
-              {
-                label: "Voice and dialogue",
-                body: "Performance, casting, delivery.",
-              },
-              {
-                label: "Soundscape",
-                body: "Ambience, foley, texture. Does the world feel alive?",
-              },
-              {
-                label: "Music and pacing",
-                body: "How sound drives rhythm and emotion.",
-              },
-            ]}
-            prompt={
-              <>
-                In the self-nomination field, call out specific voice/foley/music moments. Judges will listen on proper
-                cinema speakers — the small details you added will actually be audible.
-              </>
-            }
-          />
-
-          <PrizeCard
-            icon="⚙️"
-            title="Best use of Fal"
-            presenter="Fal"
-            summary="For the team that turned Fal's video generation infrastructure into something deliberate. Not just outputs. A pipeline with intent, speed, and visual coherence from first frame to last."
-            criteria={[
-              {
-                label: "Pipeline craft",
-                body: "Did the team go beyond a single model call and build something that actually holds together?",
-              },
-              {
-                label: "Visual consistency",
-                body: "Are characters, environments, and motion controlled across shots, not just lucky?",
-              },
-              {
-                label: "Demonstrated use",
-                body: (
-                  <>
-                    Can the team show their Fal pipeline, walk through how they built it, and justify why their
-                    approach was the best use of what Fal offers?
-                  </>
-                ),
-              },
-            ]}
-            prompt={
-              <>
-                In "Behind-the-scenes process", diagram your pipeline if you can (upload to{" "}
-                <code style={{ fontFamily: T.mono, color: T.amber }}>bts/</code>). This prize is decided more by your
-                write-up than by any other.
-              </>
-            }
-          />
-
-          <PrizeCard
-            icon="🤝"
-            title="Best AI-Human Collaboration"
-            presenter="Wolfpack Digital"
-            summary="For the film that best demonstrates AI as a creative partner rather than a replacement. Three criteria, equally weighted."
-            criteria={[
-              {
-                label: "Intentionality",
-                body: "Did the team make deliberate, thoughtful choices about where to use AI and where to rely on human craft? Not everything should be AI-generated just because it can be.",
-              },
-              {
-                label: "Creative synergy",
-                body: "Did AI meaningfully elevate the final result beyond what either humans or AI could have achieved alone? The best entries show a back-and-forth between human direction and AI capability.",
-              },
-              {
-                label: "Transparency",
-                body: "Can the team clearly articulate which parts were AI-assisted and which were human-driven? A short behind-the-scenes explanation or breakdown should accompany the submission.",
-              },
-            ]}
-            prompt={
-              <>
-                The spirit: AI is a tool, and the best tools amplify human creativity. The "Where was AI the creative
-                partner, and where was the human?" field is directly for this prize.
-              </>
-            }
-          />
-
-          <PrizeCard
-            icon="❤️"
-            title="Community Choice"
-            presenter="Give(a)Go"
-            summary="Voted by the room at the premiere. The film that makes the audience lean in, talk, and still be quoting it at the pub."
-            criteria={[
-              {
-                label: "No formal rubric",
-                body: "Pure gut reaction. The room decides.",
-              },
-            ]}
-            prompt={
-              <>
-                Nothing to add on the form. Just make something that a hundred humans in a dark cinema want to watch
-                twice.
-              </>
-            }
-          />
-        </Section>
-
-        <FilmStripBorder compact />
-
-        {/* ═══════════════════════════════════════════════════════════════════
-            FINAL CTA
-            ═══════════════════════════════════════════════════════════════ */}
-        <section
-          style={{
-            padding: "3rem 1.5rem 4rem",
-            display: "flex",
-            justifyContent: "center",
-          }}
-        >
-          <SectionReveal>
+          {/* ───────────────── Gated submit CTA — appears when all three are done ───────────────── */}
+          <SectionReveal delay={0.28}>
             <div
               style={{
-                maxWidth: 720,
-                width: "100%",
-                padding: "2.25rem 2rem",
-                border: `1px solid ${T.borderStrong}`,
-                background: "rgba(200,170,80,0.04)",
+                marginTop: "2.5rem",
+                padding: "2rem 1.85rem",
+                border: `1px solid ${
+                  allDone ? "rgba(170,225,180,0.55)" : T.border
+                }`,
+                background: allDone
+                  ? "linear-gradient(150deg, rgba(140,210,150,0.08) 0%, rgba(10,8,3,0.85) 100%)"
+                  : "linear-gradient(150deg, rgba(28,22,8,0.55) 0%, rgba(10,8,3,0.95) 100%)",
+                boxShadow: allDone
+                  ? "0 0 60px rgba(140,210,150,0.14)"
+                  : "none",
                 textAlign: "center",
+                transition: "border-color 0.45s, background 0.45s, box-shadow 0.45s",
               }}
             >
               <div
                 style={{
                   fontFamily: T.mono,
-                  fontSize: "0.62rem",
-                  letterSpacing: "0.3em",
+                  fontSize: "0.6rem",
+                  letterSpacing: "0.32em",
                   textTransform: "uppercase",
-                  color: T.amber,
-                  marginBottom: "0.7rem",
+                  color: allDone
+                    ? "rgba(200,255,210,0.92)"
+                    : T.amberDim,
+                  marginBottom: "0.8rem",
                 }}
               >
-                One last look
+                {allDone ? "· All steps complete ·" : `· Locked — ${total - completed} step${total - completed === 1 ? "" : "s"} to go ·`}
               </div>
+
               <h3
                 style={{
                   margin: 0,
@@ -1790,8 +1996,11 @@ const SubmissionPage: React.FC = () => {
                   lineHeight: 1.2,
                 }}
               >
-                Upscaled · Uploaded · Form filled?
+                {allDone
+                  ? "You're ready. Submit your film."
+                  : "Finish the checklist to unlock the form."}
               </h3>
+
               <p
                 style={{
                   margin: "0.9rem auto 1.5rem",
@@ -1802,20 +2011,162 @@ const SubmissionPage: React.FC = () => {
                   color: "rgba(232,222,192,0.78)",
                 }}
               >
-                If any of those are still <em>no</em>, go back and finish them first. If all three are yes, hit submit —
-                you're done. We'll see you at the premiere.
+                {allDone ? (
+                  <>
+                    Upscaled, uploaded, answers drafted. One submission per team — you can edit it until the deadline.
+                    See you at the premiere.
+                  </>
+                ) : (
+                  <>
+                    Work through steps 01–0{total} above. As you mark each one complete, the next one opens. The submit
+                    button below activates only when every step is ticked.
+                  </>
+                )}
               </p>
+
               <div
                 style={{
                   display: "flex",
                   flexWrap: "wrap",
                   gap: "0.8rem",
                   justifyContent: "center",
+                  alignItems: "center",
                 }}
               >
-                <PrimaryButton href={SUBMISSION_FORM_URL}>Submit your film</PrimaryButton>
-                <GhostButton href="/credits">Need more credits?</GhostButton>
+                {allDone ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.open(
+                        SUBMISSION_FORM_URL,
+                        "_blank",
+                        "noopener,noreferrer",
+                      );
+                      setHasOpenedForm(true);
+                    }}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.6rem",
+                      padding: "1rem 1.9rem",
+                      background: T.accent,
+                      color: "#fff",
+                      fontFamily: T.sans,
+                      fontWeight: 600,
+                      fontSize: "0.88rem",
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      border: "none",
+                      borderRadius: 3,
+                      boxShadow:
+                        "0 0 28px rgba(232,93,53,0.28), 0 2px 10px rgba(0,0,0,0.55)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Open submission form →
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    aria-disabled
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.6rem",
+                      padding: "1rem 1.9rem",
+                      background: "rgba(80,60,30,0.35)",
+                      color: "rgba(232,222,192,0.35)",
+                      fontFamily: T.sans,
+                      fontWeight: 600,
+                      fontSize: "0.88rem",
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      border: `1px solid ${T.border}`,
+                      borderRadius: 3,
+                      cursor: "not-allowed",
+                    }}
+                  >
+                    ⌕ Submission form locked
+                  </button>
+                )}
               </div>
+
+              {allDone && hasOpenedForm && (
+                <div
+                  style={{
+                    marginTop: "1.2rem",
+                    border: `1px solid ${T.borderStrong}`,
+                    background: "rgba(200,170,80,0.05)",
+                    padding: "1rem 1.05rem",
+                    textAlign: "left",
+                    maxWidth: 640,
+                    marginLeft: "auto",
+                    marginRight: "auto",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: T.mono,
+                      fontSize: "0.58rem",
+                      letterSpacing: "0.24em",
+                      textTransform: "uppercase",
+                      color: T.amber,
+                      marginBottom: "0.6rem",
+                    }}
+                  >
+                    See you at the premiere
+                  </div>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontFamily: T.sans,
+                      fontSize: "0.95rem",
+                      lineHeight: 1.7,
+                      color: "rgba(232,222,192,0.82)",
+                    }}
+                  >
+                    Wear a formal outfit. Bring your friends and family. Share the registration link{" "}
+                    <a
+                      href={PREMIERE_REGISTRATION_URL}
+                      style={{
+                        color: T.amber,
+                        textDecoration: "none",
+                        borderBottom: "1px solid rgba(200,170,80,0.35)",
+                      }}
+                    >
+                      here
+                    </a>
+                    .
+                  </p>
+                  <div
+                    style={{
+                      marginTop: "0.75rem",
+                      fontFamily: T.sans,
+                      fontSize: "0.94rem",
+                      color: "rgba(232,222,192,0.78)",
+                    }}
+                  >
+                    Awards:
+                  </div>
+                  <ul
+                    style={{
+                      margin: "0.45rem 0 0",
+                      paddingLeft: "1.15rem",
+                      fontFamily: T.sans,
+                      fontSize: "0.92rem",
+                      lineHeight: 1.65,
+                      color: "rgba(232,222,192,0.72)",
+                    }}
+                  >
+                    <li>Best Reference-to-Video Film</li>
+                    <li>Best Sound Design</li>
+                    <li>Best Use of Fal</li>
+                    <li>Best AI-Human Collaboration</li>
+                    <li>Community Choice</li>
+                  </ul>
+                </div>
+              )}
             </div>
           </SectionReveal>
         </section>
@@ -1862,7 +2213,7 @@ const SubmissionPage: React.FC = () => {
               }}
             >
               Stuck on any step? Grab a Give(a)Go mentor on the floor or email{" "}
-              <A href="mailto:hello@giveago.io">hello@giveago.io</A>.
+              <A href="mailto:hello@giveago.co">hello@giveago.co</A>.
             </p>
           </SectionReveal>
 
