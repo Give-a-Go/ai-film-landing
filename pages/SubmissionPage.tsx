@@ -23,8 +23,6 @@ const T = {
 
 const SUBMISSION_FORM_URL = "https://forms.gle/zR2vtqS2qeNt15QX6";
 const PREMIERE_REGISTRATION_URL = "/event";
-// Example used only as a placeholder — teams submit a link to their *own* Drive folder.
-const DRIVE_FOLDER_EXAMPLE = "https://drive.google.com/drive/folders/...";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SectionReveal — scroll-triggered fade+slide
@@ -727,7 +725,7 @@ function PrizeCard({
 // ─────────────────────────────────────────────────────────────────────────────
 // Pre-submission checklist — collapsible, gated flow
 // ─────────────────────────────────────────────────────────────────────────────
-type ChecklistId = "upscale" | "upload" | "form";
+type ChecklistId = "upscale" | "upload";
 
 const CHECKLIST_ITEMS: {
   id: ChecklistId;
@@ -748,13 +746,6 @@ const CHECKLIST_ITEMS: {
     title: "Upload to your own Google Drive and share it publicly",
     summary:
       "Two versions (upscaled + original) in a Team-XX folder on your own Drive, shared as \"Anyone with the link — Viewer\".",
-  },
-  {
-    id: "form",
-    index: 3,
-    title: "Prepare your form answers",
-    summary:
-      "Draft every field in a doc first — team, tools, process, per-prize notes. Paste into the real form last.",
   },
 ];
 
@@ -942,7 +933,6 @@ const SubmissionPage: React.FC = () => {
   const [done, setDone] = useState<Record<ChecklistId, boolean>>({
     upscale: false,
     upload: false,
-    form: false,
   });
 
   const [openId, setOpenId] = useState<ChecklistId | null>("upscale");
@@ -1273,7 +1263,7 @@ const SubmissionPage: React.FC = () => {
                 letterSpacing: "0.01em",
               }}
             >
-              Step 1, Step 2, Step 3. Complete one, click next, and the form unlocks at the end.
+              Step 1, then Step 2. Complete both and the form unlocks at the end.
             </div>
           </SectionReveal>
 
@@ -1571,7 +1561,7 @@ const SubmissionPage: React.FC = () => {
                 onBack={() => setOpenId("upscale")}
                 backLabel="Back · Step 1"
                 onMarkDone={() => markDone("upload")}
-                ctaLabel="Next · Step 3"
+                ctaLabel="Finish checklist"
               >
                 <p
                   style={{
@@ -1744,236 +1734,10 @@ const SubmissionPage: React.FC = () => {
           </Card>
           </CollapsibleSection>
               </ChecklistItem>
-
-              {/* ───────────────────── Step 03 — Prepare form answers ───────────────────── */}
-              <ChecklistItem
-                index={CHECKLIST_ITEMS[2].index}
-                title={CHECKLIST_ITEMS[2].title}
-                summary={CHECKLIST_ITEMS[2].summary}
-                open={openId === "form"}
-                onBack={() => setOpenId("upload")}
-                backLabel="Back · Step 2"
-                onMarkDone={() => markDone("form")}
-                ctaLabel="Finish checklist"
-              >
-                <p
-                  style={{
-                    marginTop: "1.25rem",
-                    fontFamily: T.sans,
-                    fontSize: "1rem",
-                    lineHeight: 1.75,
-                    color: "rgba(232,222,192,0.8)",
-                  }}
-                >
-                  The form is short — under ten minutes if you have your Drive link, team roster, and a two-sentence
-                  pitch ready. These are the exact fields on the real form.{" "}
-                  <strong style={{ color: T.goldSoft, fontWeight: 600 }}>
-                    Draft every answer in a doc first, then paste them in.
-                  </strong>
-                </p>
-
-                <CollapsibleSection title="Expand form field details" defaultOpen={false}>
-                <Card style={{ marginTop: "1rem" }}>
-            <div
-              style={{
-                fontFamily: T.mono,
-                fontSize: "0.62rem",
-                letterSpacing: "0.28em",
-                textTransform: "uppercase",
-                color: T.amber,
-                marginBottom: "0.5rem",
-              }}
-            >
-              The film
-            </div>
-
-            <FormField
-              label="Film title"
-              required
-              hint="What goes on the title card at the premiere. Keep it short. No ALL CAPS unless stylistic."
-              placeholder="e.g. The Crossing"
-            />
-
-            <FormField
-              label="Two-sentence description"
-              required
-              type="textarea"
-              hint="Think of it like an announcement trailer: what's the hook, what's the feeling. Two sentences, maximum. This is what the audience hears before your film plays."
-              placeholder="A lighthouse keeper wakes to find the sea gone. What's left in its place remembers him."
-            />
-
-            <FormField
-              label="Your Google Drive folder link"
-              required
-              type="url"
-              hint={
-                <>
-                  The link to <strong>your</strong>{" "}
-                  <code style={{ fontFamily: T.mono, color: T.amber }}>Team-XX_Film-Title</code> folder from Step II —
-                  containing both the <em>_UPSCALED</em> and <em>_ORIGINAL</em> files. The folder{" "}
-                  <strong style={{ color: T.goldSoft, fontWeight: 600 }}>
-                    must be shared as "Anyone with the link — Viewer"
-                  </strong>
-                  . Test it in an incognito window before pasting it here — if it asks for access, it isn't shared
-                  correctly.
-                </>
-              }
-              placeholder={DRIVE_FOLDER_EXAMPLE}
-            />
-
-            <FormField
-              label="Confirm the film has been upscaled for cinema projection"
-              required
-              type="select"
-              hint="Yes / No / Partially. Films that haven't been upscaled still play but will read rougher than they should. Be honest."
-              placeholder="Yes — upscaled to 2K"
-            />
-
-            <div
-              style={{
-                fontFamily: T.mono,
-                fontSize: "0.62rem",
-                letterSpacing: "0.28em",
-                textTransform: "uppercase",
-                color: T.amber,
-                marginTop: "2rem",
-                marginBottom: "0.5rem",
-              }}
-            >
-              The team
-            </div>
-
-            <FormField
-              label="Team number"
-              required
-              hint="Assigned at kickoff. On your table card."
-              placeholder="e.g. 07"
-            />
-
-            <FormField
-              label="Team members"
-              required
-              type="textarea"
-              hint="Full names + a one-word role each (director, VFX, sound, writer, etc.). Everyone who worked on the film — for the credits slide at the premiere."
-              placeholder={"Aoife Byrne — director\nSam Okafor — production\nMira Petrov — sound\nLina Cruz — editor"}
-            />
-
-            <FormField
-              label="Primary contact email"
-              required
-              type="email"
-              hint="One person the organisers can reach if we need a re-upload or a correction before the premiere."
-              placeholder="you@email.com"
-            />
-
-            <div
-              style={{
-                fontFamily: T.mono,
-                fontSize: "0.62rem",
-                letterSpacing: "0.28em",
-                textTransform: "uppercase",
-                color: T.amber,
-                marginTop: "2rem",
-                marginBottom: "0.5rem",
-              }}
-            >
-              The process
-            </div>
-
-            <FormField
-              label="Tools used"
-              required
-              type="textarea"
-              hint="Every AI tool and every traditional tool used on your short film. Models, editors, audio software, plugins, on-set gear."
-              placeholder={"Video model(s), image model(s), editor, audio tools, upscaler, finishing tools"}
-            />
-
-            <FormField
-              label="Behind-the-scenes process"
-              required
-              type="textarea"
-              hint="2–4 paragraphs. Walk us through how you made your short film from idea to final export. What AI did, what humans did, what broke, what worked. This is the one question every judge reads."
-              placeholder="We started from references and a storyboard, generated options, selected final scenes, upscaled the final short film version, then finished edit and sound. We iterated on consistency, pacing, and mix until export..."
-            />
-
-            <FormField
-              label="Reference examples (if you used reference-to-video)"
-              hint={
-                <>
-                  Required only if you're entering the Reference-to-Video prize. Link to the reference images or short film clips
-                  (Drive, Dropbox, or anything public). Put everything in your{" "}
-                  <code style={{ fontFamily: T.mono, color: T.amber }}>references/</code> folder from Step II and
-                  paste the link here.
-                </>
-              }
-              type="url"
-              placeholder="https://drive.google.com/drive/folders/..."
-            />
-
-            <div
-              style={{
-                fontFamily: T.mono,
-                fontSize: "0.62rem",
-                letterSpacing: "0.28em",
-                textTransform: "uppercase",
-                color: T.amber,
-                marginTop: "2rem",
-                marginBottom: "0.5rem",
-              }}
-            >
-              Self-nomination (optional, per prize)
-            </div>
-
-            <p
-              style={{
-                margin: "0 0 0.5rem",
-                fontFamily: T.sans,
-                fontSize: "0.95rem",
-                lineHeight: 1.7,
-                color: "rgba(232,222,192,0.7)",
-              }}
-            >
-              Every film is eligible for every prize automatically — you don't have to opt in. But if one of the prizes
-              fits your film particularly well, tell the judges why in a sentence or two. It won't hurt, and it often
-              helps.
-            </p>
-
-            <FormField
-              label="Why is yours the Best Reference-to-Video Film?"
-              hint="Only if you used Wan AI's reference-to-video feature. One sentence on how you used reference material."
-              type="textarea"
-              placeholder="We used reference stills from our short film concept, then generated matching motion clips..."
-            />
-            <FormField
-              label="Why is your sound design the best?"
-              hint="ElevenLabs prize. One sentence on your voice work, foley, or score."
-              type="textarea"
-              placeholder="All dialogue is a voice-cloned actor with emotion tags, foley generated scene-by-scene, original score in Music..."
-            />
-            <FormField
-              label="Why is your Fal workflow the most deliberate for your short film?"
-              hint="Fal prize. One sentence on how your short film workflow fits together, with consistency across scenes."
-              type="textarea"
-              placeholder="Reference character image → motion generation → upscale → consistent face and look across the short film..."
-            />
-            <FormField
-              label="Where was AI the creative partner, and where was the human?"
-              hint="Wolfpack AI-Human Collaboration prize. Two or three sentences. Be specific."
-              type="textarea"
-              placeholder="Directing and scene selection were 100% human. Generation, lip-sync, and upscaling were AI. We re-ran scenes until the short film matched our storyboard..."
-            />
-
-            <Callout title="When you're ready">
-              Once every field above is drafted, tick this step complete — the submission form button unlocks at the
-              bottom of the checklist. One submission per team. You can edit until the deadline.
-            </Callout>
-          </Card>
-          </CollapsibleSection>
-              </ChecklistItem>
             </div>
           </SectionReveal>
 
-          {/* ───────────────── Gated submit CTA — appears when all three are done ───────────────── */}
+          {/* ───────────────── Gated submit CTA — appears when both steps are done ───────────────── */}
           <SectionReveal delay={0.28}>
             <div
               style={{
