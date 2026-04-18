@@ -758,13 +758,13 @@ const CHECKLIST_ITEMS: {
   },
 ];
 
-const CHECKLIST_STORAGE_KEY = "aif-submission-checklist-v1";
-
 function ChecklistItem({
   index,
   title,
   summary,
   open,
+  onBack,
+  backLabel,
   onMarkDone,
   ctaLabel,
   children,
@@ -773,6 +773,8 @@ function ChecklistItem({
   title: string;
   summary: string;
   open: boolean;
+  onBack?: () => void;
+  backLabel?: string;
   onMarkDone: () => void;
   ctaLabel: string;
   children: React.ReactNode;
@@ -863,6 +865,37 @@ function ChecklistItem({
             alignItems: "center",
           }}
         >
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              style={{
+                fontFamily: T.mono,
+                fontSize: "0.66rem",
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                color: T.amberDim,
+                border: `1px solid ${T.border}`,
+                background: "transparent",
+                padding: "0.72rem 1.05rem",
+                cursor: "pointer",
+                borderRadius: 3,
+                transition: "border-color 0.18s, color 0.18s, background 0.18s",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = T.borderStrong;
+                (e.currentTarget as HTMLElement).style.color = T.amber;
+                (e.currentTarget as HTMLElement).style.background = "rgba(200,170,80,0.05)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = T.border;
+                (e.currentTarget as HTMLElement).style.color = T.amberDim;
+                (e.currentTarget as HTMLElement).style.background = "transparent";
+              }}
+            >
+              {backLabel ?? "Back"}
+            </button>
+          )}
           <button
             type="button"
             onClick={onMarkDone}
@@ -906,41 +939,13 @@ function ChecklistItem({
 // ─────────────────────────────────────────────────────────────────────────────
 const SubmissionPage: React.FC = () => {
   const [hasOpenedForm, setHasOpenedForm] = useState(false);
-  const [done, setDone] = useState<Record<ChecklistId, boolean>>(() => {
-    const defaults: Record<ChecklistId, boolean> = {
-      upscale: false,
-      upload: false,
-      form: false,
-    };
-    if (typeof window === "undefined") return defaults;
-    try {
-      const raw = window.localStorage.getItem(CHECKLIST_STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Partial<Record<ChecklistId, boolean>>;
-        return {
-          upscale: !!parsed.upscale,
-          upload: !!parsed.upload,
-          form: !!parsed.form,
-        };
-      }
-    } catch {
-      /* ignore */
-    }
-    return defaults;
+  const [done, setDone] = useState<Record<ChecklistId, boolean>>({
+    upscale: false,
+    upload: false,
+    form: false,
   });
 
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(CHECKLIST_STORAGE_KEY, JSON.stringify(done));
-    } catch {
-      /* ignore */
-    }
-  }, [done]);
-
-  const [openId, setOpenId] = useState<ChecklistId | null>(() => {
-    const first = CHECKLIST_ITEMS.find((x) => !done[x.id]);
-    return first ? first.id : null;
-  });
+  const [openId, setOpenId] = useState<ChecklistId | null>("upscale");
 
   const markDone = (id: ChecklistId) => {
     setDone((prev) => {
@@ -1563,6 +1568,8 @@ const SubmissionPage: React.FC = () => {
                 title={CHECKLIST_ITEMS[1].title}
                 summary={CHECKLIST_ITEMS[1].summary}
                 open={openId === "upload"}
+                onBack={() => setOpenId("upscale")}
+                backLabel="Back · Step 1"
                 onMarkDone={() => markDone("upload")}
                 ctaLabel="Next · Step 3"
               >
@@ -1744,6 +1751,8 @@ const SubmissionPage: React.FC = () => {
                 title={CHECKLIST_ITEMS[2].title}
                 summary={CHECKLIST_ITEMS[2].summary}
                 open={openId === "form"}
+                onBack={() => setOpenId("upload")}
+                backLabel="Back · Step 2"
                 onMarkDone={() => markDone("form")}
                 ctaLabel="Finish checklist"
               >
