@@ -1622,7 +1622,19 @@ const SubmissionPage: React.FC = () => {
                 </div>
               </Step>
               <Step n={3}>
-                <strong style={{ color: T.goldSoft, fontWeight: 500 }}>Inside the same folder, add:</strong>
+                <strong style={{ color: T.goldSoft, fontWeight: 500 }}>
+                  Optional (can upload later): supporting files
+                </strong>
+                <div
+                  style={{
+                    marginTop: "0.4rem",
+                    fontSize: "0.9rem",
+                    lineHeight: 1.6,
+                    color: "rgba(232,222,192,0.6)",
+                  }}
+                >
+                  Priority is to upload the two film files above and submit first. You can add these support files later.
+                </div>
                 <div style={{ marginTop: "0.55rem" }}>
                   <Bullets
                     items={[
