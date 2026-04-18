@@ -4,6 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "setup": "bash scripts/setup.sh",
+    "run": "bash scripts/run.sh",
+    "start": "bash scripts/run.sh",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
