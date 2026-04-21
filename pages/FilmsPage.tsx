@@ -504,14 +504,8 @@ const FILM_VIDEO_MAP: Record<string, string[]> = {
   [getFilmKey("Team 16", "Mental Sidequest")]: ["https://youtu.be/tD5vk1F595g"],
   [getFilmKey("Team 17", "Stay")]: ["https://youtu.be/kc7mPs5n90g"],
   [getFilmKey("Team 18", "Don’t hate what God Made You")]: ["https://youtu.be/2tOh_lDjDao"],
-  [getFilmKey("Team 19", "Keep An Eye on...")]: [
-    "https://youtu.be/_ax7xOBDti8",
-    "https://youtu.be/qViMnPrAebw",
-  ],
-  [getFilmKey("Team 19", "Upgrade")]: [
-    "https://youtu.be/_ax7xOBDti8",
-    "https://youtu.be/qViMnPrAebw",
-  ],
+  [getFilmKey("Team 19", "Keep An Eye on...")]: ["https://youtu.be/M2EQIk_cG0g"],
+  [getFilmKey("Team 19", "Upgrade")]: ["https://youtu.be/M2EQIk_cG0g"],
   [getFilmKey("Team 20", "Am i who i think i am?")]: ["https://youtu.be/G-4Wn1m8Zo0"],
   [getFilmKey("Team 23", "Rerouting")]: ["https://youtu.be/amghiVlOguQ"],
   [getFilmKey("Team 24", "Simpsons - The Sidequest")]: ["https://youtu.be/uLGtwBMOCDw"],
