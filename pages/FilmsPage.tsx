@@ -331,7 +331,7 @@ const SITE_FILM_OVERRIDES: Record<number, Omit<Film, "team">> = {
     title: "Keep An Eye on...",
     members: "Aishwarya, Annie Samira Kamga Ngatchou, Sanjana Pawar",
     description:
-      "Sarah has new eyes. They are faster, sharper, and objectively better than the ones she was born with. But in a quiet hospital room on a rainy afternoon, she tries to explain to her doctor what the upgrade cost her.",
+      'In a world of "perfect" medical AI, a simple instruction leads to an unforgettable outcome. It’s human intuition vs. robotic logic, and the results are far more literal than you’d think.',
   },
   20: {
     title: "Am I Who I Think I Am?",
