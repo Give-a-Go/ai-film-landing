@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const LUMA_EVENT_URL = "https://luma.com/0zqny709?utm_source=aif";
+const V1_RECAP_URL = "https://giveago.co/after-movie/ai-film";
 
 const Navigation: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -45,61 +45,15 @@ const Navigation: React.FC = () => {
           <a href="/brief" className={linkClassSmall}>
             Brief
           </a>
-          <a href="/agenda" className={linkClassSmall}>
-            Agenda
+          <a href="/films" className={linkClassSmall}>
+            Films
           </a>
           <a
-            href="https://giveago.co/after-movie/ai-film"
+            href={V1_RECAP_URL}
             className={linkClassSmall}
             style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}
           >
             V1 Recap <span style={{ fontSize: "0.7em", opacity: 0.7 }}>↗</span>
-          </a>
-          <a
-            href="/credits"
-            className={linkClassSmall}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.35rem",
-              color: "rgba(220,185,90,0.78)",
-            }}
-          >
-            <span
-              aria-hidden
-              style={{
-                display: "inline-block",
-                width: 5,
-                height: 5,
-                borderRadius: "50%",
-                background: "rgba(220,185,90,0.7)",
-                boxShadow: "0 0 8px rgba(220,185,90,0.55)",
-              }}
-            />
-            Claim credits
-          </a>
-          <a
-            href="/submit"
-            className={linkClassSmall}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.35rem",
-              color: "rgba(255,180,150,0.92)",
-            }}
-          >
-            <span
-              aria-hidden
-              style={{
-                display: "inline-block",
-                width: 5,
-                height: 5,
-                borderRadius: "50%",
-                background: "rgba(255,140,100,0.95)",
-                boxShadow: "0 0 10px rgba(232,93,53,0.7)",
-              }}
-            />
-            Submit film
           </a>
         </div>
       </div>
@@ -108,12 +62,10 @@ const Navigation: React.FC = () => {
       <div className="pointer-events-auto flex items-center gap-3 relative z-50">
         <div className="hidden md:flex items-center gap-3">
           <a
-            href={LUMA_EVENT_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={V1_RECAP_URL}
             className="px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-1 group bg-[#E0D5C0] text-[#050505] hover:bg-white no-underline"
           >
-            Apply to join{" "}
+            Watch V1 recap{" "}
             <span className="group-hover:translate-x-0.5 transition-transform">
               →
             </span>
@@ -240,11 +192,11 @@ const Navigation: React.FC = () => {
             <a href="/brief" className={linkClass} onClick={closeMenu}>
               Brief
             </a>
-            <a href="/agenda" className={linkClass} onClick={closeMenu}>
-              Agenda
+            <a href="/films" className={linkClass} onClick={closeMenu}>
+              Films
             </a>
             <a
-              href="https://giveago.co/after-movie/ai-film"
+              href={V1_RECAP_URL}
               className={linkClass}
               onClick={closeMenu}
               style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}
@@ -252,68 +204,18 @@ const Navigation: React.FC = () => {
               V1 Recap{" "}
               <span style={{ fontSize: "0.75em", opacity: 0.6 }}>↗</span>
             </a>
-            <a
-              href="/credits"
-              className={linkClass}
-              onClick={closeMenu}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                color: "rgba(220,185,90,0.92)",
-              }}
-            >
-              <span
-                aria-hidden
-                style={{
-                  display: "inline-block",
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: "rgba(220,185,90,0.8)",
-                  boxShadow: "0 0 10px rgba(220,185,90,0.55)",
-                }}
-              />
-              Claim credits
-            </a>
-            <a
-              href="/submit"
-              className={linkClass}
-              onClick={closeMenu}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                color: "rgba(255,180,150,0.95)",
-              }}
-            >
-              <span
-                aria-hidden
-                style={{
-                  display: "inline-block",
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: "rgba(255,140,100,0.95)",
-                  boxShadow: "0 0 10px rgba(232,93,53,0.7)",
-                }}
-              />
-              Submit film
-            </a>
             <div
               className="my-2"
               style={{ borderTop: "1px solid rgba(198,153,58,0.14)" }}
             />
             <div className="px-2 space-y-2">
               <a
-                href={LUMA_EVENT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={V1_RECAP_URL}
                 className="w-full rounded-full px-5 py-3 text-sm font-medium transition-all duration-300 flex items-center justify-center gap-1 min-h-[44px] no-underline"
                 style={{ background: "#E0D5C0", color: "#050505" }}
                 onClick={closeMenu}
               >
-                Apply to join <span className="transition-transform">→</span>
+                Watch V1 recap <span className="transition-transform">→</span>
               </a>
             </div>
           </nav>

@@ -10,6 +10,7 @@ import AgendaPage from "./pages/AgendaPage";
 import CreditsPage from "./pages/CreditsPage";
 import SubmissionPage from "./pages/SubmissionPage";
 import AwardsPage from "./pages/AwardsPage";
+import FilmsPage from "./pages/FilmsPage";
 import gsap from "gsap";
 
 const normalizePath = (pathname: string) =>
@@ -36,6 +37,7 @@ const App: React.FC = () => {
   const isCreditsPage = path === "/credits";
   const isSubmissionPage = path === "/submit" || path === "/submission";
   const isAwardsPage = path === "/awards";
+  const isFilmsPage = path === "/films";
 
   useEffect(() => {
     gsap.config({ autoSleep: 60, force3D: true });
@@ -93,6 +95,10 @@ const App: React.FC = () => {
 
   if (isAwardsPage) {
     return <AwardsPage />;
+  }
+
+  if (isFilmsPage) {
+    return <FilmsPage />;
   }
 
   if (isBriefPage) {

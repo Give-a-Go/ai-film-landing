@@ -635,7 +635,7 @@ function SponsorLogoCard({
 // ─────────────────────────────────────────────────────────────────────────────
 // FinScene — animated Fin label + gold-amber CTA with ticket-tear hover
 // ─────────────────────────────────────────────────────────────────────────────
-const LUMA_EVENT_URL = "https://luma.com/0zqny709?utm_source=aif";
+const FILMS_PAGE_URL = "/films";
 
 function FinScene() {
   const ref = useRef<HTMLDivElement>(null);
@@ -704,9 +704,7 @@ function FinScene() {
         />
       </div>
       <a
-        href={LUMA_EVENT_URL}
-        target="_blank"
-        rel="noopener noreferrer"
+        href={FILMS_PAGE_URL}
         style={{
           display: "inline-block",
           position: "relative",
@@ -751,7 +749,7 @@ function FinScene() {
             transition: "transform 150ms ease",
           }}
         >
-          Apply to join →
+          Watch films →
         </span>
       </a>
     </div>
@@ -1212,13 +1210,11 @@ const EventContent: React.FC = () => {
                 }}
               >
                 <a
-                  href={LUMA_EVENT_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={FILMS_PAGE_URL}
                   className="rounded-full px-6 py-3 md:px-8 md:py-3.5 text-sm font-medium hover:scale-105 transition-all duration-300 whitespace-nowrap no-underline"
                   style={{ background: "#E0D5C0", color: "#050505" }}
                 >
-                  Apply to join
+                  View films
                 </a>
                 <a
                   href="https://giveago.co/sponsor"
@@ -1246,7 +1242,7 @@ const EventContent: React.FC = () => {
                       "rgba(220,185,90,0.5)";
                   }}
                 >
-                  Sponsor
+                  Sponsor the next one
                 </a>
               </div>
             </SectionReveal>
@@ -1849,7 +1845,7 @@ const EventContent: React.FC = () => {
                   "rgba(220,185,90,0.5)";
               }}
             >
-              Become a sponsor →
+              Sponsor the next one →
             </a>
           </div>
         </SectionReveal>

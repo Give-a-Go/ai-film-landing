@@ -1407,7 +1407,7 @@ const EventPage: React.FC = () => {
                 el.style.color = "rgba(248,236,188,0.72)";
               }}
             >
-              Become a Sponsor
+              Sponsor the next one
             </a>
           </div>
         </SectionReveal>

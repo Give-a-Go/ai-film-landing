@@ -3,7 +3,7 @@ import gsap from "gsap";
 import * as THREE from "three";
 import TeleprompterModal from "./TeleprompterModal";
 
-const LUMA_EVENT_URL = "https://luma.com/0zqny709?utm_source=aif";
+const FILMS_URL = "/films";
 
 export type HeroMode = "default" | "banner";
 
@@ -933,11 +933,8 @@ const Hero: React.FC<HeroProps> = ({ mode = "default" }) => {
                 <span style={{ color: "rgba(198,153,58,0.35)" }}>×</span> Napkin
               </div>
 
-              {/* Submission call-out — live / in-event */}
               {!isBanner && (
-                <a
-                  href="/submit"
-                  className="submission-callout group"
+                <div
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -948,14 +945,12 @@ const Hero: React.FC<HeroProps> = ({ mode = "default" }) => {
                     fontSize: "0.7rem",
                     letterSpacing: "0.22em",
                     textTransform: "uppercase",
-                    color: "rgba(255,220,200,0.95)",
-                    textDecoration: "none",
+                    color: "rgba(248,236,188,0.95)",
                     background:
-                      "linear-gradient(180deg, rgba(232,93,53,0.18) 0%, rgba(232,93,53,0.08) 100%)",
-                    border: "1px solid rgba(232,93,53,0.65)",
+                      "linear-gradient(180deg, rgba(220,185,90,0.18) 0%, rgba(220,185,90,0.08) 100%)",
+                    border: "1px solid rgba(220,185,90,0.62)",
                     borderRadius: 999,
-                    boxShadow: "0 0 24px rgba(232,93,53,0.25)",
-                    transition: "transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease",
+                    boxShadow: "0 0 24px rgba(220,185,90,0.2)",
                   }}
                 >
                   <span
@@ -964,21 +959,14 @@ const Hero: React.FC<HeroProps> = ({ mode = "default" }) => {
                       width: 8,
                       height: 8,
                       borderRadius: "50%",
-                      background: "rgba(255,140,100,0.95)",
-                      boxShadow: "0 0 10px rgba(232,93,53,0.9)",
+                      background: "rgba(220,185,90,0.95)",
+                      boxShadow: "0 0 10px rgba(220,185,90,0.85)",
                       animation: "submissionCalloutPulse 1.8s ease-in-out infinite",
                       flexShrink: 0,
                     }}
                   />
-                  <span>Submissions open — submit your film</span>
-                  <span
-                    aria-hidden
-                    className="group-hover:translate-x-0.5 transition-transform"
-                    style={{ color: "rgba(255,220,200,0.85)" }}
-                  >
-                    →
-                  </span>
-                </a>
+                  <span>Event concluded</span>
+                </div>
               )}
 
               <h1
@@ -1012,12 +1000,10 @@ const Hero: React.FC<HeroProps> = ({ mode = "default" }) => {
               {!isBanner && (
                 <div className="flex flex-col items-center gap-5 sm:gap-6 mt-2 w-full max-w-md sm:max-w-none">
                   <a
-                    href={LUMA_EVENT_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full px-10 py-4 sm:px-12 sm:py-[1.125rem] text-base sm:text-lg font-semibold tracking-wide uppercase no-underline transition-all duration-300 group bg-[#C6993A] text-[#050505] shadow-[0_0_0_1px_rgba(248,236,188,0.25),0_12px_40px_rgba(0,0,0,0.55),0_0_48px_rgba(198,153,58,0.35)] hover:bg-[#d4a84a] hover:shadow-[0_0_0_1px_rgba(248,236,188,0.35),0_16px_48px_rgba(0,0,0,0.5),0_0_64px_rgba(198,153,58,0.45)] hover:scale-[1.02] active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f8ecbc] focus-visible:ring-offset-2 focus-visible:ring-offset-black/80"
+                    href={FILMS_URL}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full px-6 py-2.5 sm:px-7 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-wide uppercase no-underline transition-all duration-300 group bg-[#C6993A] text-[#050505] shadow-[0_0_0_1px_rgba(248,236,188,0.25),0_12px_40px_rgba(0,0,0,0.55),0_0_48px_rgba(198,153,58,0.35)] hover:bg-[#d4a84a] hover:shadow-[0_0_0_1px_rgba(248,236,188,0.35),0_16px_48px_rgba(0,0,0,0.5),0_0_64px_rgba(198,153,58,0.45)] hover:scale-[1.02] active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f8ecbc] focus-visible:ring-offset-2 focus-visible:ring-offset-black/80"
                   >
-                    Apply now
+                    Watch the films
                     <span
                       className="group-hover:translate-x-0.5 transition-transform"
                       aria-hidden
@@ -1026,15 +1012,11 @@ const Hero: React.FC<HeroProps> = ({ mode = "default" }) => {
                     </span>
                   </a>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const el = document.getElementById(
-                        "cinematic-transition",
-                      );
-                      if (el) el.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    className="group flex flex-col items-center gap-2 cursor-pointer border-none bg-transparent hover:opacity-80 transition-opacity duration-300"
+                  <a
+                    href="https://giveago.co"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex flex-col items-center gap-2 cursor-pointer bg-transparent hover:opacity-80 transition-opacity duration-300 no-underline"
                     style={{ background: "none" }}
                   >
                     <span
@@ -1046,7 +1028,7 @@ const Hero: React.FC<HeroProps> = ({ mode = "default" }) => {
                         textTransform: "uppercase",
                       }}
                     >
-                      Learn more
+                      See upcoming events
                     </span>
                     <svg
                       width="2"
@@ -1063,7 +1045,7 @@ const Hero: React.FC<HeroProps> = ({ mode = "default" }) => {
                         strokeWidth="1.5"
                       />
                     </svg>
-                  </button>
+                  </a>
                 </div>
               )}
 
