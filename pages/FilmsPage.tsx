@@ -479,10 +479,39 @@ function getYoutubeEmbedUrl(url?: string, autoplay = false) {
   return `https://www.youtube.com/embed/${id}?rel=0${autoplay ? "&autoplay=1" : ""}`;
 }
 
+function getYoutubeWatchUrl(url?: string) {
+  const id = getYoutubeId(url);
+  if (!id) return null;
+  return `https://www.youtube.com/watch?v=${id}`;
+}
+
 function getYoutubeThumbnailUrl(url?: string) {
   const id = getYoutubeId(url);
   if (!id) return null;
   return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+}
+
+const MOBILE_LIGHTBOX_MEDIA_QUERY = "(max-width: 760px)";
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia(MOBILE_LIGHTBOX_MEDIA_QUERY).matches;
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia(MOBILE_LIGHTBOX_MEDIA_QUERY);
+    const handleChange = (event: MediaQueryListEvent) => setIsMobile(event.matches);
+
+    setIsMobile(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  return isMobile;
 }
 
 const FILM_VIDEO_MAP: Record<string, string[]> = {
@@ -747,16 +776,30 @@ const playableFilms = displayFilms.filter(({ film }) => getFilmVideoUrls(film).l
 function PreviewCard({
   film,
   winner,
+  isMobile,
   onOpenLightbox,
 }: {
   film: Film;
   winner?: Winner;
+  isMobile: boolean;
   onOpenLightbox: () => void;
 }) {
   const videoUrls = getFilmVideoUrls(film);
   const hasVideo = videoUrls.length > 0;
   const thumbnailUrl = getYoutubeThumbnailUrl(videoUrls[0]);
+  const watchUrl = getYoutubeWatchUrl(videoUrls[0]);
   const preview = getDescriptionPreview(film.description, winner ? 140 : 125);
+
+  function handleOpenVideo() {
+    if (!hasVideo) return;
+
+    if (isMobile && watchUrl) {
+      window.open(watchUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    onOpenLightbox();
+  }
 
   return (
     <article
@@ -818,7 +861,7 @@ function PreviewCard({
             overflow: "hidden",
             cursor: hasVideo ? "pointer" : "default",
           }}
-          onClick={hasVideo ? onOpenLightbox : undefined}
+          onClick={hasVideo ? handleOpenVideo : undefined}
         >
           {thumbnailUrl ? (
             <>
@@ -1505,6 +1548,7 @@ function Lightbox({
 }
 
 const FilmsPage: React.FC = () => {
+  const isMobile = useIsMobile();
   const [lightboxState, setLightboxState] = useState<{
     filmIndex: number;
     videoIndex: number;
@@ -1679,6 +1723,7 @@ const FilmsPage: React.FC = () => {
                 key={`${film.team}-${film.title}-${index}`}
                 film={film}
                 winner={winner}
+                isMobile={isMobile}
                 onOpenLightbox={() => {
                   const playableIndex = playableFilms.findIndex(
                     ({ film: playableFilm }) =>
