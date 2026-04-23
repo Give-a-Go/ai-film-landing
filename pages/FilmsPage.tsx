@@ -67,7 +67,7 @@ const winners: Winner[] = [
     logoAlt: "fal.ai",
   },
   {
-    award: "Best AI-Human Collaboration (Best direction)",
+    award: "Best Direction",
     team: "Team 8",
     film: "Microdosing",
   },
