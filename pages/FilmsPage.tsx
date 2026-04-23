@@ -21,7 +21,7 @@ type Winner = {
   award: string;
   team: string;
   film: string;
-  presenter: string;
+  presenter?: string;
   sponsorHref?: string;
   logoSrc?: string;
   logoAlt?: string;
@@ -70,7 +70,6 @@ const winners: Winner[] = [
     award: "Best AI-Human Collaboration (Best direction)",
     team: "Team 8",
     film: "Microdosing",
-    presenter: "Give(a)Go",
   },
   {
     award: "Community Choice",
@@ -621,47 +620,49 @@ function SponsorPedestal({ winner }: { winner: Winner }) {
         {winner.award}
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          gap: "0.45rem",
-          minWidth: 0,
-        }}
-      >
+      {winner.presenter ? (
         <div
           style={{
-            fontFamily: T.sans,
-            fontSize: "0.72rem",
-            fontWeight: 700,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: T.amberDim,
-            flexShrink: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: "0.45rem",
+            minWidth: 0,
           }}
         >
-          Presented by
-        </div>
-
-        {winner.sponsorHref ? (
-          <a
-            href={winner.sponsorHref}
-            target="_blank"
-            rel="noreferrer"
-            aria-label={`Visit ${winner.presenter}`}
+          <div
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              textDecoration: "none",
+              fontFamily: T.sans,
+              fontSize: "0.72rem",
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: T.amberDim,
+              flexShrink: 0,
             }}
           >
-            {logoContent}
-          </a>
-        ) : (
-          logoContent
-        )}
-      </div>
+            Presented by
+          </div>
+
+          {winner.sponsorHref ? (
+            <a
+              href={winner.sponsorHref}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`Visit ${winner.presenter}`}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                textDecoration: "none",
+              }}
+            >
+              {logoContent}
+            </a>
+          ) : (
+            logoContent
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }
