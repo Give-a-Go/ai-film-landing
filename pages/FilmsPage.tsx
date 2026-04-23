@@ -605,7 +605,7 @@ function SponsorPedestal({ winner }: { winner: Winner }) {
         gap: "0.85rem",
         padding: "0.95rem 1rem",
         boxShadow: "inset 0 1px 0 rgba(248,236,188,0.08)",
-        minHeight: 116,
+        minHeight: winner.presenter ? 116 : undefined,
       }}
     >
       <div
