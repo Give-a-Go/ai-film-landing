@@ -70,12 +70,7 @@ const winners: Winner[] = [
     award: "Best AI-Human Collaboration (Best direction)",
     team: "Team 8",
     film: "Microdosing",
-    presenter: "Wolfpack Digital",
-    sponsorHref: "https://www.wolfpack-digital.com/?utm_source=giveago&utm_medium=live_event",
-    logoSrc: "/partners/wolfpack-digital-light.png",
-    logoAlt: "Wolfpack Digital",
-    wordmarkPrimary: "Wolfpack",
-    wordmarkSecondary: "Digital",
+    presenter: "Give(a)Go",
   },
   {
     award: "Community Choice",
