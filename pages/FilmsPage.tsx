@@ -529,7 +529,7 @@ const FILM_VIDEO_MAP: Record<string, string[]> = {
   [getFilmKey("Team 18", "Don’t hate what God Made You")]: ["https://youtu.be/2tOh_lDjDao"],
   [getFilmKey("Team 19", "Keep An Eye on...")]: ["https://youtu.be/M2EQIk_cG0g"],
   [getFilmKey("Team 19", "Upgrade")]: ["https://youtu.be/M2EQIk_cG0g"],
-  [getFilmKey("Team 20", "Am i who i think i am?")]: ["https://youtu.be/G-4Wn1m8Zo0"],
+  [getFilmKey("Team 20", "Am i who i think i am?")]: ["https://youtu.be/XMkjm29W-Bs"],
   [getFilmKey("Team 23", "Rerouting")]: ["https://youtu.be/amghiVlOguQ"],
   [getFilmKey("Team 24", "Simpsons - The Sidequest")]: ["https://youtu.be/uLGtwBMOCDw"],
   [getFilmKey("Team 25", "The Nightly News")]: ["https://youtu.be/0uBa7DCqjNQ"],
