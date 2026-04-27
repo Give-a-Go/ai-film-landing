@@ -367,7 +367,7 @@ const SITE_FILM_TITLE_ALIASES: Record<number, string[]> = {
     "Don’t hate what God Made You",
     "Don't hate what God Made You",
   ],
-  19: ["Keep An Eye on...", "Upgrade"],
+  19: ["Keep An Eye on..."],
   30: ["AI-Joe", "AI-Joe — Unexpected Item"],
 };
 
@@ -528,7 +528,7 @@ const FILM_VIDEO_MAP: Record<string, string[]> = {
   [getFilmKey("Team 17", "Stay")]: ["https://youtu.be/kc7mPs5n90g"],
   [getFilmKey("Team 18", "Don’t hate what God Made You")]: ["https://youtu.be/2tOh_lDjDao"],
   [getFilmKey("Team 19", "Keep An Eye on...")]: ["https://youtu.be/M2EQIk_cG0g"],
-  [getFilmKey("Team 19", "Upgrade")]: ["https://youtu.be/M2EQIk_cG0g"],
+  [getFilmKey("Team 19", "Upgrade")]: ["https://youtu.be/_ax7xOBDti8"],
   [getFilmKey("Team 20", "Am i who i think i am?")]: ["https://youtu.be/XMkjm29W-Bs"],
   [getFilmKey("Team 23", "Rerouting")]: ["https://youtu.be/amghiVlOguQ"],
   [getFilmKey("Team 24", "Simpsons - The Sidequest")]: ["https://youtu.be/uLGtwBMOCDw"],
