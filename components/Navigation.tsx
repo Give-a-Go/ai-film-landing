@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 
-const V1_RECAP_URL = "https://giveago.co/after-movie/ai-film";
-
 const Navigation: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -48,31 +46,11 @@ const Navigation: React.FC = () => {
           <a href="/films" className={linkClassSmall}>
             Films
           </a>
-          <a
-            href={V1_RECAP_URL}
-            className={linkClassSmall}
-            style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}
-          >
-            V1 Recap <span style={{ fontSize: "0.7em", opacity: 0.7 }}>↗</span>
-          </a>
         </div>
       </div>
 
-      {/* CTAs (desktop only) + Hamburger (mobile only) */}
+      {/* Hamburger button (mobile only) */}
       <div className="pointer-events-auto flex items-center gap-3 relative z-50">
-        <div className="hidden md:flex items-center gap-3">
-          <a
-            href={V1_RECAP_URL}
-            className="px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-1 group bg-[#E0D5C0] text-[#050505] hover:bg-white no-underline"
-          >
-            Watch V1 recap{" "}
-            <span className="group-hover:translate-x-0.5 transition-transform">
-              →
-            </span>
-          </a>
-        </div>
-
-        {/* Hamburger button (mobile only) */}
         <button
           type="button"
           className="md:hidden w-11 h-11 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent text-[#E0D5C0] focus-visible:ring-[#E0D5C0]/50"
@@ -195,29 +173,6 @@ const Navigation: React.FC = () => {
             <a href="/films" className={linkClass} onClick={closeMenu}>
               Films
             </a>
-            <a
-              href={V1_RECAP_URL}
-              className={linkClass}
-              onClick={closeMenu}
-              style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}
-            >
-              V1 Recap{" "}
-              <span style={{ fontSize: "0.75em", opacity: 0.6 }}>↗</span>
-            </a>
-            <div
-              className="my-2"
-              style={{ borderTop: "1px solid rgba(198,153,58,0.14)" }}
-            />
-            <div className="px-2 space-y-2">
-              <a
-                href={V1_RECAP_URL}
-                className="w-full rounded-full px-5 py-3 text-sm font-medium transition-all duration-300 flex items-center justify-center gap-1 min-h-[44px] no-underline"
-                style={{ background: "#E0D5C0", color: "#050505" }}
-                onClick={closeMenu}
-              >
-                Watch V1 recap <span className="transition-transform">→</span>
-              </a>
-            </div>
           </nav>
         </div>
       </div>

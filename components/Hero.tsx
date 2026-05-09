@@ -4,6 +4,8 @@ import * as THREE from "three";
 import TeleprompterModal from "./TeleprompterModal";
 
 const FILMS_URL = "/films";
+const RECAP_URL =
+  "https://www.linkedin.com/posts/lets-giveago_ireland-ai-filmmaking-activity-7458801601600770048-pkt8?utm_source=share&utm_medium=member_desktop&rcm=ACoAACHDUFUBvf-JKd1q0HAAHNzS4W_WMhb7yWY";
 
 export type HeroMode = "default" | "banner";
 
@@ -999,18 +1001,34 @@ const Hero: React.FC<HeroProps> = ({ mode = "default" }) => {
 
               {!isBanner && (
                 <div className="flex flex-col items-center gap-5 sm:gap-6 mt-2 w-full max-w-md sm:max-w-none">
-                  <a
-                    href={FILMS_URL}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full px-6 py-2.5 sm:px-7 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-wide uppercase no-underline transition-all duration-300 group bg-[#C6993A] text-[#050505] shadow-[0_0_0_1px_rgba(248,236,188,0.25),0_12px_40px_rgba(0,0,0,0.55),0_0_48px_rgba(198,153,58,0.35)] hover:bg-[#d4a84a] hover:shadow-[0_0_0_1px_rgba(248,236,188,0.35),0_16px_48px_rgba(0,0,0,0.5),0_0_64px_rgba(198,153,58,0.45)] hover:scale-[1.02] active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f8ecbc] focus-visible:ring-offset-2 focus-visible:ring-offset-black/80"
-                  >
-                    Watch the films
-                    <span
-                      className="group-hover:translate-x-0.5 transition-transform"
-                      aria-hidden
+                  <div className="flex w-full flex-col sm:flex-row items-center justify-center gap-3">
+                    <a
+                      href={FILMS_URL}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full px-6 py-2.5 sm:px-7 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-wide uppercase no-underline transition-all duration-300 group bg-[#C6993A] text-[#050505] shadow-[0_0_0_1px_rgba(248,236,188,0.25),0_12px_40px_rgba(0,0,0,0.55),0_0_48px_rgba(198,153,58,0.35)] hover:bg-[#d4a84a] hover:shadow-[0_0_0_1px_rgba(248,236,188,0.35),0_16px_48px_rgba(0,0,0,0.5),0_0_64px_rgba(198,153,58,0.45)] hover:scale-[1.02] active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f8ecbc] focus-visible:ring-offset-2 focus-visible:ring-offset-black/80"
                     >
-                      →
-                    </span>
-                  </a>
+                      Watch the films
+                      <span
+                        className="group-hover:translate-x-0.5 transition-transform"
+                        aria-hidden
+                      >
+                        →
+                      </span>
+                    </a>
+                    <a
+                      href={RECAP_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full px-6 py-2.5 sm:px-7 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-wide uppercase no-underline transition-all duration-300 group bg-[rgba(224,213,192,0.08)] text-[#E0D5C0] shadow-[inset_0_0_0_1px_rgba(248,236,188,0.28),0_12px_40px_rgba(0,0,0,0.4)] hover:bg-[rgba(224,213,192,0.14)] hover:shadow-[inset_0_0_0_1px_rgba(248,236,188,0.4),0_16px_48px_rgba(0,0,0,0.46)] hover:scale-[1.02] active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f8ecbc] focus-visible:ring-offset-2 focus-visible:ring-offset-black/80"
+                    >
+                      Watch the recap
+                      <span
+                        className="group-hover:translate-x-0.5 transition-transform"
+                        aria-hidden
+                      >
+                        ↗
+                      </span>
+                    </a>
+                  </div>
 
                   <a
                     href="https://giveago.co"

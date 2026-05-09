@@ -17,6 +17,10 @@ const T = {
   mono: "monospace",
 };
 
+const RECAP_URL =
+  "https://www.linkedin.com/posts/lets-giveago_ireland-ai-filmmaking-activity-7458801601600770048-pkt8?utm_source=share&utm_medium=member_desktop&rcm=ACoAACHDUFUBvf-JKd1q0HAAHNzS4W_WMhb7yWY";
+const RECAP_PREVIEW_IMAGE = "/images-optimized/DSC03927.webp";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // SectionReveal — scroll-triggered fade+slide
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2049,7 +2053,7 @@ const EventContent: React.FC = () => {
                 a room full of people who'd watched them get made.
               </p>
               <a
-                href="https://www.youtube.com/shorts/sd-EOweCCzM"
+                href={RECAP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -2078,13 +2082,13 @@ const EventContent: React.FC = () => {
                     "rgba(200,170,80,0.25)";
                 }}
               >
-                Watch the V1 recap ↗
+                Watch the recap on LinkedIn ↗
               </a>
             </div>
           </SectionReveal>
           <SectionReveal delay={0.15}>
             <a
-              href="https://www.youtube.com/shorts/sd-EOweCCzM"
+              href={RECAP_URL}
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -2096,10 +2100,10 @@ const EventContent: React.FC = () => {
                 background: "#050505",
               }}
             >
-              {/* YouTube thumbnail */}
+              {/* Recap preview */}
               <img
-                src="https://img.youtube.com/vi/sd-EOweCCzM/hqdefault.jpg"
-                alt="V1 Recap"
+                src={RECAP_PREVIEW_IMAGE}
+                alt="AI Filmmaking Hackathon recap preview"
                 style={{
                   position: "absolute",
                   inset: 0,
@@ -2160,7 +2164,7 @@ const EventContent: React.FC = () => {
                     backdropFilter: "blur(4px)",
                   }}
                 >
-                  AI Filmmaking Hackathon v1 · Recap
+                  AI Filmmaking Hackathon · Recap
                 </div>
               </div>
               {/* Film grain overlay */}
